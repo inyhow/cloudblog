@@ -27,42 +27,50 @@ function filePathFromSlug(slug: string): string {
 }
 
 export async function listPosts(): Promise<BlogPost[]> {
-  const paths = await listDir(POSTS_DIR);
-  const posts = await Promise.all(
-    paths.filter((p) => p.endsWith('.md')).map(async (path) => {
-      const f = await getFile(path);
-      if (!f) return null;
-      const parsed = matter(f.content);
-      return {
-        slug: path.split('/').pop()!.replace(/\.md$/, ''),
-        title: parsed.data.title ?? 'Untitled',
-        description: parsed.data.description ?? '',
-        tags: parsed.data.tags ?? [],
-        pubDate: parsed.data.pubDate ?? new Date().toISOString(),
-        updatedDate: parsed.data.updatedDate,
-        content: parsed.content,
-      } satisfies BlogPost;
-    }),
-  );
-  return posts
-    .filter((p): p is BlogPost => Boolean(p))
-    .sort((a, b) => new Date(b.pubDate).valueOf() - new Date(a.pubDate).valueOf());
+  try {
+    const paths = await listDir(POSTS_DIR);
+    const posts = await Promise.all(
+      paths.filter((p) => p.endsWith('.md')).map(async (path) => {
+        const f = await getFile(path);
+        if (!f) return null;
+        const parsed = matter(f.content);
+        return {
+          slug: path.split('/').pop()!.replace(/\.md$/, ''),
+          title: parsed.data.title ?? 'Untitled',
+          description: parsed.data.description ?? '',
+          tags: parsed.data.tags ?? [],
+          pubDate: parsed.data.pubDate ?? new Date().toISOString(),
+          updatedDate: parsed.data.updatedDate,
+          content: parsed.content,
+        } satisfies BlogPost;
+      }),
+    );
+    return posts
+      .filter((p): p is BlogPost => Boolean(p))
+      .sort((a, b) => new Date(b.pubDate).valueOf() - new Date(a.pubDate).valueOf());
+  } catch {
+    return [];
+  }
 }
 
 export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
-  const path = filePathFromSlug(slug);
-  const f = await getFile(path);
-  if (!f) return null;
-  const parsed = matter(f.content);
-  return {
-    slug,
-    title: parsed.data.title ?? 'Untitled',
-    description: parsed.data.description ?? '',
-    tags: parsed.data.tags ?? [],
-    pubDate: parsed.data.pubDate ?? new Date().toISOString(),
-    updatedDate: parsed.data.updatedDate,
-    content: parsed.content,
-  };
+  try {
+    const path = filePathFromSlug(slug);
+    const f = await getFile(path);
+    if (!f) return null;
+    const parsed = matter(f.content);
+    return {
+      slug,
+      title: parsed.data.title ?? 'Untitled',
+      description: parsed.data.description ?? '',
+      tags: parsed.data.tags ?? [],
+      pubDate: parsed.data.pubDate ?? new Date().toISOString(),
+      updatedDate: parsed.data.updatedDate,
+      content: parsed.content,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function savePost(input: Partial<BlogPost> & { title: string; content: string; slug?: string }) {

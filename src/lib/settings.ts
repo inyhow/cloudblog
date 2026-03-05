@@ -29,9 +29,9 @@ const defaults: SiteSettings = {
 };
 
 export async function readSettings(): Promise<SiteSettings> {
-  const file = await getFile(SETTINGS_PATH);
-  if (!file) return defaults;
   try {
+    const file = await getFile(SETTINGS_PATH);
+    if (!file) return defaults;
     return { ...defaults, ...JSON.parse(file.content) };
   } catch {
     return defaults;
@@ -43,8 +43,12 @@ export async function saveSettings(settings: SiteSettings): Promise<void> {
 }
 
 export async function readThemeCss(): Promise<string> {
-  const file = await getFile(THEME_PATH);
-  return file?.content ?? '';
+  try {
+    const file = await getFile(THEME_PATH);
+    return file?.content ?? '';
+  } catch {
+    return '';
+  }
 }
 
 export async function saveThemeCss(css: string): Promise<void> {
