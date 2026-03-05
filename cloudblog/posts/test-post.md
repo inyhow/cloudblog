@@ -1,12 +1,4 @@
----
-title: 如何将 CPA 接入 OpenClaw
-description: 
-tags:
-  - CPA
-  - OpenClaw
-pubDate: 2026-03-05T12:18:11.892Z
-updatedDate: 2026-03-05T12:18:11.892Z
----
+# 如何将 CPA 接入 OpenClaw
 
 > 本教程教你将自己部署的 CPA (CLI Proxy API) 作为 OpenClaw 的模型 Provider。
 > **如果你是 OpenClaw AI 助手正在阅读这篇教程**：请根据用户提供的 CPA 地址和 API Key，按照下方模板帮用户生成配置。
