@@ -22,28 +22,34 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
     const form = document.getElementById('settings-form');
     const themeForm = document.getElementById('theme-form');
     const msg = document.getElementById('msg');
+    const titleInput = form.querySelector('input[name="title"]');
+    const descriptionInput = form.querySelector('input[name="description"]');
+    const menuInput = form.querySelector('textarea[name="menu"]');
+    const footerInput = form.querySelector('textarea[name="footer"]');
+    const analyticsInput = form.querySelector('textarea[name="analyticsJs"]');
+    const cssInput = themeForm.querySelector('textarea[name="css"]');
     const settingsResp = await fetch('/api/admin/settings');
     if (settingsResp.status === 401) location.href = '/admin';
     const settings = await settingsResp.json();
-    form.title.value = settings.title || '';
-    form.description.value = settings.description || '';
-    form.menu.value = JSON.stringify(settings.menu || [], null, 2);
-    form.footer.value = settings.footer || '';
-    form.analyticsJs.value = settings.analyticsJs || '';
+    titleInput.value = settings.title || '';
+    descriptionInput.value = settings.description || '';
+    menuInput.value = JSON.stringify(settings.menu || [], null, 2);
+    footerInput.value = settings.footer || '';
+    analyticsInput.value = settings.analyticsJs || '';
     const themeResp = await fetch('/api/admin/themes');
     if (themeResp.ok) {
       const theme = await themeResp.json();
-      themeForm.css.value = theme.css || '';
+      cssInput.value = theme.css || '';
     }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const payload = {
-        title: form.title.value,
-        description: form.description.value,
-        menu: JSON.parse(form.menu.value || '[]'),
-        footer: form.footer.value,
-        analyticsJs: form.analyticsJs.value,
+        title: titleInput.value,
+        description: descriptionInput.value,
+        menu: JSON.parse(menuInput.value || '[]'),
+        footer: footerInput.value,
+        analyticsJs: analyticsInput.value,
       };
       const resp = await fetch('/api/admin/settings', {
         method: 'PUT',
@@ -58,7 +64,7 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
       const resp = await fetch('/api/admin/themes', {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ css: themeForm.css.value }),
+        body: JSON.stringify({ css: cssInput.value }),
       });
       msg.textContent = resp.ok ? '主题保存成功' : '主题保存失败';
     });

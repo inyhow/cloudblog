@@ -20,6 +20,9 @@ import SiteLayout from '../../../layouts/SiteLayout.astro';
     const md = document.getElementById('md');
     const visual = document.getElementById('visual');
     const msg = document.getElementById('msg');
+    const titleInput = form.querySelector('input[name="title"]');
+    const descriptionInput = form.querySelector('input[name="description"]');
+    const tagsInput = form.querySelector('input[name="tags"]');
     const slug = new URL(location.href).searchParams.get('slug');
 
     md.addEventListener('input', () => { visual.innerText = md.value; });
@@ -29,9 +32,9 @@ import SiteLayout from '../../../layouts/SiteLayout.astro';
       const resp = await fetch(`/api/admin/posts/${slug}`);
       if (resp.ok) {
         const post = await resp.json();
-        form.title.value = post.title;
-        form.description.value = post.description;
-        form.tags.value = (post.tags || []).join(',');
+        titleInput.value = post.title;
+        descriptionInput.value = post.description;
+        tagsInput.value = (post.tags || []).join(',');
         md.value = post.content || '';
         visual.innerText = md.value;
       }
@@ -40,9 +43,9 @@ import SiteLayout from '../../../layouts/SiteLayout.astro';
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const payload = {
-        title: form.title.value,
-        description: form.description.value,
-        tags: form.tags.value.split(',').map((s) => s.trim()).filter(Boolean),
+        title: titleInput.value,
+        description: descriptionInput.value,
+        tags: tagsInput.value.split(',').map((s) => s.trim()).filter(Boolean),
         content: md.value,
       };
       const url = slug ? `/api/admin/posts/${slug}` : '/api/admin/posts';
