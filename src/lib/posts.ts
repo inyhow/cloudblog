@@ -1,4 +1,3 @@
-import matter from 'gray-matter';
 import { marked } from 'marked';
 import { getFile, listDir, putFile } from './github';
 
@@ -26,20 +25,61 @@ function filePathFromSlug(slug: string): string {
   return `${POSTS_DIR}/${slug}.md`;
 }
 
+function parseFrontmatter(raw: string): { data: Record<string, unknown>; content: string } {
+  if (!raw.startsWith('---\n')) return { data: {}, content: raw };
+  const end = raw.indexOf('\n---\n', 4);
+  if (end === -1) return { data: {}, content: raw };
+  const fm = raw.slice(4, end);
+  const content = raw.slice(end + 5);
+  const data: Record<string, unknown> = {};
+  let currentArrayKey = '';
+  for (const line of fm.split('\n')) {
+    if (line.startsWith('- ') && currentArrayKey) {
+      const arr = (data[currentArrayKey] as string[]) || [];
+      arr.push(line.slice(2).trim());
+      data[currentArrayKey] = arr;
+      continue;
+    }
+    const idx = line.indexOf(':');
+    if (idx === -1) continue;
+    const key = line.slice(0, idx).trim();
+    const value = line.slice(idx + 1).trim();
+    if (value === '') {
+      currentArrayKey = key;
+      data[key] = [];
+    } else {
+      currentArrayKey = '';
+      data[key] = value;
+    }
+  }
+  return { data, content };
+}
+
+function stringifyFrontmatter(data: {
+  title: string;
+  description: string;
+  tags: string[];
+  pubDate: string;
+  updatedDate: string;
+}, content: string): string {
+  const tagsBlock = data.tags.map((t) => `  - ${t}`).join('\n');
+  return `---\ntitle: ${data.title}\ndescription: ${data.description}\ntags:\n${tagsBlock || '  -'}\npubDate: ${data.pubDate}\nupdatedDate: ${data.updatedDate}\n---\n\n${content}`;
+}
+
 async function listPostsCore(runtimeEnv?: Record<string, string>): Promise<BlogPost[]> {
   const paths = await listDir(POSTS_DIR, runtimeEnv);
   const posts = await Promise.all(
     paths.filter((p) => p.endsWith('.md')).map(async (path) => {
       const f = await getFile(path, runtimeEnv);
       if (!f) return null;
-      const parsed = matter(f.content);
+      const parsed = parseFrontmatter(f.content);
       return {
         slug: path.split('/').pop()!.replace(/\.md$/, ''),
-        title: parsed.data.title ?? 'Untitled',
-        description: parsed.data.description ?? '',
-        tags: parsed.data.tags ?? [],
-        pubDate: parsed.data.pubDate ?? new Date().toISOString(),
-        updatedDate: parsed.data.updatedDate,
+        title: String(parsed.data.title ?? 'Untitled'),
+        description: String(parsed.data.description ?? ''),
+        tags: Array.isArray(parsed.data.tags) ? (parsed.data.tags as string[]) : [],
+        pubDate: String(parsed.data.pubDate ?? new Date().toISOString()),
+        updatedDate: parsed.data.updatedDate ? String(parsed.data.updatedDate) : undefined,
         content: parsed.content,
       } satisfies BlogPost;
     }),
@@ -66,14 +106,14 @@ export async function getPostBySlug(slug: string, runtimeEnv?: Record<string, st
     const path = filePathFromSlug(slug);
     const f = await getFile(path, runtimeEnv);
     if (!f) return null;
-    const parsed = matter(f.content);
+    const parsed = parseFrontmatter(f.content);
     return {
       slug,
-      title: parsed.data.title ?? 'Untitled',
-      description: parsed.data.description ?? '',
-      tags: parsed.data.tags ?? [],
-      pubDate: parsed.data.pubDate ?? new Date().toISOString(),
-      updatedDate: parsed.data.updatedDate,
+      title: String(parsed.data.title ?? 'Untitled'),
+      description: String(parsed.data.description ?? ''),
+      tags: Array.isArray(parsed.data.tags) ? (parsed.data.tags as string[]) : [],
+      pubDate: String(parsed.data.pubDate ?? new Date().toISOString()),
+      updatedDate: parsed.data.updatedDate ? String(parsed.data.updatedDate) : undefined,
       content: parsed.content,
     };
   } catch {
@@ -86,13 +126,13 @@ export async function savePost(
   runtimeEnv?: Record<string, string>,
 ) {
   const slug = normalizeSlug(input.slug || input.title);
-  const body = matter.stringify(input.content, {
+  const body = stringifyFrontmatter({
     title: input.title,
     description: input.description ?? '',
     tags: input.tags ?? [],
     pubDate: input.pubDate ?? new Date().toISOString(),
     updatedDate: new Date().toISOString(),
-  });
+  }, input.content);
   await putFile(filePathFromSlug(slug), body, `feat: update post ${slug}`, undefined, runtimeEnv);
   return slug;
 }
