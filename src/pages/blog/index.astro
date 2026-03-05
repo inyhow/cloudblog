@@ -13,6 +13,7 @@ const posts = await listPosts(getRuntimeEnv(Astro.locals));
       <a href={`/blog/${post.slug}`} class="rounded-lg border border-slate-200 bg-white p-4 transition hover:shadow">
         <h2 class="text-lg font-semibold">{post.title}</h2>
         <p class="mt-2 text-slate-600">{post.description}</p>
+        <p class="mt-2 text-xs text-slate-500">发布时间：{new Date(post.pubDate).toLocaleString('zh-CN')}</p>
       </a>
     ))}
   </div>

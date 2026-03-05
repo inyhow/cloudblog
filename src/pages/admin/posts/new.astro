@@ -2,56 +2,75 @@
 import SiteLayout from '../../../layouts/SiteLayout.astro';
 ---
 
-<SiteLayout title="编辑文章">
+<SiteLayout title="发布文章">
   <h1 class="mb-4 text-2xl font-bold">发布/编辑文章</h1>
-  <form id="form" class="grid gap-3">
-    <input class="rounded border px-3 py-2" name="title" placeholder="标题" />
-    <input class="rounded border px-3 py-2" name="description" placeholder="描述" />
+  <form id="form" class="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <input class="rounded border px-3 py-2" name="title" placeholder="标题" required />
+    <input class="rounded border px-3 py-2" name="description" placeholder="摘要描述" />
     <input class="rounded border px-3 py-2" name="tags" placeholder="标签，逗号分隔" />
     <div class="grid gap-3 md:grid-cols-2">
-      <textarea class="min-h-80 rounded border px-3 py-2 font-mono" name="content" id="md"></textarea>
-      <div class="min-h-80 rounded border bg-white p-3" id="visual" contenteditable="true"></div>
+      <textarea class="min-h-80 rounded border px-3 py-2 font-mono" name="content" id="md" placeholder="# 正文"></textarea>
+      <div class="min-h-80 rounded border bg-slate-50 p-3" id="visual" contenteditable="true"></div>
     </div>
-    <button class="rounded bg-slate-900 px-3 py-2 text-white" type="submit">保存</button>
+    <button class="rounded bg-slate-900 px-3 py-2 text-white" type="submit">保存文章</button>
   </form>
   <p id="msg" class="mt-2 text-sm"></p>
   <script is:inline>
-    const form = document.getElementById('form');
-    const md = document.getElementById('md');
-    const visual = document.getElementById('visual');
-    const msg = document.getElementById('msg');
-    const titleInput = form.querySelector('input[name="title"]');
-    const descriptionInput = form.querySelector('input[name="description"]');
-    const tagsInput = form.querySelector('input[name="tags"]');
-    const slug = new URL(location.href).searchParams.get('slug');
+    (() => {
+      const form = document.getElementById('form');
+      const md = document.getElementById('md');
+      const visual = document.getElementById('visual');
+      const msg = document.getElementById('msg');
+      const titleInput = form.querySelector('input[name="title"]');
+      const descriptionInput = form.querySelector('input[name="description"]');
+      const tagsInput = form.querySelector('input[name="tags"]');
+      const slug = new URL(location.href).searchParams.get('slug');
 
-    md.addEventListener('input', () => { visual.innerText = md.value; });
-    visual.addEventListener('input', () => { md.value = visual.innerText; });
+      md.addEventListener('input', () => {
+        visual.innerText = md.value;
+      });
+      visual.addEventListener('input', () => {
+        md.value = visual.innerText;
+      });
 
-    if (slug) {
-      const resp = await fetch(`/api/admin/posts/${slug}`);
-      if (resp.ok) {
+      (async () => {
+        if (!slug) return;
+        const resp = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}`);
+        if (!resp.ok) return;
         const post = await resp.json();
-        titleInput.value = post.title;
-        descriptionInput.value = post.description;
+        titleInput.value = post.title || '';
+        descriptionInput.value = post.description || '';
         tagsInput.value = (post.tags || []).join(',');
         md.value = post.content || '';
         visual.innerText = md.value;
-      }
-    }
+      })();
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const payload = {
-        title: titleInput.value,
-        description: descriptionInput.value,
-        tags: tagsInput.value.split(',').map((s) => s.trim()).filter(Boolean),
-        content: md.value,
-      };
-      const url = slug ? `/api/admin/posts/${slug}` : '/api/admin/posts';
-      const method = slug ? 'PUT' : 'POST';
-      const resp = await fetch(url, { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
-      msg.textContent = resp.ok ? '保存成功' : '保存失败';
-    });
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        msg.className = 'mt-2 text-sm text-slate-600';
+        msg.textContent = '保存中...';
+        const payload = {
+          title: titleInput.value.trim(),
+          description: descriptionInput.value.trim(),
+          tags: tagsInput.value.split(',').map((s) => s.trim()).filter(Boolean),
+          content: md.value,
+        };
+        const url = slug ? `/api/admin/posts/${encodeURIComponent(slug)}` : '/api/admin/posts';
+        const method = slug ? 'PUT' : 'POST';
+        const resp = await fetch(url, {
+          method,
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const text = await resp.text();
+        if (resp.ok) {
+          msg.className = 'mt-2 text-sm text-emerald-600';
+          msg.textContent = '保存成功';
+          return;
+        }
+        msg.className = 'mt-2 text-sm text-red-600';
+        msg.textContent = `保存失败: ${text}`;
+      });
+    })();
   </script>
 </SiteLayout>

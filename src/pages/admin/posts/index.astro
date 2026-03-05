@@ -9,16 +9,34 @@ import SiteLayout from '../../../layouts/SiteLayout.astro';
     <a class="rounded border px-3 py-2" href="/admin/settings">网站设置</a>
   </div>
   <div id="list" class="grid gap-3"></div>
+  <p id="msg" class="mt-2 text-sm text-red-600"></p>
   <script is:inline>
-    const list = document.getElementById('list');
-    const resp = await fetch('/api/admin/posts');
-    if (resp.status === 401) location.href = '/admin';
-    const posts = await resp.json();
-    list.innerHTML = posts.map((p) => `
-      <a class="rounded-lg border border-slate-200 bg-white p-4" href="/admin/posts/new?slug=${p.slug}">
-        <div class="text-lg font-semibold">${p.title}</div>
-        <div class="text-sm text-slate-500">${p.description || ''}</div>
-      </a>
-    `).join('');
+    (() => {
+      const list = document.getElementById('list');
+      const msg = document.getElementById('msg');
+      (async () => {
+        const resp = await fetch('/api/admin/posts');
+        if (resp.status === 401) {
+          location.href = '/admin';
+          return;
+        }
+        const raw = await resp.text();
+        if (!resp.ok) {
+          msg.textContent = raw;
+          return;
+        }
+        const posts = JSON.parse(raw);
+        list.innerHTML = posts
+          .map(
+            (p) => `
+          <a class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" href="/admin/posts/new?slug=${encodeURIComponent(p.slug)}">
+            <div class="text-lg font-semibold">${p.title}</div>
+            <div class="text-sm text-slate-500">${p.description || ''}</div>
+          </a>
+        `,
+          )
+          .join('');
+      })();
+    })();
   </script>
 </SiteLayout>

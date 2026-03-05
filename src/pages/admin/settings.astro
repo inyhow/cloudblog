@@ -4,7 +4,7 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
 
 <SiteLayout title="网站设置">
   <h1 class="mb-4 text-2xl font-bold">网站设置</h1>
-  <form id="settings-form" class="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
+  <form id="settings-form" class="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
     <input class="rounded border px-3 py-2" name="title" placeholder="SEO 标题" />
     <input class="rounded border px-3 py-2" name="description" placeholder="SEO 描述" />
     <textarea class="rounded border px-3 py-2" name="menu" placeholder='菜单 JSON: [{"label":"首页","href":"/"}]'></textarea>
@@ -12,61 +12,74 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
     <textarea class="rounded border px-3 py-2" name="analyticsJs" placeholder="统计 JS"></textarea>
     <button class="rounded bg-slate-900 px-3 py-2 text-white" type="submit">保存设置</button>
   </form>
-  <form id="theme-form" class="mt-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
+  <form id="theme-form" class="mt-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
     <h2 class="text-lg font-semibold">主题样式</h2>
     <textarea class="min-h-48 rounded border px-3 py-2 font-mono" name="css" placeholder="自定义主题 CSS"></textarea>
     <button class="rounded bg-slate-900 px-3 py-2 text-white" type="submit">保存主题</button>
   </form>
   <p id="msg" class="mt-2 text-sm"></p>
   <script is:inline>
-    const form = document.getElementById('settings-form');
-    const themeForm = document.getElementById('theme-form');
-    const msg = document.getElementById('msg');
-    const titleInput = form.querySelector('input[name="title"]');
-    const descriptionInput = form.querySelector('input[name="description"]');
-    const menuInput = form.querySelector('textarea[name="menu"]');
-    const footerInput = form.querySelector('textarea[name="footer"]');
-    const analyticsInput = form.querySelector('textarea[name="analyticsJs"]');
-    const cssInput = themeForm.querySelector('textarea[name="css"]');
-    const settingsResp = await fetch('/api/admin/settings');
-    if (settingsResp.status === 401) location.href = '/admin';
-    const settings = await settingsResp.json();
-    titleInput.value = settings.title || '';
-    descriptionInput.value = settings.description || '';
-    menuInput.value = JSON.stringify(settings.menu || [], null, 2);
-    footerInput.value = settings.footer || '';
-    analyticsInput.value = settings.analyticsJs || '';
-    const themeResp = await fetch('/api/admin/themes');
-    if (themeResp.ok) {
-      const theme = await themeResp.json();
-      cssInput.value = theme.css || '';
-    }
+    (() => {
+      const form = document.getElementById('settings-form');
+      const themeForm = document.getElementById('theme-form');
+      const msg = document.getElementById('msg');
+      const titleInput = form.querySelector('input[name="title"]');
+      const descriptionInput = form.querySelector('input[name="description"]');
+      const menuInput = form.querySelector('textarea[name="menu"]');
+      const footerInput = form.querySelector('textarea[name="footer"]');
+      const analyticsInput = form.querySelector('textarea[name="analyticsJs"]');
+      const cssInput = themeForm.querySelector('textarea[name="css"]');
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const payload = {
-        title: titleInput.value,
-        description: descriptionInput.value,
-        menu: JSON.parse(menuInput.value || '[]'),
-        footer: footerInput.value,
-        analyticsJs: analyticsInput.value,
-      };
-      const resp = await fetch('/api/admin/settings', {
-        method: 'PUT',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      msg.textContent = resp.ok ? '设置保存成功' : '设置保存失败';
-    });
+      (async () => {
+        const settingsResp = await fetch('/api/admin/settings');
+        if (settingsResp.status === 401) {
+          location.href = '/admin';
+          return;
+        }
+        const settings = await settingsResp.json();
+        titleInput.value = settings.title || '';
+        descriptionInput.value = settings.description || '';
+        menuInput.value = JSON.stringify(settings.menu || [], null, 2);
+        footerInput.value = settings.footer || '';
+        analyticsInput.value = settings.analyticsJs || '';
 
-    themeForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const resp = await fetch('/api/admin/themes', {
-        method: 'PUT',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ css: cssInput.value }),
+        const themeResp = await fetch('/api/admin/themes');
+        if (themeResp.ok) {
+          const theme = await themeResp.json();
+          cssInput.value = theme.css || '';
+        }
+      })();
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+          title: titleInput.value,
+          description: descriptionInput.value,
+          menu: JSON.parse(menuInput.value || '[]'),
+          footer: footerInput.value,
+          analyticsJs: analyticsInput.value,
+        };
+        const resp = await fetch('/api/admin/settings', {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const text = await resp.text();
+        msg.className = resp.ok ? 'mt-2 text-sm text-emerald-600' : 'mt-2 text-sm text-red-600';
+        msg.textContent = resp.ok ? '设置保存成功' : `设置保存失败: ${text}`;
       });
-      msg.textContent = resp.ok ? '主题保存成功' : '主题保存失败';
-    });
+
+      themeForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const resp = await fetch('/api/admin/themes', {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ css: cssInput.value }),
+        });
+        const text = await resp.text();
+        msg.className = resp.ok ? 'mt-2 text-sm text-emerald-600' : 'mt-2 text-sm text-red-600';
+        msg.textContent = resp.ok ? '主题保存成功' : `主题保存失败: ${text}`;
+      });
+    })();
   </script>
 </SiteLayout>
