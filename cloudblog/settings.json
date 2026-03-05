@@ -1,0 +1,22 @@
+{
+  "title": "Cloud Blog",
+  "description": "Blog powered by Astro + Cloudflare Pages",
+  "menu": [
+    {
+      "label": "首页",
+      "href": "/"
+    },
+    {
+      "label": "博客",
+      "href": "/blog"
+    }
+  ],
+  "footer": "© Cloud Blog",
+  "analyticsJs": "",
+  "templates": {
+    "home": "magazine",
+    "post": "minimal",
+    "tag": "grid",
+    "page": "minimal"
+  }
+}
