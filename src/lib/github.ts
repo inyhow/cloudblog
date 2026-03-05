@@ -22,7 +22,8 @@ function decodeBase64(value: string): string {
 }
 
 function readEnv(name: string, runtimeEnv?: Record<string, string>): string {
-  return runtimeEnv?.[name] || import.meta.env[name] || '';
+  const value = runtimeEnv?.[name] || import.meta.env[name] || '';
+  return String(value).trim();
 }
 
 function repoConfig(runtimeEnv?: Record<string, string>) {
