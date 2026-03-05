@@ -13,6 +13,7 @@ async function githubProbe(runtimeEnv?: Record<string, string>) {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github+json',
+      'User-Agent': 'cloudblog-app',
     },
   });
   const text = await resp.text();

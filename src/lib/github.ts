@@ -42,6 +42,7 @@ function jsonHeaders(token: string) {
     Authorization: `Bearer ${token}`,
     Accept: 'application/vnd.github+json',
     'Content-Type': 'application/json',
+    'User-Agent': 'cloudblog-app',
   };
 }
 
