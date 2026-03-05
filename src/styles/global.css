@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+article.prose h1,
+article.prose h2,
+article.prose h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+article.prose p,
+article.prose ul {
+  margin-bottom: 1rem;
+}

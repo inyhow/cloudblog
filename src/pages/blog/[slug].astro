@@ -1,0 +1,45 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { getPostBySlug, markdownToHtml } from '../../lib/posts';
+import { readSettings } from '../../lib/settings';
+
+const slug = Astro.params.slug!;
+const post = await getPostBySlug(slug);
+if (!post) {
+  return Astro.redirect('/blog');
+}
+const settings = await readSettings();
+const html = markdownToHtml(post.content);
+---
+
+<SiteLayout title={post.title} description={post.description}>
+  <article class="prose max-w-none rounded-lg border border-slate-200 bg-white p-6">
+    <h1>{post.title}</h1>
+    <p class="text-sm text-slate-500">{new Date(post.pubDate).toLocaleString('zh-CN')}</p>
+    <div set:html={html} />
+  </article>
+  <div class="mt-4 flex gap-2">
+    {post.tags.map((tag) => <a class="text-sm text-blue-600" href={`/tags/${encodeURIComponent(tag)}`}>#{tag}</a>)}
+  </div>
+  {
+    settings.giscus && (
+      <section class="mt-8">
+        <script
+          src="https://giscus.app/client.js"
+          data-repo={settings.giscus.repo}
+          data-repo-id={settings.giscus.repoId}
+          data-category={settings.giscus.category}
+          data-category-id={settings.giscus.categoryId}
+          data-mapping="pathname"
+          data-strict="0"
+          data-reactions-enabled="1"
+          data-emit-metadata="0"
+          data-input-position="top"
+          data-theme="preferred_color_scheme"
+          crossOrigin="anonymous"
+          async
+        />
+      </section>
+    )
+  }
+</SiteLayout>
