@@ -26,31 +26,39 @@ function filePathFromSlug(slug: string): string {
   return `${POSTS_DIR}/${slug}.md`;
 }
 
+async function listPostsCore(runtimeEnv?: Record<string, string>): Promise<BlogPost[]> {
+  const paths = await listDir(POSTS_DIR, runtimeEnv);
+  const posts = await Promise.all(
+    paths.filter((p) => p.endsWith('.md')).map(async (path) => {
+      const f = await getFile(path, runtimeEnv);
+      if (!f) return null;
+      const parsed = matter(f.content);
+      return {
+        slug: path.split('/').pop()!.replace(/\.md$/, ''),
+        title: parsed.data.title ?? 'Untitled',
+        description: parsed.data.description ?? '',
+        tags: parsed.data.tags ?? [],
+        pubDate: parsed.data.pubDate ?? new Date().toISOString(),
+        updatedDate: parsed.data.updatedDate,
+        content: parsed.content,
+      } satisfies BlogPost;
+    }),
+  );
+  return posts
+    .filter((p): p is BlogPost => Boolean(p))
+    .sort((a, b) => new Date(b.pubDate).valueOf() - new Date(a.pubDate).valueOf());
+}
+
 export async function listPosts(runtimeEnv?: Record<string, string>): Promise<BlogPost[]> {
   try {
-    const paths = await listDir(POSTS_DIR, runtimeEnv);
-    const posts = await Promise.all(
-      paths.filter((p) => p.endsWith('.md')).map(async (path) => {
-        const f = await getFile(path, runtimeEnv);
-        if (!f) return null;
-        const parsed = matter(f.content);
-        return {
-          slug: path.split('/').pop()!.replace(/\.md$/, ''),
-          title: parsed.data.title ?? 'Untitled',
-          description: parsed.data.description ?? '',
-          tags: parsed.data.tags ?? [],
-          pubDate: parsed.data.pubDate ?? new Date().toISOString(),
-          updatedDate: parsed.data.updatedDate,
-          content: parsed.content,
-        } satisfies BlogPost;
-      }),
-    );
-    return posts
-      .filter((p): p is BlogPost => Boolean(p))
-      .sort((a, b) => new Date(b.pubDate).valueOf() - new Date(a.pubDate).valueOf());
+    return await listPostsCore(runtimeEnv);
   } catch {
     return [];
   }
+}
+
+export async function listPostsStrict(runtimeEnv?: Record<string, string>): Promise<BlogPost[]> {
+  return listPostsCore(runtimeEnv);
 }
 
 export async function getPostBySlug(slug: string, runtimeEnv?: Record<string, string>): Promise<BlogPost | null> {
