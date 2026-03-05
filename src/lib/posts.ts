@@ -26,12 +26,12 @@ function filePathFromSlug(slug: string): string {
   return `${POSTS_DIR}/${slug}.md`;
 }
 
-export async function listPosts(): Promise<BlogPost[]> {
+export async function listPosts(runtimeEnv?: Record<string, string>): Promise<BlogPost[]> {
   try {
-    const paths = await listDir(POSTS_DIR);
+    const paths = await listDir(POSTS_DIR, runtimeEnv);
     const posts = await Promise.all(
       paths.filter((p) => p.endsWith('.md')).map(async (path) => {
-        const f = await getFile(path);
+        const f = await getFile(path, runtimeEnv);
         if (!f) return null;
         const parsed = matter(f.content);
         return {
@@ -53,10 +53,10 @@ export async function listPosts(): Promise<BlogPost[]> {
   }
 }
 
-export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
+export async function getPostBySlug(slug: string, runtimeEnv?: Record<string, string>): Promise<BlogPost | null> {
   try {
     const path = filePathFromSlug(slug);
-    const f = await getFile(path);
+    const f = await getFile(path, runtimeEnv);
     if (!f) return null;
     const parsed = matter(f.content);
     return {
@@ -73,7 +73,10 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
   }
 }
 
-export async function savePost(input: Partial<BlogPost> & { title: string; content: string; slug?: string }) {
+export async function savePost(
+  input: Partial<BlogPost> & { title: string; content: string; slug?: string },
+  runtimeEnv?: Record<string, string>,
+) {
   const slug = normalizeSlug(input.slug || input.title);
   const body = matter.stringify(input.content, {
     title: input.title,
@@ -82,7 +85,7 @@ export async function savePost(input: Partial<BlogPost> & { title: string; conte
     pubDate: input.pubDate ?? new Date().toISOString(),
     updatedDate: new Date().toISOString(),
   });
-  await putFile(filePathFromSlug(slug), body, `feat: update post ${slug}`);
+  await putFile(filePathFromSlug(slug), body, `feat: update post ${slug}`, undefined, runtimeEnv);
   return slug;
 }
 

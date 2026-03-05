@@ -1,8 +1,9 @@
 ---
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import { listPosts } from '../../lib/posts';
+import { getRuntimeEnv } from '../../lib/runtime-env';
 
-const posts = await listPosts();
+const posts = await listPosts(getRuntimeEnv(Astro.locals));
 ---
 
 <SiteLayout title="博客列表">

@@ -1,9 +1,10 @@
 ---
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import { listPosts } from '../../lib/posts';
+import { getRuntimeEnv } from '../../lib/runtime-env';
 
 const tag = decodeURIComponent(Astro.params.tag!);
-const posts = (await listPosts()).filter((post) => post.tags.includes(tag));
+const posts = (await listPosts(getRuntimeEnv(Astro.locals))).filter((post) => post.tags.includes(tag));
 ---
 
 <SiteLayout title={`标签: ${tag}`}>

@@ -1,5 +1,3 @@
-import { requireEnv } from './env';
-
 export interface GithubFile {
   path: string;
   content: string;
@@ -23,11 +21,18 @@ function decodeBase64(value: string): string {
   return new TextDecoder().decode(bytes);
 }
 
-function repoConfig() {
-  const owner = requireEnv('GITHUB_OWNER');
-  const repo = requireEnv('GITHUB_REPO');
-  const branch = import.meta.env.GITHUB_BRANCH ?? 'main';
-  const token = requireEnv('GITHUB_TOKEN');
+function readEnv(name: string, runtimeEnv?: Record<string, string>): string {
+  return runtimeEnv?.[name] || import.meta.env[name] || '';
+}
+
+function repoConfig(runtimeEnv?: Record<string, string>) {
+  const owner = readEnv('GITHUB_OWNER', runtimeEnv);
+  const repo = readEnv('GITHUB_REPO', runtimeEnv);
+  const branch = readEnv('GITHUB_BRANCH', runtimeEnv) || 'main';
+  const token = readEnv('GITHUB_TOKEN', runtimeEnv);
+  if (!owner || !repo || !token) {
+    throw new Error('Missing GitHub env. Required: GITHUB_OWNER, GITHUB_REPO, GITHUB_TOKEN');
+  }
   return { owner, repo, branch, token };
 }
 
@@ -39,8 +44,8 @@ function jsonHeaders(token: string) {
   };
 }
 
-export async function getFile(path: string): Promise<GithubFile | null> {
-  const { owner, repo, token, branch } = repoConfig();
+export async function getFile(path: string, runtimeEnv?: Record<string, string>): Promise<GithubFile | null> {
+  const { owner, repo, token, branch } = repoConfig(runtimeEnv);
   const url = `${apiBase}/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
   const resp = await fetch(url, { headers: jsonHeaders(token) });
   if (resp.status === 404) return null;
@@ -53,8 +58,8 @@ export async function getFile(path: string): Promise<GithubFile | null> {
   };
 }
 
-export async function listDir(path: string): Promise<string[]> {
-  const { owner, repo, token, branch } = repoConfig();
+export async function listDir(path: string, runtimeEnv?: Record<string, string>): Promise<string[]> {
+  const { owner, repo, token, branch } = repoConfig(runtimeEnv);
   const url = `${apiBase}/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
   const resp = await fetch(url, { headers: jsonHeaders(token) });
   if (resp.status === 404) return [];
@@ -69,9 +74,10 @@ export async function putFile(
   content: string,
   message: string,
   options?: { isBase64?: boolean },
+  runtimeEnv?: Record<string, string>,
 ): Promise<void> {
-  const { owner, repo, token, branch } = repoConfig();
-  const current = await getFile(path);
+  const { owner, repo, token, branch } = repoConfig(runtimeEnv);
+  const current = await getFile(path, runtimeEnv);
   const url = `${apiBase}/repos/${owner}/${repo}/contents/${path}`;
   const body: Record<string, unknown> = {
     message,

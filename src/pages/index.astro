@@ -2,9 +2,11 @@
 import SiteLayout from '../layouts/SiteLayout.astro';
 import { listPosts } from '../lib/posts';
 import { readSettings } from '../lib/settings';
+import { getRuntimeEnv } from '../lib/runtime-env';
 
-const settings = await readSettings();
-const posts = await listPosts();
+const runtimeEnv = getRuntimeEnv(Astro.locals);
+const settings = await readSettings(runtimeEnv);
+const posts = await listPosts(runtimeEnv);
 ---
 
 <SiteLayout title={settings.title} description={settings.description}>

@@ -2,13 +2,15 @@
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import { getPostBySlug, markdownToHtml } from '../../lib/posts';
 import { readSettings } from '../../lib/settings';
+import { getRuntimeEnv } from '../../lib/runtime-env';
 
 const slug = Astro.params.slug!;
-const post = await getPostBySlug(slug);
+const runtimeEnv = getRuntimeEnv(Astro.locals);
+const post = await getPostBySlug(slug, runtimeEnv);
 if (!post) {
   return Astro.redirect('/blog');
 }
-const settings = await readSettings();
+const settings = await readSettings(runtimeEnv);
 const html = markdownToHtml(post.content);
 ---
 

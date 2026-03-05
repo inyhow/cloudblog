@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { isAuthed } from '../../../lib/auth';
 import { putFile } from '../../../lib/github';
+import { getRuntimeEnv } from '../../../lib/runtime-env';
 
 export const POST: APIRoute = async (context) => {
   if (!isAuthed(context)) return new Response('Unauthorized', { status: 401 });
@@ -13,8 +14,9 @@ export const POST: APIRoute = async (context) => {
   bytes.forEach((b) => (binary += String.fromCharCode(b)));
   const base64 = btoa(binary);
   const path = `cloudblog/images/${Date.now()}.${ext}`;
-  await putFile(path, base64, `feat: upload image ${file.name}`, { isBase64: true });
-  const publicPrefix = import.meta.env.GITHUB_RAW_PREFIX ?? '';
+  const runtimeEnv = getRuntimeEnv(context.locals);
+  await putFile(path, base64, `feat: upload image ${file.name}`, { isBase64: true }, runtimeEnv);
+  const publicPrefix = runtimeEnv?.GITHUB_RAW_PREFIX || import.meta.env.GITHUB_RAW_PREFIX || '';
   const url = publicPrefix ? `${publicPrefix}/${path}` : path;
   return new Response(JSON.stringify({ ok: true, url }));
 };

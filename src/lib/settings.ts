@@ -28,9 +28,9 @@ const defaults: SiteSettings = {
   analyticsJs: '',
 };
 
-export async function readSettings(): Promise<SiteSettings> {
+export async function readSettings(runtimeEnv?: Record<string, string>): Promise<SiteSettings> {
   try {
-    const file = await getFile(SETTINGS_PATH);
+    const file = await getFile(SETTINGS_PATH, runtimeEnv);
     if (!file) return defaults;
     return { ...defaults, ...JSON.parse(file.content) };
   } catch {
@@ -38,19 +38,25 @@ export async function readSettings(): Promise<SiteSettings> {
   }
 }
 
-export async function saveSettings(settings: SiteSettings): Promise<void> {
-  await putFile(SETTINGS_PATH, JSON.stringify(settings, null, 2), 'chore: update site settings');
+export async function saveSettings(settings: SiteSettings, runtimeEnv?: Record<string, string>): Promise<void> {
+  await putFile(
+    SETTINGS_PATH,
+    JSON.stringify(settings, null, 2),
+    'chore: update site settings',
+    undefined,
+    runtimeEnv,
+  );
 }
 
-export async function readThemeCss(): Promise<string> {
+export async function readThemeCss(runtimeEnv?: Record<string, string>): Promise<string> {
   try {
-    const file = await getFile(THEME_PATH);
+    const file = await getFile(THEME_PATH, runtimeEnv);
     return file?.content ?? '';
   } catch {
     return '';
   }
 }
 
-export async function saveThemeCss(css: string): Promise<void> {
-  await putFile(THEME_PATH, css, 'chore: update theme css');
+export async function saveThemeCss(css: string, runtimeEnv?: Record<string, string>): Promise<void> {
+  await putFile(THEME_PATH, css, 'chore: update theme css', undefined, runtimeEnv);
 }
