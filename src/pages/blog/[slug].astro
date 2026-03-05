@@ -10,14 +10,28 @@ const post = await getPostBySlug(slug, runtimeEnv);
 if (!post) {
   return Astro.redirect('/blog');
 }
+if (post.status !== 'published') {
+  return Astro.redirect('/blog');
+}
 const settings = await readSettings(runtimeEnv);
+const postTemplate = settings.templates?.post ?? 'classic';
 const html = markdownToHtml(post.content);
 ---
 
 <SiteLayout title={post.title} description={post.description}>
-  <article class="prose max-w-none rounded-lg border border-slate-200 bg-white p-6">
+  <article class:list={["prose max-w-none rounded-lg border border-slate-200 bg-white", postTemplate === 'minimal' ? 'p-4' : 'p-6']}>
+    {post.coverImage && (
+      <img
+        class:list={["mb-4 w-full rounded object-cover", postTemplate === 'cover' ? 'h-[28rem]' : 'h-72']}
+        src={post.coverImage}
+        alt={post.title}
+      />
+    )}
     <h1>{post.title}</h1>
-    <p class="text-sm text-slate-500">{new Date(post.pubDate).toLocaleString('zh-CN')}</p>
+    <p class="text-sm text-slate-500">
+      发布时间：{new Date(post.pubDate).toLocaleString('zh-CN')}
+      {post.updatedDate && ` · 更新时间：${new Date(post.updatedDate).toLocaleString('zh-CN')}`}
+    </p>
     <div set:html={html} />
   </article>
   <div class="mt-4 flex gap-2">

@@ -2,17 +2,36 @@
 import SiteLayout from '../../../layouts/SiteLayout.astro';
 ---
 
-<SiteLayout title="发布文章">
-  <h1 class="mb-4 text-2xl font-bold">发布/编辑文章</h1>
+<SiteLayout title="Post Editor">
+  <h1 class="mb-4 text-2xl font-bold">Post Editor</h1>
   <form id="form" class="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-    <input class="rounded border px-3 py-2" name="title" placeholder="标题" required />
-    <input class="rounded border px-3 py-2" name="description" placeholder="摘要描述" />
-    <input class="rounded border px-3 py-2" name="tags" placeholder="标签，逗号分隔" />
+    <input class="rounded border px-3 py-2" name="title" placeholder="Title" required />
+    <input class="rounded border px-3 py-2" name="slug" placeholder="Custom URL slug (example: my-post-url)" />
+    <input class="rounded border px-3 py-2" name="description" placeholder="Description" />
+    <input class="rounded border px-3 py-2" name="tags" placeholder="Tags (comma separated)" />
+    <div class="grid gap-3 md:grid-cols-3">
+      <select class="rounded border px-3 py-2" name="status">
+        <option value="published">Published</option>
+        <option value="draft">Draft</option>
+      </select>
+      <label class="flex items-center gap-2 rounded border px-3 py-2">
+        <input type="checkbox" name="pinned" />
+        <span>Pinned</span>
+      </label>
+      <input class="rounded border px-3 py-2" name="coverImage" placeholder="Cover image URL" />
+    </div>
+    <div class="rounded border p-3">
+      <label class="mb-2 block text-sm font-medium">Upload Cover</label>
+      <div class="flex gap-2">
+        <input class="flex-1 rounded border px-3 py-2" type="file" id="cover-file" />
+        <button class="rounded border px-3 py-2" type="button" id="upload-btn">Upload</button>
+      </div>
+    </div>
     <div class="grid gap-3 md:grid-cols-2">
-      <textarea class="min-h-80 rounded border px-3 py-2 font-mono" name="content" id="md" placeholder="# 正文"></textarea>
+      <textarea class="min-h-80 rounded border px-3 py-2 font-mono" name="content" id="md" placeholder="# Content"></textarea>
       <div class="min-h-80 rounded border bg-slate-50 p-3" id="visual" contenteditable="true"></div>
     </div>
-    <button class="rounded bg-slate-900 px-3 py-2 text-white" type="submit">保存文章</button>
+    <button class="rounded bg-slate-900 px-3 py-2 text-white" type="submit">Save Post</button>
   </form>
   <p id="msg" class="mt-2 text-sm"></p>
   <script is:inline>
@@ -21,9 +40,17 @@ import SiteLayout from '../../../layouts/SiteLayout.astro';
       const md = document.getElementById('md');
       const visual = document.getElementById('visual');
       const msg = document.getElementById('msg');
+      const uploadBtn = document.getElementById('upload-btn');
+      const coverFile = document.getElementById('cover-file');
+
       const titleInput = form.querySelector('input[name="title"]');
       const descriptionInput = form.querySelector('input[name="description"]');
+      const slugInput = form.querySelector('input[name="slug"]');
       const tagsInput = form.querySelector('input[name="tags"]');
+      const statusInput = form.querySelector('select[name="status"]');
+      const pinnedInput = form.querySelector('input[name="pinned"]');
+      const coverImageInput = form.querySelector('input[name="coverImage"]');
+
       const slug = new URL(location.href).searchParams.get('slug');
 
       md.addEventListener('input', () => {
@@ -33,6 +60,23 @@ import SiteLayout from '../../../layouts/SiteLayout.astro';
         md.value = visual.innerText;
       });
 
+      uploadBtn.addEventListener('click', async () => {
+        const file = coverFile.files?.[0];
+        if (!file) return;
+        const fd = new FormData();
+        fd.append('file', file);
+        const resp = await fetch('/api/admin/upload-image', { method: 'POST', body: fd });
+        const body = await resp.json();
+        if (!resp.ok) {
+          msg.className = 'mt-2 text-sm text-red-600';
+          msg.textContent = `Upload failed: ${JSON.stringify(body)}`;
+          return;
+        }
+        coverImageInput.value = body.url;
+        msg.className = 'mt-2 text-sm text-emerald-600';
+        msg.textContent = 'Cover uploaded';
+      });
+
       (async () => {
         if (!slug) return;
         const resp = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}`);
@@ -40,7 +84,11 @@ import SiteLayout from '../../../layouts/SiteLayout.astro';
         const post = await resp.json();
         titleInput.value = post.title || '';
         descriptionInput.value = post.description || '';
+        slugInput.value = post.slug || '';
         tagsInput.value = (post.tags || []).join(',');
+        statusInput.value = post.status || 'published';
+        pinnedInput.checked = !!post.pinned;
+        coverImageInput.value = post.coverImage || '';
         md.value = post.content || '';
         visual.innerText = md.value;
       })();
@@ -48,11 +96,15 @@ import SiteLayout from '../../../layouts/SiteLayout.astro';
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         msg.className = 'mt-2 text-sm text-slate-600';
-        msg.textContent = '保存中...';
+        msg.textContent = 'Saving...';
         const payload = {
           title: titleInput.value.trim(),
           description: descriptionInput.value.trim(),
+          slug: slugInput.value.trim(),
           tags: tagsInput.value.split(',').map((s) => s.trim()).filter(Boolean),
+          status: statusInput.value,
+          pinned: pinnedInput.checked,
+          coverImage: coverImageInput.value.trim(),
           content: md.value,
         };
         const url = slug ? `/api/admin/posts/${encodeURIComponent(slug)}` : '/api/admin/posts';
@@ -64,12 +116,19 @@ import SiteLayout from '../../../layouts/SiteLayout.astro';
         });
         const text = await resp.text();
         if (resp.ok) {
+          try {
+            const data = JSON.parse(text);
+            if (data?.slug) {
+              const next = `/admin/posts/new?slug=${encodeURIComponent(data.slug)}`;
+              if (location.pathname + location.search !== next) history.replaceState({}, '', next);
+            }
+          } catch {}
           msg.className = 'mt-2 text-sm text-emerald-600';
-          msg.textContent = '保存成功';
+          msg.textContent = 'Saved';
           return;
         }
         msg.className = 'mt-2 text-sm text-red-600';
-        msg.textContent = `保存失败: ${text}`;
+        msg.textContent = `Save failed: ${text}`;
       });
     })();
   </script>

@@ -1,0 +1,22 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { getRuntimeEnv } from '../../lib/runtime-env';
+import { getCustomPageBySlug } from '../../lib/custom-pages';
+import { readSettings } from '../../lib/settings';
+
+const slug = Astro.params.slug!;
+const runtimeEnv = getRuntimeEnv(Astro.locals);
+const settings = await readSettings(runtimeEnv);
+const page = await getCustomPageBySlug(slug, runtimeEnv);
+if (!page) {
+  return Astro.redirect('/');
+}
+const pageTemplate = settings.templates?.page ?? 'classic';
+---
+
+<SiteLayout title={page.title} description={page.description}>
+  <article class:list={["prose max-w-none rounded-lg border border-slate-200 bg-white", pageTemplate === 'minimal' ? 'p-4' : 'p-6']}>
+    <h1>{page.title}</h1>
+    <div set:html={page.content} />
+  </article>
+</SiteLayout>

@@ -20,6 +20,9 @@ export interface BlogPost {
   title: string;
   description: string;
   tags: string[];
+  status: 'draft' | 'published';
+  pinned: boolean;
+  coverImage?: string;
   pubDate: string;
   updatedDate?: string;
   content: string;
@@ -61,21 +64,28 @@ function parseFrontmatter(raw: string): { data: Record<string, unknown>; content
       data[key] = [];
     } else {
       currentArrayKey = '';
-      data[key] = value;
+      data[key] = value.replace(/^"(.*)"$/, '$1');
     }
   }
   return { data, content };
+}
+
+function quote(value: string): string {
+  return `"${value.replace(/"/g, '\\"')}"`;
 }
 
 function stringifyFrontmatter(data: {
   title: string;
   description: string;
   tags: string[];
+  status: 'draft' | 'published';
+  pinned: boolean;
+  coverImage?: string;
   pubDate: string;
   updatedDate: string;
 }, content: string): string {
   const tagsBlock = data.tags.map((t) => `  - ${t}`).join('\n');
-  return `---\ntitle: ${data.title}\ndescription: ${data.description}\ntags:\n${tagsBlock || '  -'}\npubDate: ${data.pubDate}\nupdatedDate: ${data.updatedDate}\n---\n\n${content}`;
+  return `---\ntitle: ${quote(data.title)}\ndescription: ${quote(data.description)}\ntags:\n${tagsBlock || '  -'}\nstatus: ${data.status}\npinned: ${data.pinned}\ncoverImage: ${quote(data.coverImage || '')}\npubDate: ${data.pubDate}\nupdatedDate: ${data.updatedDate}\n---\n\n${content}`;
 }
 
 async function listPostsCore(runtimeEnv?: Record<string, string>): Promise<BlogPost[]> {
@@ -90,6 +100,9 @@ async function listPostsCore(runtimeEnv?: Record<string, string>): Promise<BlogP
         title: String(parsed.data.title ?? 'Untitled'),
         description: String(parsed.data.description ?? ''),
         tags: Array.isArray(parsed.data.tags) ? (parsed.data.tags as string[]) : [],
+        status: parsed.data.status === 'draft' ? 'draft' : 'published',
+        pinned: String(parsed.data.pinned ?? 'false') === 'true',
+        coverImage: String(parsed.data.coverImage ?? '').replace(/^"|"$/g, '') || undefined,
         pubDate: String(parsed.data.pubDate ?? new Date().toISOString()),
         updatedDate: parsed.data.updatedDate ? String(parsed.data.updatedDate) : undefined,
         content: parsed.content,
@@ -124,6 +137,9 @@ export async function getPostBySlug(slug: string, runtimeEnv?: Record<string, st
       title: String(parsed.data.title ?? 'Untitled'),
       description: String(parsed.data.description ?? ''),
       tags: Array.isArray(parsed.data.tags) ? (parsed.data.tags as string[]) : [],
+      status: parsed.data.status === 'draft' ? 'draft' : 'published',
+      pinned: String(parsed.data.pinned ?? 'false') === 'true',
+      coverImage: String(parsed.data.coverImage ?? '').replace(/^"|"$/g, '') || undefined,
       pubDate: String(parsed.data.pubDate ?? new Date().toISOString()),
       updatedDate: parsed.data.updatedDate ? String(parsed.data.updatedDate) : undefined,
       content: parsed.content,
@@ -142,6 +158,9 @@ export async function savePost(
     title: input.title,
     description: input.description ?? '',
     tags: input.tags ?? [],
+    status: input.status ?? 'published',
+    pinned: input.pinned ?? false,
+    coverImage: input.coverImage ?? '',
     pubDate: input.pubDate ?? new Date().toISOString(),
     updatedDate: new Date().toISOString(),
   }, input.content);

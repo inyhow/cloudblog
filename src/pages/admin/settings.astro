@@ -10,6 +10,39 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
     <textarea class="rounded border px-3 py-2" name="menu" placeholder='菜单 JSON: [{"label":"首页","href":"/"}]'></textarea>
     <textarea class="rounded border px-3 py-2" name="footer" placeholder="页脚文本"></textarea>
     <textarea class="rounded border px-3 py-2" name="analyticsJs" placeholder="统计 JS"></textarea>
+    <div class="grid gap-3 md:grid-cols-2">
+      <label class="grid gap-1">
+        <span class="text-sm">首页模板</span>
+        <select class="rounded border px-3 py-2" name="homeTemplate">
+          <option value="classic">classic</option>
+          <option value="magazine">magazine</option>
+          <option value="minimal">minimal</option>
+        </select>
+      </label>
+      <label class="grid gap-1">
+        <span class="text-sm">内页模板</span>
+        <select class="rounded border px-3 py-2" name="postTemplate">
+          <option value="classic">classic</option>
+          <option value="cover">cover</option>
+          <option value="minimal">minimal</option>
+        </select>
+      </label>
+      <label class="grid gap-1">
+        <span class="text-sm">Tag 模板</span>
+        <select class="rounded border px-3 py-2" name="tagTemplate">
+          <option value="classic">classic</option>
+          <option value="grid">grid</option>
+          <option value="minimal">minimal</option>
+        </select>
+      </label>
+      <label class="grid gap-1">
+        <span class="text-sm">单页模板</span>
+        <select class="rounded border px-3 py-2" name="pageTemplate">
+          <option value="classic">classic</option>
+          <option value="minimal">minimal</option>
+        </select>
+      </label>
+    </div>
     <button class="rounded bg-slate-900 px-3 py-2 text-white" type="submit">保存设置</button>
   </form>
   <form id="theme-form" class="mt-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -28,6 +61,10 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
       const menuInput = form.querySelector('textarea[name="menu"]');
       const footerInput = form.querySelector('textarea[name="footer"]');
       const analyticsInput = form.querySelector('textarea[name="analyticsJs"]');
+      const homeTemplateInput = form.querySelector('select[name="homeTemplate"]');
+      const postTemplateInput = form.querySelector('select[name="postTemplate"]');
+      const tagTemplateInput = form.querySelector('select[name="tagTemplate"]');
+      const pageTemplateInput = form.querySelector('select[name="pageTemplate"]');
       const cssInput = themeForm.querySelector('textarea[name="css"]');
 
       (async () => {
@@ -42,6 +79,10 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
         menuInput.value = JSON.stringify(settings.menu || [], null, 2);
         footerInput.value = settings.footer || '';
         analyticsInput.value = settings.analyticsJs || '';
+        homeTemplateInput.value = settings.templates?.home || 'classic';
+        postTemplateInput.value = settings.templates?.post || 'classic';
+        tagTemplateInput.value = settings.templates?.tag || 'classic';
+        pageTemplateInput.value = settings.templates?.page || 'classic';
 
         const themeResp = await fetch('/api/admin/themes');
         if (themeResp.ok) {
@@ -58,6 +99,12 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
           menu: JSON.parse(menuInput.value || '[]'),
           footer: footerInput.value,
           analyticsJs: analyticsInput.value,
+          templates: {
+            home: homeTemplateInput.value,
+            post: postTemplateInput.value,
+            tag: tagTemplateInput.value,
+            page: pageTemplateInput.value,
+          },
         };
         const resp = await fetch('/api/admin/settings', {
           method: 'PUT',

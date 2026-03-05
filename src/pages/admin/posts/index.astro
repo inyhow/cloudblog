@@ -26,12 +26,19 @@ import SiteLayout from '../../../layouts/SiteLayout.astro';
           return;
         }
         const posts = JSON.parse(raw);
+        posts.sort((a, b) => new Date(b.pubDate).valueOf() - new Date(a.pubDate).valueOf());
         list.innerHTML = posts
           .map(
             (p) => `
           <a class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" href="/admin/posts/new?slug=${encodeURIComponent(p.slug)}">
-            <div class="text-lg font-semibold">${p.title}</div>
+            <div class="mb-1 flex items-center gap-2">
+              <div class="text-lg font-semibold">${p.title}</div>
+              <span class="rounded px-2 py-0.5 text-xs ${p.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">${p.status}</span>
+              ${p.pinned ? '<span class="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-700">pinned</span>' : ''}
+            </div>
             <div class="text-sm text-slate-500">${p.description || ''}</div>
+            <div class="mt-1 text-xs text-slate-400">/${p.slug}</div>
+            <div class="mt-2 text-xs text-slate-400">${new Date(p.pubDate).toLocaleString('zh-CN')}</div>
           </a>
         `,
           )

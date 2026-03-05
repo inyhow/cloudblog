@@ -9,6 +9,12 @@ export interface SiteSettings {
   menu: Array<{ label: string; href: string }>;
   footer: string;
   analyticsJs: string;
+  templates: {
+    home: 'classic' | 'magazine' | 'minimal';
+    post: 'classic' | 'cover' | 'minimal';
+    tag: 'classic' | 'grid' | 'minimal';
+    page: 'classic' | 'minimal';
+  };
   giscus?: {
     repo: string;
     repoId: string;
@@ -26,6 +32,12 @@ const defaults: SiteSettings = {
   ],
   footer: '© Cloud Blog',
   analyticsJs: '',
+  templates: {
+    home: 'classic',
+    post: 'classic',
+    tag: 'classic',
+    page: 'classic',
+  },
 };
 
 export async function readSettings(runtimeEnv?: Record<string, string>): Promise<SiteSettings> {
