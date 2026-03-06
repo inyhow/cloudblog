@@ -28,6 +28,7 @@ In Cloudflare Dashboard:
 - `GITHUB_REPO`
 - `GITHUB_BRANCH`
 - `GITHUB_RAW_PREFIX` (optional)
+- `GITHUB_CDN_PREFIX` (optional, recommended)
 
 Mark sensitive values as encrypted/secret in Cloudflare UI when available.
 
@@ -42,4 +43,3 @@ Mark sensitive values as encrypted/secret in Cloudflare UI when available.
 - Rotate `GITHUB_TOKEN` and `ADMIN_PASSWORD` regularly.
 - Never expose server env vars in client code.
 - If a secret was leaked, revoke immediately and issue a new one.
-

@@ -42,3 +42,42 @@ article.prose td {
   border: 1px solid #cbd5e1;
   padding: 0.5rem;
 }
+
+[contenteditable][data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: #94a3b8;
+}
+
+#editor h1,
+#editor h2,
+#editor p,
+#editor ul,
+#editor blockquote,
+#editor pre,
+#editor table {
+  margin-bottom: 0.85rem;
+}
+
+#editor blockquote {
+  border-left: 4px solid #cbd5e1;
+  padding-left: 0.75rem;
+  color: #475569;
+}
+
+#editor pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+#editor table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#editor td {
+  border: 1px solid #cbd5e1;
+  padding: 0.5rem;
+}

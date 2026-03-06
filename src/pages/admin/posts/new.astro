@@ -4,44 +4,70 @@ import SiteLayout from '../../../layouts/SiteLayout.astro';
 
 <SiteLayout title="Post Editor">
   <h1 class="mb-4 text-2xl font-bold">Post Editor</h1>
-  <form id="form" class="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-    <input class="rounded border px-3 py-2" name="title" placeholder="Title" required />
-    <input class="rounded border px-3 py-2" name="slug" placeholder="Custom URL slug (example: my-post-url)" />
-    <input class="rounded border px-3 py-2" name="description" placeholder="Description" />
-    <input class="rounded border px-3 py-2" name="tags" placeholder="Tags (comma separated)" />
-    <div class="grid gap-3 md:grid-cols-3">
-      <select class="rounded border px-3 py-2" name="status">
+  <form id="form" class="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="grid gap-3 md:grid-cols-2">
+      <input class="rounded-xl border px-3 py-2" name="title" placeholder="Title" required />
+      <input class="rounded-xl border px-3 py-2" name="slug" placeholder="Custom URL slug" />
+    </div>
+    <input class="rounded-xl border px-3 py-2" name="description" placeholder="Description" />
+    <div class="grid gap-3 md:grid-cols-4">
+      <input class="rounded-xl border px-3 py-2 md:col-span-2" name="tags" placeholder="Tags (comma separated)" />
+      <select class="rounded-xl border px-3 py-2" name="status">
         <option value="published">Published</option>
         <option value="draft">Draft</option>
       </select>
-      <label class="flex items-center gap-2 rounded border px-3 py-2">
+      <label class="flex items-center gap-2 rounded-xl border px-3 py-2">
         <input type="checkbox" name="pinned" />
         <span>Pinned</span>
       </label>
-      <input class="rounded border px-3 py-2" name="coverImage" placeholder="Cover image URL" />
     </div>
-    <div class="rounded border p-3">
-      <label class="mb-2 block text-sm font-medium">Upload Cover</label>
+    <div class="grid gap-3 md:grid-cols-[1fr_auto]">
+      <input class="rounded-xl border px-3 py-2" name="coverImage" placeholder="Cover image URL" />
       <div class="flex gap-2">
-        <input class="flex-1 rounded border px-3 py-2" type="file" id="cover-file" />
-        <button class="rounded border px-3 py-2" type="button" id="upload-btn">Upload</button>
+        <input class="hidden" type="file" id="cover-file" accept="image/*" />
+        <button class="rounded-xl border px-3 py-2" type="button" id="cover-pick">Choose Cover</button>
+        <button class="rounded-xl border px-3 py-2" type="button" id="cover-upload">Upload Cover</button>
       </div>
     </div>
-    <div class="grid gap-3 md:grid-cols-2">
-      <textarea class="min-h-80 rounded border px-3 py-2 font-mono" name="content" id="md" placeholder="# Content"></textarea>
-      <div class="min-h-80 rounded border bg-slate-50 p-3" id="visual" contenteditable="true"></div>
+    <div class="rounded-2xl border border-slate-200 bg-slate-50">
+      <div class="flex flex-wrap gap-2 border-b border-slate-200 p-3">
+        <button class="rounded-lg border bg-white px-3 py-1.5 text-sm" type="button" data-command="bold">Bold</button>
+        <button class="rounded-lg border bg-white px-3 py-1.5 text-sm" type="button" data-command="italic">Italic</button>
+        <button class="rounded-lg border bg-white px-3 py-1.5 text-sm" type="button" data-command="formatBlock" data-value="h2">H2</button>
+        <button class="rounded-lg border bg-white px-3 py-1.5 text-sm" type="button" data-command="formatBlock" data-value="blockquote">Quote</button>
+        <button class="rounded-lg border bg-white px-3 py-1.5 text-sm" type="button" data-command="insertUnorderedList">List</button>
+        <button class="rounded-lg border bg-white px-3 py-1.5 text-sm" type="button" id="insert-link">Link</button>
+        <button class="rounded-lg border bg-white px-3 py-1.5 text-sm" type="button" id="insert-code">Code</button>
+        <button class="rounded-lg border bg-white px-3 py-1.5 text-sm" type="button" id="insert-table">Table</button>
+        <button class="rounded-lg border bg-white px-3 py-1.5 text-sm" type="button" id="pick-inline-image">Image</button>
+        <input class="hidden" type="file" id="inline-image-file" accept="image/*" />
+      </div>
+      <div
+        id="editor"
+        class="min-h-[28rem] bg-white p-4 outline-none"
+        contenteditable="true"
+        spellcheck="false"
+        data-placeholder="Write your post here..."
+      ></div>
     </div>
-    <button class="rounded bg-slate-900 px-3 py-2 text-white" type="submit">Save Post</button>
+    <details class="rounded-xl border border-slate-200 bg-slate-50">
+      <summary class="cursor-pointer px-4 py-3 text-sm font-medium">Markdown source</summary>
+      <textarea class="min-h-80 w-full border-t border-slate-200 px-4 py-3 font-mono text-sm outline-none" name="content" id="md" placeholder="# Content"></textarea>
+    </details>
+    <div class="flex gap-3">
+      <button class="rounded-xl bg-slate-900 px-4 py-2 text-white" type="submit">Save Post</button>
+      <button class="rounded-xl border px-4 py-2" type="button" id="sync-markdown">Sync from Markdown</button>
+    </div>
   </form>
-  <p id="msg" class="mt-2 text-sm"></p>
+  <p id="msg" class="mt-3 text-sm"></p>
+
   <script is:inline>
     (() => {
       const form = document.getElementById('form');
+      const editor = document.getElementById('editor');
       const md = document.getElementById('md');
-      const visual = document.getElementById('visual');
       const msg = document.getElementById('msg');
-      const uploadBtn = document.getElementById('upload-btn');
-      const coverFile = document.getElementById('cover-file');
+      const slug = new URL(location.href).searchParams.get('slug');
 
       const titleInput = form.querySelector('input[name="title"]');
       const descriptionInput = form.querySelector('input[name="description"]');
@@ -51,30 +77,254 @@ import SiteLayout from '../../../layouts/SiteLayout.astro';
       const pinnedInput = form.querySelector('input[name="pinned"]');
       const coverImageInput = form.querySelector('input[name="coverImage"]');
 
-      const slug = new URL(location.href).searchParams.get('slug');
+      const coverFile = document.getElementById('cover-file');
+      const coverPick = document.getElementById('cover-pick');
+      const coverUpload = document.getElementById('cover-upload');
+      const inlineImageFile = document.getElementById('inline-image-file');
+      const syncMarkdownBtn = document.getElementById('sync-markdown');
 
-      md.addEventListener('input', () => {
-        visual.innerText = md.value;
-      });
-      visual.addEventListener('input', () => {
-        md.value = visual.innerText;
-      });
+      function escapeHtml(value) {
+        return value
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;');
+      }
 
-      uploadBtn.addEventListener('click', async () => {
-        const file = coverFile.files?.[0];
-        if (!file) return;
+      function markdownToHtml(markdown) {
+        const lines = markdown.replace(/\r/g, '').split('\n');
+        const html = [];
+        let inList = false;
+        let inCode = false;
+        let codeBuffer = [];
+
+        const closeList = () => {
+          if (inList) {
+            html.push('</ul>');
+            inList = false;
+          }
+        };
+
+        const flushCode = () => {
+          if (inCode) {
+            html.push(`<pre><code>${escapeHtml(codeBuffer.join('\n'))}</code></pre>`);
+            inCode = false;
+            codeBuffer = [];
+          }
+        };
+
+        for (const line of lines) {
+          if (line.startsWith('```')) {
+            closeList();
+            if (inCode) {
+              flushCode();
+            } else {
+              inCode = true;
+            }
+            continue;
+          }
+          if (inCode) {
+            codeBuffer.push(line);
+            continue;
+          }
+          if (!line.trim()) {
+            closeList();
+            html.push('<p><br></p>');
+            continue;
+          }
+          if (line.startsWith('## ')) {
+            closeList();
+            html.push(`<h2>${escapeHtml(line.slice(3))}</h2>`);
+            continue;
+          }
+          if (line.startsWith('# ')) {
+            closeList();
+            html.push(`<h1>${escapeHtml(line.slice(2))}</h1>`);
+            continue;
+          }
+          if (line.startsWith('> ')) {
+            closeList();
+            html.push(`<blockquote>${escapeHtml(line.slice(2))}</blockquote>`);
+            continue;
+          }
+          if (line.startsWith('- ')) {
+            if (!inList) {
+              html.push('<ul>');
+              inList = true;
+            }
+            html.push(`<li>${escapeInline(line.slice(2))}</li>`);
+            continue;
+          }
+          closeList();
+          if (/^\|.+\|$/.test(line)) {
+            const cells = line.split('|').slice(1, -1).map((cell) => `<td>${escapeInline(cell.trim())}</td>`).join('');
+            html.push(`<table><tbody><tr>${cells}</tr></tbody></table>`);
+            continue;
+          }
+          html.push(`<p>${escapeInline(line)}</p>`);
+        }
+        closeList();
+        flushCode();
+        return html.join('');
+      }
+
+      function escapeInline(value) {
+        let output = escapeHtml(value);
+        output = output.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img alt="$1" src="$2" />');
+        output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+        output = output.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        output = output.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        output = output.replace(/`([^`]+)`/g, '<code>$1</code>');
+        return output;
+      }
+
+      function inlineToMarkdown(node) {
+        if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+        if (node.nodeType !== Node.ELEMENT_NODE) return '';
+        const tag = node.tagName.toLowerCase();
+        const content = Array.from(node.childNodes).map(inlineToMarkdown).join('');
+        if (tag === 'strong' || tag === 'b') return `**${content}**`;
+        if (tag === 'em' || tag === 'i') return `*${content}*`;
+        if (tag === 'code' && node.parentElement?.tagName.toLowerCase() !== 'pre') return `\`${content}\``;
+        if (tag === 'a') return `[${content}](${node.getAttribute('href') || ''})`;
+        if (tag === 'img') return `![${node.getAttribute('alt') || ''}](${node.getAttribute('src') || ''})`;
+        if (tag === 'br') return '\n';
+        return content;
+      }
+
+      function blockToMarkdown(node) {
+        if (node.nodeType === Node.TEXT_NODE) return node.textContent.trim();
+        if (node.nodeType !== Node.ELEMENT_NODE) return '';
+        const tag = node.tagName.toLowerCase();
+        if (tag === 'h1') return `# ${Array.from(node.childNodes).map(inlineToMarkdown).join('')}`;
+        if (tag === 'h2') return `## ${Array.from(node.childNodes).map(inlineToMarkdown).join('')}`;
+        if (tag === 'blockquote') return `> ${Array.from(node.childNodes).map(inlineToMarkdown).join('')}`;
+        if (tag === 'ul') {
+          return Array.from(node.children).map((li) => `- ${Array.from(li.childNodes).map(inlineToMarkdown).join('')}`).join('\n');
+        }
+        if (tag === 'pre') {
+          const code = node.textContent.replace(/\n+$/, '');
+          return `\`\`\`\n${code}\n\`\`\``;
+        }
+        if (tag === 'table') {
+          return Array.from(node.querySelectorAll('tr'))
+            .map((row) => `| ${Array.from(row.children).map((cell) => cell.textContent.trim()).join(' | ')} |`)
+            .join('\n');
+        }
+        return Array.from(node.childNodes).map(inlineToMarkdown).join('');
+      }
+
+      function htmlToMarkdown(root) {
+        return Array.from(root.childNodes)
+          .map(blockToMarkdown)
+          .filter(Boolean)
+          .join('\n\n')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+      }
+
+      function syncEditorFromMarkdown() {
+        editor.innerHTML = markdownToHtml(md.value || '');
+      }
+
+      function syncMarkdownFromEditor() {
+        md.value = htmlToMarkdown(editor);
+      }
+
+      function setMessage(text, tone) {
+        msg.className = `mt-3 text-sm ${tone === 'error' ? 'text-red-600' : tone === 'success' ? 'text-emerald-600' : 'text-slate-600'}`;
+        msg.textContent = text;
+      }
+
+      async function uploadImage(file) {
         const fd = new FormData();
         fd.append('file', file);
         const resp = await fetch('/api/admin/upload-image', { method: 'POST', body: fd });
         const body = await resp.json();
-        if (!resp.ok) {
-          msg.className = 'mt-2 text-sm text-red-600';
-          msg.textContent = `Upload failed: ${JSON.stringify(body)}`;
-          return;
+        if (!resp.ok) throw new Error(body?.error || JSON.stringify(body));
+        return body;
+      }
+
+      function insertHtml(html) {
+        editor.focus();
+        document.execCommand('insertHTML', false, html);
+        syncMarkdownFromEditor();
+      }
+
+      form.querySelectorAll('[data-command]').forEach((button) => {
+        button.addEventListener('click', () => {
+          editor.focus();
+          document.execCommand(button.dataset.command, false, button.dataset.value || null);
+          syncMarkdownFromEditor();
+        });
+      });
+
+      document.getElementById('insert-link').addEventListener('click', () => {
+        const url = prompt('Link URL');
+        if (!url) return;
+        editor.focus();
+        document.execCommand('createLink', false, url);
+        syncMarkdownFromEditor();
+      });
+
+      document.getElementById('insert-code').addEventListener('click', () => {
+        insertHtml('<pre><code>const example = true;</code></pre>');
+      });
+
+      document.getElementById('insert-table').addEventListener('click', () => {
+        insertHtml('<table><tbody><tr><td>Header 1</td><td>Header 2</td></tr><tr><td>Cell 1</td><td>Cell 2</td></tr></tbody></table>');
+      });
+
+      document.getElementById('pick-inline-image').addEventListener('click', () => inlineImageFile.click());
+      coverPick.addEventListener('click', () => coverFile.click());
+
+      coverUpload.addEventListener('click', async () => {
+        const file = coverFile.files?.[0];
+        if (!file) return;
+        try {
+          setMessage('Uploading cover...', 'info');
+          const body = await uploadImage(file);
+          coverImageInput.value = body.url;
+          setMessage('Cover uploaded', 'success');
+        } catch (error) {
+          setMessage(`Cover upload failed: ${error.message}`, 'error');
         }
-        coverImageInput.value = body.url;
-        msg.className = 'mt-2 text-sm text-emerald-600';
-        msg.textContent = 'Cover uploaded';
+      });
+
+      inlineImageFile.addEventListener('change', async () => {
+        const file = inlineImageFile.files?.[0];
+        if (!file) return;
+        try {
+          setMessage('Uploading image...', 'info');
+          const body = await uploadImage(file);
+          insertHtml(`<p><img src="${body.url}" alt="${file.name}" /></p>`);
+          setMessage('Image inserted', 'success');
+          inlineImageFile.value = '';
+        } catch (error) {
+          setMessage(`Image upload failed: ${error.message}`, 'error');
+        }
+      });
+
+      editor.addEventListener('input', syncMarkdownFromEditor);
+      md.addEventListener('input', () => {
+        if (document.activeElement === md) syncEditorFromMarkdown();
+      });
+      syncMarkdownBtn.addEventListener('click', syncEditorFromMarkdown);
+
+      editor.addEventListener('keydown', (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'b') {
+          event.preventDefault();
+          document.execCommand('bold');
+          syncMarkdownFromEditor();
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'i') {
+          event.preventDefault();
+          document.execCommand('italic');
+          syncMarkdownFromEditor();
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+          event.preventDefault();
+          document.getElementById('insert-link').click();
+        }
       });
 
       (async () => {
@@ -90,13 +340,15 @@ import SiteLayout from '../../../layouts/SiteLayout.astro';
         pinnedInput.checked = !!post.pinned;
         coverImageInput.value = post.coverImage || '';
         md.value = post.content || '';
-        visual.innerText = md.value;
+        syncEditorFromMarkdown();
       })();
+
+      syncEditorFromMarkdown();
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        msg.className = 'mt-2 text-sm text-slate-600';
-        msg.textContent = 'Saving...';
+        syncMarkdownFromEditor();
+        setMessage('Saving...', 'info');
         const payload = {
           title: titleInput.value.trim(),
           description: descriptionInput.value.trim(),
@@ -123,12 +375,10 @@ import SiteLayout from '../../../layouts/SiteLayout.astro';
               if (location.pathname + location.search !== next) history.replaceState({}, '', next);
             }
           } catch {}
-          msg.className = 'mt-2 text-sm text-emerald-600';
-          msg.textContent = 'Saved';
+          setMessage('Saved', 'success');
           return;
         }
-        msg.className = 'mt-2 text-sm text-red-600';
-        msg.textContent = `Save failed: ${text}`;
+        setMessage(`Save failed: ${text}`, 'error');
       });
     })();
   </script>

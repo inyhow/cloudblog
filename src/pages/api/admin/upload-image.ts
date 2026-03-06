@@ -3,6 +3,10 @@ import { isAuthed } from '../../../lib/auth';
 import { putFile } from '../../../lib/github';
 import { getRuntimeEnv } from '../../../lib/runtime-env';
 
+function readEnv(name: string, runtimeEnv?: Record<string, string>): string {
+  return String(runtimeEnv?.[name] || import.meta.env[name] || '').trim();
+}
+
 export const POST: APIRoute = async (context) => {
   if (!isAuthed(context)) return new Response('Unauthorized', { status: 401 });
   const form = await context.request.formData();
@@ -16,7 +20,13 @@ export const POST: APIRoute = async (context) => {
   const path = `cloudblog/images/${Date.now()}.${ext}`;
   const runtimeEnv = getRuntimeEnv(context.locals);
   await putFile(path, base64, `feat: upload image ${file.name}`, { isBase64: true }, runtimeEnv);
-  const publicPrefix = runtimeEnv?.GITHUB_RAW_PREFIX || import.meta.env.GITHUB_RAW_PREFIX || '';
-  const url = publicPrefix ? `${publicPrefix}/${path}` : path;
-  return new Response(JSON.stringify({ ok: true, url }));
+  const owner = readEnv('GITHUB_OWNER', runtimeEnv);
+  const repo = readEnv('GITHUB_REPO', runtimeEnv);
+  const branch = readEnv('GITHUB_BRANCH', runtimeEnv) || 'main';
+  const rawPrefix = readEnv('GITHUB_RAW_PREFIX', runtimeEnv);
+  const cdnPrefix =
+    readEnv('GITHUB_CDN_PREFIX', runtimeEnv) || `https://cdn.jsdelivr.net/gh/${owner}/${repo}@${branch}`;
+  const rawUrl = rawPrefix ? `${rawPrefix.replace(/\/$/, '')}/${path}` : path;
+  const cdnUrl = `${cdnPrefix.replace(/\/$/, '')}/${path}`;
+  return new Response(JSON.stringify({ ok: true, url: cdnUrl, cdnUrl, rawUrl, path }));
 };
