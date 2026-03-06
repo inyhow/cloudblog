@@ -14,9 +14,15 @@
   "footer": "© Cloud Blog",
   "analyticsJs": "",
   "templates": {
-    "home": "magazine",
+    "home": "minimal",
     "post": "minimal",
     "tag": "grid",
     "page": "minimal"
+  },
+  "templateContent": {
+    "homeHeroHtml": "",
+    "postHeaderHtml": "",
+    "tagHeaderHtml": "",
+    "pageHeaderHtml": ""
   }
 }
