@@ -1,19 +1,23 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
+import { tr } from '../lib/i18n';
+import { getRuntimeEnv } from '../lib/runtime-env';
+import { readSettings } from '../lib/settings';
 
 interface Props {
   title: string;
 }
 
 const { title } = Astro.props;
+const settings = await readSettings(getRuntimeEnv(Astro.locals));
+const locale = settings.locale || 'en';
 const nav = [
-  { href: '/admin/overview', label: 'Overview' },
-  { href: '/admin/posts', label: 'Articles' },
-  { href: '/admin/pages', label: 'Pages' },
-  { href: '/admin/templates', label: 'Templates' },
-  { href: '/admin/media', label: 'Media' },
-  { href: '/admin/ops', label: 'Ops' },
-  { href: '/admin/settings', label: 'Settings' },
+  { href: '/admin/overview', label: tr(locale, 'nav.overview', 'Overview') },
+  { href: '/admin/posts', label: tr(locale, 'nav.articles', 'Articles') },
+  { href: '/admin/pages', label: tr(locale, 'nav.pages', 'Pages') },
+  { href: '/admin/templates', label: tr(locale, 'nav.templates', 'Templates') },
+  { href: '/admin/media', label: tr(locale, 'nav.media', 'Media') },
+  { href: '/admin/settings', label: tr(locale, 'nav.settings', 'Settings') },
 ];
 ---
 
@@ -32,7 +36,7 @@ const nav = [
               {item.label}
             </a>
           ))}
-          <a href="/" class="mt-4 rounded-xl px-4 py-3 text-sm text-slate-400 transition hover:bg-white/10">View Site</a>
+          <a href="/" class="mt-4 rounded-xl px-4 py-3 text-sm text-slate-400 transition hover:bg-white/10">{tr(locale, 'site.viewSite', 'View Site')}</a>
         </nav>
       </aside>
       <main class="p-6 md:p-8">

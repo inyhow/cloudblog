@@ -82,6 +82,8 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       const md = document.getElementById('md');
       const msg = document.getElementById('msg');
       const slug = new URL(location.href).searchParams.get('slug');
+      let isDirty = false;
+      let isSaving = false;
 
       const titleInput = form.querySelector('input[name="title"]');
       const descriptionInput = form.querySelector('input[name="description"]');
@@ -254,10 +256,31 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         msg.textContent = text;
       }
 
+      function markDirty() {
+        if (isSaving) return;
+        isDirty = true;
+      }
+
+      async function fetchWithRetry(url, options = {}, retries = 1) {
+        let lastError;
+        for (let i = 0; i <= retries; i += 1) {
+          try {
+            const resp = await fetch(url, options);
+            if (resp.ok || i === retries) return resp;
+            lastError = new Error(`HTTP ${resp.status}`);
+          } catch (err) {
+            lastError = err;
+            if (i === retries) throw err;
+          }
+          await new Promise((r) => setTimeout(r, 400 * (i + 1)));
+        }
+        throw lastError;
+      }
+
       async function uploadImage(file) {
         const fd = new FormData();
         fd.append('file', file);
-        const resp = await fetch('/api/admin/upload-image', { method: 'POST', body: fd });
+        const resp = await fetchWithRetry('/api/admin/upload-image', { method: 'POST', body: fd }, 1);
         const body = await resp.json();
         if (!resp.ok) throw new Error(body?.error || JSON.stringify(body));
         return body;
@@ -324,10 +347,18 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       });
 
       editor.addEventListener('input', syncMarkdownFromEditor);
+      editor.addEventListener('input', markDirty);
       md.addEventListener('input', () => {
         if (document.activeElement === md) syncEditorFromMarkdown();
       });
+      md.addEventListener('input', markDirty);
       syncMarkdownBtn.addEventListener('click', syncEditorFromMarkdown);
+      form.addEventListener('input', markDirty);
+      window.addEventListener('beforeunload', (event) => {
+        if (!isDirty || isSaving) return;
+        event.preventDefault();
+        event.returnValue = '';
+      });
 
       editor.addEventListener('keydown', (event) => {
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'b') {
@@ -365,6 +396,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         }
         md.value = post.content || '';
         syncEditorFromMarkdown();
+        isDirty = false;
 
         const revisionsResp = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}/revisions`);
         if (revisionsResp.ok) {
@@ -403,9 +435,11 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       })();
 
       syncEditorFromMarkdown();
+      isDirty = false;
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        isSaving = true;
         syncMarkdownFromEditor();
         setMessage('Saving...', 'info');
         const payload = {
@@ -423,24 +457,31 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         };
         const url = slug ? `/api/admin/posts/${encodeURIComponent(slug)}` : '/api/admin/posts';
         const method = slug ? 'PUT' : 'POST';
-        const resp = await fetch(url, {
-          method,
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        const text = await resp.text();
-        if (resp.ok) {
-          try {
-            const data = JSON.parse(text);
-            if (data?.slug) {
-              const next = `/admin/posts/new?slug=${encodeURIComponent(data.slug)}`;
-              if (location.pathname + location.search !== next) history.replaceState({}, '', next);
-            }
-          } catch {}
-          setMessage('Saved', 'success');
-          return;
+        try {
+          const resp = await fetchWithRetry(url, {
+            method,
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(payload),
+          }, 2);
+          const text = await resp.text();
+          if (resp.ok) {
+            try {
+              const data = JSON.parse(text);
+              if (data?.slug) {
+                const next = `/admin/posts/new?slug=${encodeURIComponent(data.slug)}`;
+                if (location.pathname + location.search !== next) history.replaceState({}, '', next);
+              }
+            } catch {}
+            setMessage('Saved', 'success');
+            isDirty = false;
+            return;
+          }
+          setMessage(`Save failed (${resp.status}): ${text}`, 'error');
+        } catch (error) {
+          setMessage(`Save failed: ${error instanceof Error ? error.message : String(error)}`, 'error');
+        } finally {
+          isSaving = false;
         }
-        setMessage(`Save failed: ${text}`, 'error');
       });
     })();
   </script>

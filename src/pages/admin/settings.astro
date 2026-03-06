@@ -1,31 +1,33 @@
----
+﻿---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
 
 <AdminLayout title="Settings">
   <div class="mb-6">
     <h1 class="text-3xl font-semibold text-white">Site Settings</h1>
-    <p class="mt-2 text-sm text-slate-300">Configure SEO, Google, categories, templates, and theme style.</p>
+    <p class="mt-2 text-sm text-slate-300">Lean mode: keep core settings visible, move complex options to Advanced.</p>
   </div>
 
   <div class="mb-4 flex flex-wrap gap-2" id="tabs">
     <button data-tab="base" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Base</button>
-    <button data-tab="seo" class="rounded-xl border border-white/10 px-3 py-2 text-sm">SEO & Google</button>
-    <button data-tab="ads" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Ads</button>
-    <button data-tab="category" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Categories</button>
-    <button data-tab="template" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Template</button>
-    <button data-tab="vars" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Variables</button>
-    <button data-tab="style" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Theme CSS</button>
+    <button data-tab="seo" class="rounded-xl border border-white/10 px-3 py-2 text-sm">SEO</button>
+    <button data-tab="content" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Content</button>
+    <button data-tab="theme" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Theme</button>
   </div>
 
   <form id="settings-form" class="grid gap-6">
     <section data-panel="base" class="panel rounded-2xl border border-white/10 bg-slate-900/60 p-5">
       <div class="grid gap-3">
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-300">Language</span>
+          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="locale">
+            <option value="en">English</option>
+            <option value="zh-CN">简体中文</option>
+          </select>
+        </label>
         <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="title" placeholder="Site title" />
         <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="description" placeholder="Site description" />
-        <textarea class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="menu" placeholder='Menu JSON'></textarea>
         <textarea class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="footer" placeholder="Footer text"></textarea>
-        <textarea class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="analyticsJs" placeholder="Custom analytics JS"></textarea>
       </div>
     </section>
 
@@ -39,77 +41,54 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       </div>
     </section>
 
-    <section data-panel="ads" class="panel hidden rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+    <section data-panel="content" class="panel hidden rounded-2xl border border-white/10 bg-slate-900/60 p-5">
       <div class="grid gap-3">
-        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adHomeTop" placeholder="Ad slot: home top HTML"></textarea>
-        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adListTop" placeholder="Ad slot: blog list top HTML"></textarea>
-        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostTop" placeholder="Ad slot: post top HTML"></textarea>
-        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostBottom" placeholder="Ad slot: post bottom HTML"></textarea>
-        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostSidebar" placeholder="Ad slot: post sidebar HTML"></textarea>
+        <textarea class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="menu" placeholder='Menu JSON'></textarea>
+        <div class="rounded-xl border border-white/10 bg-slate-950/40 p-3">
+          <div class="mb-2 flex items-center justify-between gap-2">
+            <div class="text-sm text-slate-300">Categories</div>
+            <button id="cat-add" type="button" class="rounded-lg border border-emerald-400/50 px-3 py-1 text-xs text-emerald-300">Add</button>
+          </div>
+          <div id="cat-table" class="grid gap-2"></div>
+        </div>
       </div>
     </section>
 
-    <section data-panel="category" class="panel hidden rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-      <div class="mb-3 flex flex-wrap gap-2">
-        <button id="cat-add" type="button" class="rounded-lg border border-emerald-400/50 px-3 py-1.5 text-xs text-emerald-300">Add Category</button>
-        <button id="cat-sync-json" type="button" class="rounded-lg border border-sky-400/50 px-3 py-1.5 text-xs text-sky-300">Sync to JSON</button>
-        <button id="cat-apply-json" type="button" class="rounded-lg border border-amber-400/50 px-3 py-1.5 text-xs text-amber-300">Apply JSON to Table</button>
-      </div>
-      <div id="cat-table" class="mb-3 grid gap-2"></div>
-      <textarea class="min-h-56 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="categories" placeholder='Categories JSON: [{"slug":"tech","name":"Tech","description":"Category intro","seoTitle":"Tech News","seoDescription":"Tech articles","template":"grid","sort":10,"showInMenu":true,"adTop":"<div>ad</div>","adSidebar":"<div>ad</div>","modules":["hero","list","sidebar"]}]'></textarea>
-      <p class="mt-2 text-xs text-slate-400">Supports: slug, name, description, seoTitle, seoDescription, template, sort, showInMenu, adTop, adSidebar, modules(hero/list/sidebar).</p>
-    </section>
-
-    <section data-panel="template" class="panel hidden rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+    <section data-panel="theme" class="panel hidden rounded-2xl border border-white/10 bg-slate-900/60 p-5">
       <div class="grid gap-3 md:grid-cols-2">
         <label class="grid gap-1">
           <span class="text-sm text-slate-300">Home template</span>
-          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="homeTemplate">
-            <option value="classic">classic</option>
-            <option value="magazine">magazine</option>
-            <option value="minimal">minimal</option>
-          </select>
+          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="homeTemplate"><option value="classic">classic</option><option value="magazine">magazine</option><option value="minimal">minimal</option></select>
         </label>
         <label class="grid gap-1">
           <span class="text-sm text-slate-300">Post template</span>
-          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="postTemplate">
-            <option value="classic">classic</option>
-            <option value="cover">cover</option>
-            <option value="minimal">minimal</option>
-          </select>
-        </label>
-        <label class="grid gap-1">
-          <span class="text-sm text-slate-300">Tag template</span>
-          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="tagTemplate">
-            <option value="classic">classic</option>
-            <option value="grid">grid</option>
-            <option value="minimal">minimal</option>
-          </select>
-        </label>
-        <label class="grid gap-1">
-          <span class="text-sm text-slate-300">Page template</span>
-          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="pageTemplate">
-            <option value="classic">classic</option>
-            <option value="minimal">minimal</option>
-          </select>
+          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="postTemplate"><option value="classic">classic</option><option value="cover">cover</option><option value="minimal">minimal</option></select>
         </label>
       </div>
-      <div class="mt-4 grid gap-3">
-        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="homeHeroHtml" placeholder="Home fragment HTML"></textarea>
-        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="postHeaderHtml" placeholder="Post fragment HTML"></textarea>
-        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="tagHeaderHtml" placeholder="Tag fragment HTML"></textarea>
-        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="pageHeaderHtml" placeholder="Page fragment HTML"></textarea>
+      <textarea class="mt-3 min-h-56 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="css" id="css"></textarea>
+    </section>
+
+    <details class="rounded-2xl border border-white/10 bg-slate-900/40 p-4">
+      <summary class="cursor-pointer text-sm font-medium text-slate-200">Advanced</summary>
+      <div class="mt-3 grid gap-3">
+        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="analyticsJs" placeholder="Custom analytics JS"></textarea>
+        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adHomeTop" placeholder="Ad slot home top HTML"></textarea>
+        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adListTop" placeholder="Ad slot list top HTML"></textarea>
+        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostTop" placeholder="Ad slot post top HTML"></textarea>
+        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostBottom" placeholder="Ad slot post bottom HTML"></textarea>
+        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostSidebar" placeholder="Ad slot post sidebar HTML"></textarea>
+        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="templateVariables" placeholder='Template vars JSON'></textarea>
+        <textarea class="hidden" name="categories" placeholder='Categories JSON'></textarea>
+        <div class="grid gap-3 md:grid-cols-2">
+          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="tagTemplate"><option value="classic">Tag: classic</option><option value="grid">Tag: grid</option><option value="minimal">Tag: minimal</option></select>
+          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="pageTemplate"><option value="classic">Page: classic</option><option value="minimal">Page: minimal</option></select>
+        </div>
+        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="homeHeroHtml" placeholder="Home fragment HTML"></textarea>
+        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="postHeaderHtml" placeholder="Post fragment HTML"></textarea>
+        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="tagHeaderHtml" placeholder="Tag fragment HTML"></textarea>
+        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="pageHeaderHtml" placeholder="Page fragment HTML"></textarea>
       </div>
-    </section>
-
-    <section data-panel="vars" class="panel hidden rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-      <textarea class="min-h-48 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="templateVariables" placeholder='Template variables JSON: {"brand.slogan":"Ship fast"}'></textarea>
-      <p class="mt-2 text-xs text-slate-400">Use in templates: <code>{'{{site.title}}'}</code>, <code>{'{{post.title}}'}</code>, custom keys like <code>{'{{brand.slogan}}'}</code>.</p>
-    </section>
-
-    <section data-panel="style" class="panel hidden rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-      <textarea class="min-h-72 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="css" id="css"></textarea>
-    </section>
+    </details>
 
     <div class="flex gap-3">
       <button class="rounded-xl bg-amber-400 px-4 py-2 font-medium text-slate-950" type="submit">Save Settings</button>
@@ -124,79 +103,94 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       const form = document.getElementById('settings-form');
       const msg = document.getElementById('msg');
       const tabs = document.getElementById('tabs');
+      let isDirty = false;
+      let isSaving = false;
 
       function switchTab(tab) {
-        form.querySelectorAll('[data-panel]').forEach((panel) => {
-          panel.classList.toggle('hidden', panel.dataset.panel !== tab);
-        });
+        form.querySelectorAll('[data-panel]').forEach((panel) => panel.classList.toggle('hidden', panel.dataset.panel !== tab));
         tabs.querySelectorAll('[data-tab]').forEach((button) => {
-          button.classList.toggle('bg-amber-400', button.dataset.tab === tab);
-          button.classList.toggle('text-slate-950', button.dataset.tab === tab);
+          const on = button.dataset.tab === tab;
+          button.classList.toggle('bg-amber-400', on);
+          button.classList.toggle('text-slate-950', on);
         });
       }
-
-      tabs.querySelectorAll('[data-tab]').forEach((button) => {
-        button.addEventListener('click', () => switchTab(button.dataset.tab));
-      });
+      tabs.querySelectorAll('[data-tab]').forEach((button) => button.addEventListener('click', () => switchTab(button.dataset.tab)));
       switchTab('base');
 
+      const pick = (s) => form.querySelector(s);
       const f = {
-        title: form.querySelector('input[name="title"]'),
-        description: form.querySelector('input[name="description"]'),
-        menu: form.querySelector('textarea[name="menu"]'),
-        footer: form.querySelector('textarea[name="footer"]'),
-        analyticsJs: form.querySelector('textarea[name="analyticsJs"]'),
-        homeTitle: form.querySelector('input[name="homeTitle"]'),
-        homeDescription: form.querySelector('input[name="homeDescription"]'),
-        googleAnalyticsId: form.querySelector('input[name="googleAnalyticsId"]'),
-        googleSiteVerification: form.querySelector('input[name="googleSiteVerification"]'),
-        googleAdsenseClient: form.querySelector('input[name="googleAdsenseClient"]'),
-        adHomeTop: form.querySelector('textarea[name="adHomeTop"]'),
-        adListTop: form.querySelector('textarea[name="adListTop"]'),
-        adPostTop: form.querySelector('textarea[name="adPostTop"]'),
-        adPostBottom: form.querySelector('textarea[name="adPostBottom"]'),
-        adPostSidebar: form.querySelector('textarea[name="adPostSidebar"]'),
-        categories: form.querySelector('textarea[name="categories"]'),
-        homeTemplate: form.querySelector('select[name="homeTemplate"]'),
-        postTemplate: form.querySelector('select[name="postTemplate"]'),
-        tagTemplate: form.querySelector('select[name="tagTemplate"]'),
-        pageTemplate: form.querySelector('select[name="pageTemplate"]'),
-        homeHeroHtml: form.querySelector('textarea[name="homeHeroHtml"]'),
-        postHeaderHtml: form.querySelector('textarea[name="postHeaderHtml"]'),
-        tagHeaderHtml: form.querySelector('textarea[name="tagHeaderHtml"]'),
-        pageHeaderHtml: form.querySelector('textarea[name="pageHeaderHtml"]'),
-        templateVariables: form.querySelector('textarea[name="templateVariables"]'),
+        locale: pick('select[name="locale"]'),
+        title: pick('input[name="title"]'),
+        description: pick('input[name="description"]'),
+        menu: pick('textarea[name="menu"]'),
+        footer: pick('textarea[name="footer"]'),
+        analyticsJs: pick('textarea[name="analyticsJs"]'),
+        homeTitle: pick('input[name="homeTitle"]'),
+        homeDescription: pick('input[name="homeDescription"]'),
+        googleAnalyticsId: pick('input[name="googleAnalyticsId"]'),
+        googleSiteVerification: pick('input[name="googleSiteVerification"]'),
+        googleAdsenseClient: pick('input[name="googleAdsenseClient"]'),
+        adHomeTop: pick('textarea[name="adHomeTop"]'),
+        adListTop: pick('textarea[name="adListTop"]'),
+        adPostTop: pick('textarea[name="adPostTop"]'),
+        adPostBottom: pick('textarea[name="adPostBottom"]'),
+        adPostSidebar: pick('textarea[name="adPostSidebar"]'),
+        categories: pick('textarea[name="categories"]'),
+        homeTemplate: pick('select[name="homeTemplate"]'),
+        postTemplate: pick('select[name="postTemplate"]'),
+        tagTemplate: pick('select[name="tagTemplate"]'),
+        pageTemplate: pick('select[name="pageTemplate"]'),
+        homeHeroHtml: pick('textarea[name="homeHeroHtml"]'),
+        postHeaderHtml: pick('textarea[name="postHeaderHtml"]'),
+        tagHeaderHtml: pick('textarea[name="tagHeaderHtml"]'),
+        pageHeaderHtml: pick('textarea[name="pageHeaderHtml"]'),
+        templateVariables: pick('textarea[name="templateVariables"]'),
         css: document.getElementById('css'),
       };
       const catTable = document.getElementById('cat-table');
       const catAdd = document.getElementById('cat-add');
-      const catSyncJson = document.getElementById('cat-sync-json');
-      const catApplyJson = document.getElementById('cat-apply-json');
       let categoryRows = [];
 
-      function renderCategoryTable() {
+      function setMessage(text, tone = 'info') {
+        msg.className = `mt-4 text-sm ${tone === 'error' ? 'text-red-400' : tone === 'success' ? 'text-emerald-300' : 'text-slate-300'}`;
+        msg.textContent = text;
+      }
+
+      function markDirty() {
+        if (isSaving) return;
+        isDirty = true;
+      }
+
+      async function fetchWithRetry(url, options = {}, retries = 1) {
+        let lastError;
+        for (let i = 0; i <= retries; i += 1) {
+          try {
+            const resp = await fetch(url, options);
+            if (resp.ok || i === retries) return resp;
+            lastError = new Error(`HTTP ${resp.status}`);
+          } catch (err) {
+            lastError = err;
+            if (i === retries) throw err;
+          }
+          await new Promise((r) => setTimeout(r, 400 * (i + 1)));
+        }
+        throw lastError;
+      }
+
+      function renderCategories() {
         catTable.innerHTML = categoryRows
-          .map((item, idx) => `
-            <div class="grid gap-2 rounded-xl border border-white/10 bg-slate-950/40 p-2 md:grid-cols-12">
-              <input class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-2" data-k="slug" data-i="${idx}" value="${item.slug || ''}" placeholder="slug" />
-              <input class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-1" data-k="name" data-i="${idx}" value="${item.name || ''}" placeholder="name" />
-              <input class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-1" data-k="description" data-i="${idx}" value="${item.description || ''}" placeholder="description" />
-              <input class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-1" data-k="seoTitle" data-i="${idx}" value="${item.seoTitle || ''}" placeholder="seo title" />
-              <select class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-1" data-k="template" data-i="${idx}">
-                <option value="classic" ${item.template === 'classic' ? 'selected' : ''}>classic</option>
-                <option value="grid" ${item.template === 'grid' ? 'selected' : ''}>grid</option>
-                <option value="minimal" ${item.template === 'minimal' ? 'selected' : ''}>minimal</option>
+          .map((row, idx) => `
+            <div class="grid gap-2 rounded-lg border border-white/10 bg-slate-900/40 p-2 md:grid-cols-12">
+              <input data-k="slug" data-i="${idx}" class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-2" value="${row.slug || ''}" placeholder="slug" />
+              <input data-k="name" data-i="${idx}" class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-2" value="${row.name || ''}" placeholder="name" />
+              <input data-k="description" data-i="${idx}" class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-3" value="${row.description || ''}" placeholder="description" />
+              <select data-k="template" data-i="${idx}" class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-2">
+                <option value="classic" ${row.template === 'classic' ? 'selected' : ''}>classic</option>
+                <option value="grid" ${row.template === 'grid' ? 'selected' : ''}>grid</option>
+                <option value="minimal" ${row.template === 'minimal' ? 'selected' : ''}>minimal</option>
               </select>
-              <input class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-1" data-k="sort" data-i="${idx}" type="number" value="${item.sort || 0}" placeholder="sort" />
-              <input class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-2" data-k="adTop" data-i="${idx}" value="${item.adTop || ''}" placeholder="ad top html" />
-              <input class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-1" data-k="adSidebar" data-i="${idx}" value="${item.adSidebar || ''}" placeholder="ad sidebar html" />
-              <input class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-1" data-k="modulesText" data-i="${idx}" value="${Array.isArray(item.modules) ? item.modules.join(',') : 'hero,list,sidebar'}" placeholder="modules" />
-              <label class="flex items-center gap-1 text-xs md:col-span-1"><input data-k="showInMenu" data-i="${idx}" type="checkbox" ${item.showInMenu ? 'checked' : ''} />menu</label>
-              <div class="flex items-center justify-end gap-1 md:col-span-1">
-                <button type="button" data-action="up" data-i="${idx}" class="rounded border border-white/10 px-1.5 py-0.5 text-xs">↑</button>
-                <button type="button" data-action="down" data-i="${idx}" class="rounded border border-white/10 px-1.5 py-0.5 text-xs">↓</button>
-                <button type="button" data-action="remove" data-i="${idx}" class="rounded border border-red-400/40 px-1.5 py-0.5 text-xs text-red-300">x</button>
-              </div>
+              <label class="flex items-center gap-1 text-xs md:col-span-2"><input data-k="showInMenu" data-i="${idx}" type="checkbox" ${row.showInMenu ? 'checked' : ''}/>menu</label>
+              <button data-remove="${idx}" type="button" class="rounded border border-red-400/40 px-2 py-1 text-xs text-red-300 md:col-span-1">x</button>
             </div>
           `)
           .join('');
@@ -205,21 +199,20 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
             const i = Number(el.dataset.i);
             const k = el.dataset.k;
             categoryRows[i][k] = el.type === 'checkbox' ? el.checked : el.value;
+            markDirty();
           });
           el.addEventListener('change', () => {
             const i = Number(el.dataset.i);
             const k = el.dataset.k;
             categoryRows[i][k] = el.type === 'checkbox' ? el.checked : el.value;
+            markDirty();
           });
         });
-        catTable.querySelectorAll('[data-action]').forEach((btn) => {
+        catTable.querySelectorAll('[data-remove]').forEach((btn) => {
           btn.addEventListener('click', () => {
-            const i = Number(btn.dataset.i);
-            const action = btn.dataset.action;
-            if (action === 'remove') categoryRows.splice(i, 1);
-            if (action === 'up' && i > 0) [categoryRows[i - 1], categoryRows[i]] = [categoryRows[i], categoryRows[i - 1]];
-            if (action === 'down' && i < categoryRows.length - 1) [categoryRows[i + 1], categoryRows[i]] = [categoryRows[i], categoryRows[i + 1]];
-            renderCategoryTable();
+            categoryRows.splice(Number(btn.dataset.remove), 1);
+            renderCategories();
+            markDirty();
           });
         });
       }
@@ -233,38 +226,21 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
             seoTitle: String(row.seoTitle || '').trim(),
             seoDescription: String(row.seoDescription || '').trim(),
             template: ['classic', 'grid', 'minimal'].includes(String(row.template)) ? String(row.template) : 'classic',
-            sort: Number.isFinite(Number(row.sort)) ? Number(row.sort) : idx,
+            sort: idx,
             showInMenu: !!row.showInMenu,
             adTop: String(row.adTop || '').trim(),
             adSidebar: String(row.adSidebar || '').trim(),
-            modules: String(row.modulesText || 'hero,list,sidebar').split(',').map((x) => x.trim()).filter((x) => ['hero', 'list', 'sidebar'].includes(x)),
+            modules: Array.isArray(row.modules) ? row.modules : ['hero', 'list', 'sidebar'],
           }))
           .filter((row) => row.slug && row.name);
         f.categories.value = JSON.stringify(normalized, null, 2);
       }
 
-      function applyJsonToCategories() {
-        try {
-          const parsed = JSON.parse(f.categories.value || '[]');
-          categoryRows = Array.isArray(parsed)
-            ? parsed.map((row) => ({
-                ...row,
-                modulesText: Array.isArray(row.modules) ? row.modules.join(',') : 'hero,list,sidebar',
-              }))
-            : [];
-          renderCategoryTable();
-        } catch (error) {
-          msg.textContent = `Categories JSON invalid: ${error.message}`;
-        }
-      }
-
       (async () => {
-        const settingsResp = await fetch('/api/admin/settings');
-        if (settingsResp.status === 401) {
-          location.href = '/admin';
-          return;
-        }
+        const settingsResp = await fetchWithRetry('/api/admin/settings');
+        if (settingsResp.status === 401) return (location.href = '/admin');
         const settings = await settingsResp.json();
+        f.locale.value = settings.locale || 'en';
         f.title.value = settings.title || '';
         f.description.value = settings.description || '';
         f.menu.value = JSON.stringify(settings.menu || [], null, 2);
@@ -281,7 +257,8 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         f.adPostBottom.value = settings.adSlots?.postBottom || '';
         f.adPostSidebar.value = settings.adSlots?.postSidebar || '';
         f.categories.value = JSON.stringify(settings.categories || [], null, 2);
-        applyJsonToCategories();
+        categoryRows = settings.categories || [];
+        renderCategories();
         f.homeTemplate.value = settings.templates?.home || 'classic';
         f.postTemplate.value = settings.templates?.post || 'classic';
         f.tagTemplate.value = settings.templates?.tag || 'classic';
@@ -292,25 +269,34 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         f.pageHeaderHtml.value = settings.templateContent?.pageHeaderHtml || '';
         f.templateVariables.value = JSON.stringify(settings.templateVariables || {}, null, 2);
 
-        const themeResp = await fetch('/api/admin/themes');
+        const themeResp = await fetchWithRetry('/api/admin/themes');
         if (themeResp.ok) {
           const theme = await themeResp.json();
           f.css.value = theme.css || '';
         }
+        isDirty = false;
       })();
 
-      catAdd.addEventListener('click', () => {
-        categoryRows.push({ slug: '', name: '', description: '', seoTitle: '', seoDescription: '', template: 'classic', sort: categoryRows.length, showInMenu: false, adTop: '', adSidebar: '', modulesText: 'hero,list,sidebar' });
-        renderCategoryTable();
+      catAdd?.addEventListener('click', () => {
+        categoryRows.push({ slug: '', name: '', description: '', template: 'classic', showInMenu: false });
+        renderCategories();
+        markDirty();
       });
-      catSyncJson.addEventListener('click', syncCategoriesToJson);
-      catApplyJson.addEventListener('click', applyJsonToCategories);
+
+      form.addEventListener('input', markDirty);
+      window.addEventListener('beforeunload', (event) => {
+        if (!isDirty || isSaving) return;
+        event.preventDefault();
+        event.returnValue = '';
+      });
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        msg.textContent = 'Saving...';
+        isSaving = true;
+        setMessage('Saving...', 'info');
         syncCategoriesToJson();
         const payload = {
+          locale: f.locale.value,
           title: f.title.value,
           description: f.description.value,
           menu: JSON.parse(f.menu.value || '[]'),
@@ -346,17 +332,28 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
           templateVariables: JSON.parse(f.templateVariables.value || '{}'),
         };
 
-        const settingsResp = await fetch('/api/admin/settings', {
-          method: 'PUT',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        const themeResp = await fetch('/api/admin/themes', {
-          method: 'PUT',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ css: f.css.value }),
-        });
-        msg.textContent = settingsResp.ok && themeResp.ok ? 'Saved' : `Save failed: ${await settingsResp.text()} ${await themeResp.text()}`;
+        try {
+          const settingsResp = await fetchWithRetry('/api/admin/settings', {
+            method: 'PUT',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(payload),
+          }, 2);
+          const themeResp = await fetchWithRetry('/api/admin/themes', {
+            method: 'PUT',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ css: f.css.value }),
+          }, 2);
+          if (!settingsResp.ok || !themeResp.ok) {
+            setMessage(`Save failed: ${await settingsResp.text()} ${await themeResp.text()}`, 'error');
+            return;
+          }
+          setMessage('Saved', 'success');
+          isDirty = false;
+        } catch (error) {
+          setMessage(`Save failed: ${error instanceof Error ? error.message : String(error)}`, 'error');
+        } finally {
+          isSaving = false;
+        }
       });
     })();
   </script>

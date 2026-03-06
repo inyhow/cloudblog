@@ -43,3 +43,7 @@ Mark sensitive values as encrypted/secret in Cloudflare UI when available.
 - Rotate `GITHUB_TOKEN` and `ADMIN_PASSWORD` regularly.
 - Never expose server env vars in client code.
 - If a secret was leaked, revoke immediately and issue a new one.
+
+## 5) Preflight checklist
+
+Before each release, run: [Preflight Checklist](./preflight.md)

@@ -4,6 +4,7 @@ import { readSettings, readThemeCss } from '../lib/settings';
 import { getRuntimeEnv } from '../lib/runtime-env';
 import { getTemplateFile } from '../lib/template-files';
 import { renderTemplateVariables } from '../lib/template-vars';
+import { tr } from '../lib/i18n';
 
 interface Props {
   title: string;
@@ -23,13 +24,14 @@ const renderedTheme = renderTemplateVariables(templateTheme?.content ?? '', {
   'site.description': settings.description,
   ...settings.templateVariables,
 });
+const locale = settings.locale || 'en';
 const categoryMenu = (settings.categories || [])
   .filter((item) => item.showInMenu)
   .sort((a, b) => (a.sort || 0) - (b.sort || 0));
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang={locale}>
   <head>
     <BaseHead title={title} description={description || settings.description} />
     <style is:inline>{themeCss}</style>
@@ -69,7 +71,7 @@ const categoryMenu = (settings.categories || [])
           href="/admin"
           class="ml-auto rounded-full border border-slate-200 px-3 py-1.5 text-sm text-slate-600 transition hover:border-slate-900 hover:text-slate-900"
         >
-          Admin
+          {tr(locale, 'site.admin', 'Admin')}
         </a>
       </nav>
     </header>

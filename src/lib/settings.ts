@@ -18,6 +18,7 @@ export interface CategoryConfig {
 }
 
 export interface SiteSettings {
+  locale: 'en' | 'zh-CN';
   title: string;
   description: string;
   categories: CategoryConfig[];
@@ -60,6 +61,7 @@ export interface SiteSettings {
 }
 
 const defaults: SiteSettings = {
+  locale: 'en',
   title: 'Cloud Blog',
   description: 'Blog powered by Astro + Cloudflare Pages',
   categories: [],
