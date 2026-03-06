@@ -4,6 +4,7 @@ import hljs from 'highlight.js';
 import { deleteFile, getFile, listDir, putFile } from './github';
 
 const POSTS_DIR = 'cloudblog/posts';
+const REVISIONS_DIR = 'cloudblog/revisions';
 
 marked.use(
   markedHighlight({
@@ -21,11 +22,13 @@ export interface BlogPost {
   description: string;
   category?: string;
   tags: string[];
-  status: 'draft' | 'published';
+  status: 'draft' | 'review' | 'scheduled' | 'published' | 'archived' | 'deleted';
+  reviewNote?: string;
   pinned: boolean;
   coverImage?: string;
   pubDate: string;
   updatedDate?: string;
+  scheduledAt?: string;
   content: string;
 }
 
@@ -80,14 +83,23 @@ function stringifyFrontmatter(data: {
   description: string;
   category?: string;
   tags: string[];
-  status: 'draft' | 'published';
+  status: 'draft' | 'review' | 'scheduled' | 'published' | 'archived' | 'deleted';
+  reviewNote?: string;
   pinned: boolean;
   coverImage?: string;
   pubDate: string;
   updatedDate: string;
+  scheduledAt?: string;
 }, content: string): string {
   const tagsBlock = data.tags.map((t) => `  - ${t}`).join('\n');
-  return `---\ntitle: ${quote(data.title)}\ndescription: ${quote(data.description)}\ncategory: ${quote(data.category || '')}\ntags:\n${tagsBlock || '  -'}\nstatus: ${data.status}\npinned: ${data.pinned}\ncoverImage: ${quote(data.coverImage || '')}\npubDate: ${data.pubDate}\nupdatedDate: ${data.updatedDate}\n---\n\n${content}`;
+  return `---\ntitle: ${quote(data.title)}\ndescription: ${quote(data.description)}\ncategory: ${quote(data.category || '')}\ntags:\n${tagsBlock || '  -'}\nstatus: ${data.status}\nreviewNote: ${quote(data.reviewNote || '')}\npinned: ${data.pinned}\ncoverImage: ${quote(data.coverImage || '')}\npubDate: ${data.pubDate}\nupdatedDate: ${data.updatedDate}\nscheduledAt: ${quote(data.scheduledAt || '')}\n---\n\n${content}`;
+}
+
+function normalizeStatus(value: unknown): BlogPost['status'] {
+  if (value === 'draft' || value === 'review' || value === 'scheduled' || value === 'published' || value === 'archived' || value === 'deleted') {
+    return value;
+  }
+  return 'published';
 }
 
 async function listPostsCore(runtimeEnv?: Record<string, string>): Promise<BlogPost[]> {
@@ -103,11 +115,13 @@ async function listPostsCore(runtimeEnv?: Record<string, string>): Promise<BlogP
         description: String(parsed.data.description ?? ''),
         category: String(parsed.data.category ?? '').replace(/^"|"$/g, '') || undefined,
         tags: Array.isArray(parsed.data.tags) ? (parsed.data.tags as string[]) : [],
-        status: parsed.data.status === 'draft' ? 'draft' : 'published',
+        status: normalizeStatus(parsed.data.status),
+        reviewNote: String(parsed.data.reviewNote ?? '').replace(/^"|"$/g, '') || undefined,
         pinned: String(parsed.data.pinned ?? 'false') === 'true',
         coverImage: String(parsed.data.coverImage ?? '').replace(/^"|"$/g, '') || undefined,
         pubDate: String(parsed.data.pubDate ?? new Date().toISOString()),
         updatedDate: parsed.data.updatedDate ? String(parsed.data.updatedDate) : undefined,
+        scheduledAt: String(parsed.data.scheduledAt ?? '').replace(/^"|"$/g, '') || undefined,
         content: parsed.content,
       } satisfies BlogPost;
     }),
@@ -141,11 +155,13 @@ export async function getPostBySlug(slug: string, runtimeEnv?: Record<string, st
       description: String(parsed.data.description ?? ''),
       category: String(parsed.data.category ?? '').replace(/^"|"$/g, '') || undefined,
       tags: Array.isArray(parsed.data.tags) ? (parsed.data.tags as string[]) : [],
-      status: parsed.data.status === 'draft' ? 'draft' : 'published',
+      status: normalizeStatus(parsed.data.status),
+      reviewNote: String(parsed.data.reviewNote ?? '').replace(/^"|"$/g, '') || undefined,
       pinned: String(parsed.data.pinned ?? 'false') === 'true',
       coverImage: String(parsed.data.coverImage ?? '').replace(/^"|"$/g, '') || undefined,
       pubDate: String(parsed.data.pubDate ?? new Date().toISOString()),
       updatedDate: parsed.data.updatedDate ? String(parsed.data.updatedDate) : undefined,
+      scheduledAt: String(parsed.data.scheduledAt ?? '').replace(/^"|"$/g, '') || undefined,
       content: parsed.content,
     };
   } catch {
@@ -158,16 +174,29 @@ export async function savePost(
   runtimeEnv?: Record<string, string>,
 ) {
   const slug = normalizeSlug(input.slug || input.title);
+  const existing = await getFile(filePathFromSlug(slug), runtimeEnv);
+  if (existing?.content) {
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    await putFile(
+      `${REVISIONS_DIR}/${slug}/${stamp}.md`,
+      existing.content,
+      `chore: snapshot ${slug} ${stamp}`,
+      undefined,
+      runtimeEnv,
+    );
+  }
   const body = stringifyFrontmatter({
     title: input.title,
     description: input.description ?? '',
     category: input.category ?? '',
     tags: input.tags ?? [],
     status: input.status ?? 'published',
+    reviewNote: input.reviewNote ?? '',
     pinned: input.pinned ?? false,
     coverImage: input.coverImage ?? '',
     pubDate: input.pubDate ?? new Date().toISOString(),
     updatedDate: new Date().toISOString(),
+    scheduledAt: input.scheduledAt ?? '',
   }, input.content);
   await putFile(filePathFromSlug(slug), body, `feat: update post ${slug}`, undefined, runtimeEnv);
   return slug;
@@ -175,6 +204,12 @@ export async function savePost(
 
 export async function deletePost(slug: string, runtimeEnv?: Record<string, string>): Promise<void> {
   await deleteFile(filePathFromSlug(slug), `feat: delete post ${slug}`, runtimeEnv);
+}
+
+export async function trashPost(slug: string, runtimeEnv?: Record<string, string>): Promise<void> {
+  const current = await getPostBySlug(slug, runtimeEnv);
+  if (!current) return;
+  await savePost({ ...current, status: 'deleted', slug }, runtimeEnv);
 }
 
 export function markdownToHtml(markdown: string): string {
@@ -210,4 +245,37 @@ export function renderPostWithToc(markdown: string): { html: string; toc: TocIte
     return `<${tag} id="${id}">${text}</${tag}>`;
   });
   return { html, toc };
+}
+
+export function isPostPublic(post: BlogPost, now = new Date()): boolean {
+  if (post.status === 'published') return true;
+  if (post.status !== 'scheduled') return false;
+  if (!post.scheduledAt) return false;
+  return new Date(post.scheduledAt).valueOf() <= now.valueOf();
+}
+
+export function canTransitionStatus(from: BlogPost['status'], to: BlogPost['status']): boolean {
+  if (from === to) return true;
+  const allowed: Record<BlogPost['status'], BlogPost['status'][]> = {
+    draft: ['review', 'scheduled', 'published', 'archived', 'deleted'],
+    review: ['draft', 'published', 'archived', 'deleted'],
+    scheduled: ['draft', 'published', 'archived', 'deleted'],
+    published: ['draft', 'archived', 'deleted'],
+    archived: ['draft', 'published', 'deleted'],
+    deleted: ['draft'],
+  };
+  return allowed[from].includes(to);
+}
+
+export async function listPostRevisions(slug: string, runtimeEnv?: Record<string, string>): Promise<string[]> {
+  const paths = await listDir(`${REVISIONS_DIR}/${slug}`, runtimeEnv);
+  return paths
+    .filter((path) => path.endsWith('.md'))
+    .sort((a, b) => b.localeCompare(a));
+}
+
+export async function restorePostRevision(slug: string, revisionPath: string, runtimeEnv?: Record<string, string>): Promise<void> {
+  const revision = await getFile(revisionPath, runtimeEnv);
+  if (!revision) throw new Error('Revision not found');
+  await putFile(filePathFromSlug(slug), revision.content, `feat: restore ${slug} from revision`, undefined, runtimeEnv);
 }

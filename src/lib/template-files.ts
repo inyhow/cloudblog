@@ -13,6 +13,7 @@ const templateRegistry = [
   { key: 'home', label: 'Home Template', path: `${TEMPLATE_DIR}/home.html` },
   { key: 'post', label: 'Post Template', path: `${TEMPLATE_DIR}/post.html` },
   { key: 'tag', label: 'Tag Template', path: `${TEMPLATE_DIR}/tag.html` },
+  { key: 'category', label: 'Category Template', path: `${TEMPLATE_DIR}/category.html` },
   { key: 'page', label: 'Page Template', path: `${TEMPLATE_DIR}/page.html` },
   { key: 'theme', label: 'Theme Extra CSS', path: `${TEMPLATE_DIR}/theme.css` },
 ] as const;

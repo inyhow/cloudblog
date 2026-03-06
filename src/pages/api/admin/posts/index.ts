@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { isAuthed } from '../../../../lib/auth';
+import { appendOpsLog } from '../../../../lib/ops-log';
 import { listPostsStrict, savePost } from '../../../../lib/posts';
 import { getRuntimeEnv } from '../../../../lib/runtime-env';
 
@@ -20,7 +21,9 @@ export const POST: APIRoute = async (context) => {
   if (!isAuthed(context)) return new Response('Unauthorized', { status: 401 });
   try {
     const body = await context.request.json();
-    const slug = await savePost(body, getRuntimeEnv(context.locals));
+    const runtimeEnv = getRuntimeEnv(context.locals);
+    const slug = await savePost(body, runtimeEnv);
+    await appendOpsLog({ at: new Date().toISOString(), action: 'post.create', target: slug }, runtimeEnv);
     return new Response(JSON.stringify({ ok: true, slug }));
   } catch (err) {
     return new Response(

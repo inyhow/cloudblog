@@ -7,27 +7,33 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     <h1 class="text-3xl font-semibold text-white">Post Editor</h1>
     <p class="mt-2 text-sm text-slate-300">Write with the visual editor, upload images, and control slug, status, and cover.</p>
   </div>
-  <form id="form" class="grid gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-sm">
+  <form id="form" class="grid gap-4 overflow-x-hidden rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-sm">
     <div class="grid gap-3 md:grid-cols-2">
-      <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="title" placeholder="Title" required />
-      <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="slug" placeholder="Custom URL slug" />
+      <input class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="title" placeholder="Title" required />
+      <input class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="slug" placeholder="Custom URL slug" />
     </div>
-    <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="description" placeholder="Description" />
-    <div class="grid gap-3 md:grid-cols-4">
-      <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="category" placeholder="Category slug" />
-      <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 md:col-span-2" name="tags" placeholder="Tags (comma separated)" />
-      <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="status">
+    <input class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="description" placeholder="Description" />
+    <div class="grid gap-3 md:grid-cols-5">
+      <input class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="category" placeholder="Category slug" />
+      <input class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 md:col-span-2" name="tags" placeholder="Tags (comma separated)" />
+      <select class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="status">
         <option value="published">Published</option>
         <option value="draft">Draft</option>
+        <option value="review">In Review</option>
+        <option value="scheduled">Scheduled</option>
+        <option value="archived">Archived</option>
+        <option value="deleted">Deleted (Recycle Bin)</option>
       </select>
-      <label class="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2">
+      <label class="min-w-0 flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2">
         <input type="checkbox" name="pinned" />
         <span>Pinned</span>
       </label>
     </div>
-    <div class="grid gap-3 md:grid-cols-[1fr_auto]">
-      <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="coverImage" placeholder="Cover image URL" />
-      <div class="flex gap-2">
+    <textarea class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="reviewNote" placeholder="Review note (approval/rejection feedback)"></textarea>
+    <input class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="scheduledAt" type="datetime-local" placeholder="Scheduled publish time" />
+    <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
+      <input class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="coverImage" placeholder="Cover image URL" />
+      <div class="flex flex-wrap gap-2">
         <input class="hidden" type="file" id="cover-file" accept="image/*" />
         <button class="rounded-xl border border-white/10 px-3 py-2" type="button" id="cover-pick">Choose Cover</button>
         <button class="rounded-xl border border-white/10 px-3 py-2" type="button" id="cover-upload">Upload Cover</button>
@@ -63,6 +69,10 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       <button class="rounded-xl border border-white/10 px-4 py-2" type="button" id="sync-markdown">Sync from Markdown</button>
     </div>
   </form>
+  <section id="revisions-panel" class="mt-6 hidden rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+    <div class="mb-3 text-sm font-medium text-slate-200">Revision History</div>
+    <div id="revisions-list" class="grid gap-2"></div>
+  </section>
   <p id="msg" class="mt-3 text-sm"></p>
 
   <script is:inline>
@@ -81,12 +91,16 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       const statusInput = form.querySelector('select[name="status"]');
       const pinnedInput = form.querySelector('input[name="pinned"]');
       const coverImageInput = form.querySelector('input[name="coverImage"]');
+      const scheduledAtInput = form.querySelector('input[name="scheduledAt"]');
+      const reviewNoteInput = form.querySelector('textarea[name="reviewNote"]');
 
       const coverFile = document.getElementById('cover-file');
       const coverPick = document.getElementById('cover-pick');
       const coverUpload = document.getElementById('cover-upload');
       const inlineImageFile = document.getElementById('inline-image-file');
       const syncMarkdownBtn = document.getElementById('sync-markdown');
+      const revisionsPanel = document.getElementById('revisions-panel');
+      const revisionsList = document.getElementById('revisions-list');
 
       function escapeHtml(value) {
         return value
@@ -343,10 +357,49 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         tagsInput.value = (post.tags || []).join(',');
         categoryInput.value = post.category || '';
         statusInput.value = post.status || 'published';
+        reviewNoteInput.value = post.reviewNote || '';
         pinnedInput.checked = !!post.pinned;
         coverImageInput.value = post.coverImage || '';
+        if (post.scheduledAt) {
+          scheduledAtInput.value = new Date(post.scheduledAt).toISOString().slice(0, 16);
+        }
         md.value = post.content || '';
         syncEditorFromMarkdown();
+
+        const revisionsResp = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}/revisions`);
+        if (revisionsResp.ok) {
+          const revisionData = await revisionsResp.json();
+          const revisions = revisionData.revisions || [];
+          if (revisions.length > 0) {
+            revisionsPanel.classList.remove('hidden');
+            revisionsList.innerHTML = revisions
+              .map((path) => {
+                const name = path.split('/').pop().replace('.md', '');
+                return `<div class="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/40 p-2">
+                  <span class="text-xs text-slate-300">${name}</span>
+                  <button class="rounded-lg border border-sky-400/50 px-2 py-1 text-xs text-sky-300" data-restore-revision="${encodeURIComponent(path)}" type="button">Restore</button>
+                </div>`;
+              })
+              .join('');
+            revisionsList.querySelectorAll('[data-restore-revision]').forEach((button) => {
+              button.addEventListener('click', async () => {
+                if (!confirm('Restore this revision? Current content will be replaced.')) return;
+                const revisionPath = decodeURIComponent(button.dataset.restoreRevision);
+                const resp = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}/revisions`, {
+                  method: 'POST',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ revisionPath }),
+                });
+                if (!resp.ok) {
+                  setMessage(`Restore failed: ${await resp.text()}`, 'error');
+                  return;
+                }
+                setMessage('Revision restored. Reloading...', 'success');
+                setTimeout(() => location.reload(), 600);
+              });
+            });
+          }
+        }
       })();
 
       syncEditorFromMarkdown();
@@ -362,8 +415,10 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           tags: tagsInput.value.split(',').map((s) => s.trim()).filter(Boolean),
           category: categoryInput.value.trim(),
           status: statusInput.value,
+          reviewNote: reviewNoteInput.value.trim(),
           pinned: pinnedInput.checked,
           coverImage: coverImageInput.value.trim(),
+          scheduledAt: scheduledAtInput.value ? new Date(scheduledAtInput.value).toISOString() : '',
           content: md.value,
         };
         const url = slug ? `/api/admin/posts/${encodeURIComponent(slug)}` : '/api/admin/posts';

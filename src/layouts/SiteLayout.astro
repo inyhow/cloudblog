@@ -23,6 +23,9 @@ const renderedTheme = renderTemplateVariables(templateTheme?.content ?? '', {
   'site.description': settings.description,
   ...settings.templateVariables,
 });
+const categoryMenu = (settings.categories || [])
+  .filter((item) => item.showInMenu)
+  .sort((a, b) => (a.sort || 0) - (b.sort || 0));
 ---
 
 <!doctype html>
@@ -57,6 +60,9 @@ const renderedTheme = renderTemplateVariables(templateTheme?.content ?? '', {
         <div class="flex gap-4 text-sm text-slate-600">
           {settings.menu.map((item) => (
             <a class="transition hover:text-slate-950" href={item.href}>{item.label}</a>
+          ))}
+          {categoryMenu.map((item) => (
+            <a class="transition hover:text-slate-950" href={`/category/${encodeURIComponent(item.slug)}`}>{item.name}</a>
           ))}
         </div>
         <a

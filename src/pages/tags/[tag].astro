@@ -1,6 +1,6 @@
 ---
 import SiteLayout from '../../layouts/SiteLayout.astro';
-import { listPosts } from '../../lib/posts';
+import { isPostPublic, listPosts } from '../../lib/posts';
 import { getRuntimeEnv } from '../../lib/runtime-env';
 import { readSettings } from '../../lib/settings';
 import { getTemplateFile } from '../../lib/template-files';
@@ -13,7 +13,7 @@ const tagTemplate = settings.templates?.tag ?? 'classic';
 const tagFile = await getTemplateFile('tag', runtimeEnv);
 const tagHeaderRaw = tagFile?.content || settings.templateContent?.tagHeaderHtml || '';
 const posts = (await listPosts(runtimeEnv))
-  .filter((post) => post.status === 'published' && post.tags.includes(tag))
+  .filter((post) => isPostPublic(post) && post.tags.includes(tag))
   .sort((a, b) => new Date(b.pubDate).valueOf() - new Date(a.pubDate).valueOf());
 const tagHeaderHtml = renderTemplateVariables(tagHeaderRaw, {
   'site.title': settings.title,

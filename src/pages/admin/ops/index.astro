@@ -1,0 +1,50 @@
+﻿---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="Operations Log">
+  <div class="mb-6">
+    <h1 class="text-3xl font-semibold text-white">Operations Log</h1>
+    <p class="mt-2 text-sm text-slate-300">Recent management actions for audit and troubleshooting.</p>
+  </div>
+
+  <div id="list" class="grid gap-2"></div>
+  <p id="msg" class="mt-3 text-sm text-red-300"></p>
+
+  <script is:inline>
+    (() => {
+      const list = document.getElementById('list');
+      const msg = document.getElementById('msg');
+      (async () => {
+        const resp = await fetch('/api/admin/ops');
+        if (resp.status === 401) {
+          location.href = '/admin';
+          return;
+        }
+        const raw = await resp.text();
+        if (!resp.ok) {
+          msg.textContent = raw;
+          return;
+        }
+        const data = JSON.parse(raw);
+        const logs = data.logs || [];
+        if (!logs.length) {
+          list.innerHTML = '<div class="rounded-xl border border-white/10 bg-slate-900/50 p-4 text-sm text-slate-300">No operation logs yet.</div>';
+          return;
+        }
+        list.innerHTML = logs
+          .map(
+            (log) => `<div class="rounded-xl border border-white/10 bg-slate-900/60 p-3 text-sm">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="font-medium text-white">${log.action}</span>
+                <span class="text-xs text-slate-400">${new Date(log.at).toLocaleString('zh-CN')}</span>
+              </div>
+              <div class="mt-1 text-slate-300">${log.target}</div>
+              ${log.detail ? `<div class="mt-1 text-xs text-slate-400">${log.detail}</div>` : ''}
+            </div>`,
+          )
+          .join('');
+      })();
+    })();
+  </script>
+</AdminLayout>

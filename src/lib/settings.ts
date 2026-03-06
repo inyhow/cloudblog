@@ -1,12 +1,26 @@
-import { getFile, putFile } from './github';
+﻿import { getFile, putFile } from './github';
 
 const SETTINGS_PATH = 'cloudblog/settings.json';
 const THEME_PATH = 'cloudblog/theme.css';
 
+export interface CategoryConfig {
+  slug: string;
+  name: string;
+  description?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  template?: 'classic' | 'grid' | 'minimal';
+  sort?: number;
+  showInMenu?: boolean;
+  adTop?: string;
+  adSidebar?: string;
+  modules?: Array<'hero' | 'list' | 'sidebar'>;
+}
+
 export interface SiteSettings {
   title: string;
   description: string;
-  categories: Array<{ slug: string; name: string }>;
+  categories: CategoryConfig[];
   menu: Array<{ label: string; href: string }>;
   footer: string;
   analyticsJs: string;
@@ -16,6 +30,13 @@ export interface SiteSettings {
     googleAnalyticsId: string;
     googleSiteVerification: string;
     googleAdsenseClient: string;
+  };
+  adSlots: {
+    homeTop: string;
+    listTop: string;
+    postTop: string;
+    postBottom: string;
+    postSidebar: string;
   };
   templateVariables: Record<string, string>;
   templates: {
@@ -55,6 +76,13 @@ const defaults: SiteSettings = {
     googleSiteVerification: '',
     googleAdsenseClient: '',
   },
+  adSlots: {
+    homeTop: '',
+    listTop: '',
+    postTop: '',
+    postBottom: '',
+    postSidebar: '',
+  },
   templateVariables: {},
   templates: {
     home: 'classic',
@@ -70,11 +98,49 @@ const defaults: SiteSettings = {
   },
 };
 
+function normalizeCategories(input: unknown): CategoryConfig[] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const row = item as Record<string, unknown>;
+      const slug = String(row.slug || '').trim();
+      const name = String(row.name || '').trim();
+      if (!slug || !name) return null;
+      return {
+        slug,
+        name,
+        description: String(row.description || '').trim() || undefined,
+        seoTitle: String(row.seoTitle || '').trim() || undefined,
+        seoDescription: String(row.seoDescription || '').trim() || undefined,
+        template: row.template === 'grid' || row.template === 'minimal' ? row.template : 'classic',
+        sort: Number.isFinite(Number(row.sort)) ? Number(row.sort) : 0,
+        showInMenu: String(row.showInMenu ?? 'false') === 'true',
+        adTop: String(row.adTop || '').trim() || undefined,
+        adSidebar: String(row.adSidebar || '').trim() || undefined,
+        modules: Array.isArray(row.modules)
+          ? row.modules.filter((m): m is 'hero' | 'list' | 'sidebar' => m === 'hero' || m === 'list' || m === 'sidebar')
+          : undefined,
+      } satisfies CategoryConfig;
+    })
+    .filter((item): item is CategoryConfig => Boolean(item))
+    .sort((a, b) => (a.sort || 0) - (b.sort || 0));
+}
+
 export async function readSettings(runtimeEnv?: Record<string, string>): Promise<SiteSettings> {
   try {
     const file = await getFile(SETTINGS_PATH, runtimeEnv);
     if (!file) return defaults;
-    return { ...defaults, ...JSON.parse(file.content) };
+    const parsed = JSON.parse(file.content);
+    return {
+      ...defaults,
+      ...parsed,
+      categories: normalizeCategories(parsed.categories),
+      seo: { ...defaults.seo, ...(parsed.seo || {}) },
+      adSlots: { ...defaults.adSlots, ...(parsed.adSlots || {}) },
+      templates: { ...defaults.templates, ...(parsed.templates || {}) },
+      templateContent: { ...defaults.templateContent, ...(parsed.templateContent || {}) },
+    };
   } catch {
     return defaults;
   }

@@ -1,4 +1,4 @@
----
+﻿---
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 ---
 
@@ -6,20 +6,118 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
   <div class="mb-6 flex items-start justify-between gap-4">
     <div>
       <h1 class="text-3xl font-semibold text-white">Articles</h1>
-      <p class="mt-2 text-sm text-slate-300">Manage published posts, drafts, pinned content, and custom slugs.</p>
+      <p class="mt-2 text-sm text-slate-300">Manage drafts, review queue, scheduled, published, archived, and recycle bin.</p>
     </div>
     <div class="flex gap-3">
       <a class="rounded-xl bg-amber-400 px-4 py-2 font-medium text-slate-950" href="/admin/posts/new">New Post</a>
-      <a class="rounded-xl border border-white/10 px-4 py-2 text-slate-200" href="/admin/settings">Template Center</a>
+      <a class="rounded-xl border border-white/10 px-4 py-2 text-slate-200" href="/admin/pages/new">New Page</a>
     </div>
   </div>
+
+  <div id="tabs" class="mb-4 flex flex-wrap gap-2">
+    <button data-tab="all" class="rounded-xl border border-white/10 px-3 py-2 text-sm">All</button>
+    <button data-tab="draft" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Draft</button>
+    <button data-tab="review" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Review</button>
+    <button data-tab="scheduled" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Scheduled</button>
+    <button data-tab="published" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Published</button>
+    <button data-tab="archived" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Archived</button>
+    <button data-tab="deleted" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Recycle Bin</button>
+  </div>
+
+  <div class="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-slate-900/50 p-3 text-sm">
+    <label class="flex items-center gap-2"><input id="select-all" type="checkbox" /> <span>Select all in current tab</span></label>
+    <button id="batch-publish" class="rounded-lg border border-emerald-400/50 px-3 py-1 text-emerald-300" type="button">Batch Publish</button>
+    <button id="batch-draft" class="rounded-lg border border-slate-400/50 px-3 py-1 text-slate-300" type="button">Batch Draft</button>
+    <button id="batch-archive" class="rounded-lg border border-amber-400/50 px-3 py-1 text-amber-300" type="button">Batch Archive</button>
+    <button id="batch-delete" class="rounded-lg border border-red-400/50 px-3 py-1 text-red-300" type="button">Batch Recycle</button>
+  </div>
+
   <div id="list" class="grid gap-3"></div>
   <p id="msg" class="mt-3 text-sm text-red-300"></p>
+
   <script is:inline>
     (() => {
       const list = document.getElementById('list');
       const msg = document.getElementById('msg');
-      (async () => {
+      const tabs = document.getElementById('tabs');
+      const selectAll = document.getElementById('select-all');
+      let activeTab = 'all';
+      let posts = [];
+      let selected = new Set();
+
+      function badgeTone(status) {
+        if (status === 'published') return 'bg-emerald-500/15 text-emerald-300';
+        if (status === 'draft') return 'bg-slate-500/20 text-slate-300';
+        if (status === 'review') return 'bg-sky-500/20 text-sky-300';
+        if (status === 'scheduled') return 'bg-violet-500/20 text-violet-300';
+        if (status === 'deleted') return 'bg-rose-500/20 text-rose-300';
+        return 'bg-amber-500/20 text-amber-300';
+      }
+
+      function switchTab(tab) {
+        activeTab = tab;
+        selected = new Set();
+        selectAll.checked = false;
+        tabs.querySelectorAll('[data-tab]').forEach((button) => {
+          const current = button.dataset.tab === tab;
+          button.classList.toggle('bg-amber-400', current);
+          button.classList.toggle('text-slate-950', current);
+        });
+        render();
+      }
+
+      function filteredPosts() {
+        if (activeTab === 'all') return posts;
+        return posts.filter((post) => post.status === activeTab);
+      }
+
+      async function updateStatus(slug, status, reviewNote = undefined) {
+        const post = posts.find((item) => item.slug === slug);
+        if (!post) return false;
+        const payload = { ...post, status };
+        if (typeof reviewNote === 'string') payload.reviewNote = reviewNote;
+        const resp = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}`, {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!resp.ok) {
+          msg.textContent = `Update failed for ${slug}: ${await resp.text()}`;
+          return false;
+        }
+        return true;
+      }
+
+      async function softDelete(slug) {
+        const resp = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}`, { method: 'DELETE' });
+        if (!resp.ok) {
+          msg.textContent = `Delete failed for ${slug}: ${await resp.text()}`;
+          return false;
+        }
+        return true;
+      }
+
+      async function runBatch(kind) {
+        const slugs = Array.from(selected);
+        if (!slugs.length) {
+          msg.textContent = 'Please select at least one post.';
+          return;
+        }
+        if (kind === 'delete' && !confirm(`Move ${slugs.length} posts to recycle bin?`)) return;
+        msg.textContent = `Processing ${slugs.length} posts...`;
+        for (const slug of slugs) {
+          if (kind === 'publish') await updateStatus(slug, 'published');
+          if (kind === 'draft') await updateStatus(slug, 'draft');
+          if (kind === 'archive') await updateStatus(slug, 'archived');
+          if (kind === 'delete') await softDelete(slug);
+        }
+        selected = new Set();
+        selectAll.checked = false;
+        await refresh();
+        msg.textContent = 'Batch action complete.';
+      }
+
+      async function refresh() {
         const resp = await fetch('/api/admin/posts');
         if (resp.status === 401) {
           location.href = '/admin';
@@ -30,46 +128,131 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           msg.textContent = raw;
           return;
         }
-        const posts = JSON.parse(raw);
+        posts = JSON.parse(raw);
         posts.sort((a, b) => new Date(b.pubDate).valueOf() - new Date(a.pubDate).valueOf());
-        list.innerHTML = posts
-          .map(
-            (p) => `
-              <article class="rounded-2xl border border-white/10 bg-slate-900/60 p-5 transition hover:border-amber-400/40">
-                <a class="block" href="/admin/posts/new?slug=${encodeURIComponent(p.slug)}">
-                <div class="mb-2 flex flex-wrap items-center gap-2">
-                  <div class="text-lg font-semibold text-white">${p.title}</div>
-                  <span class="rounded-full px-2 py-0.5 text-xs ${p.status === 'published' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-500/15 text-slate-300'}">${p.status}</span>
-                  ${p.pinned ? '<span class="rounded-full bg-amber-400/15 px-2 py-0.5 text-xs text-amber-300">pinned</span>' : ''}
+        render();
+      }
+
+      function render() {
+        const visible = filteredPosts();
+        if (!visible.length) {
+          list.innerHTML = '<div class="rounded-xl border border-white/10 bg-slate-900/50 p-4 text-sm text-slate-300">No posts in this tab.</div>';
+          return;
+        }
+        list.innerHTML = visible
+          .map((p) => `
+            <article class="rounded-2xl border border-white/10 bg-slate-900/60 p-5 transition hover:border-amber-400/40">
+              <div class="mb-3 flex items-start gap-3">
+                <input data-select-slug="${encodeURIComponent(p.slug)}" type="checkbox" ${selected.has(p.slug) ? 'checked' : ''} />
+                <div class="min-w-0 flex-1">
+                  <a class="block" href="/admin/posts/new?slug=${encodeURIComponent(p.slug)}">
+                    <div class="mb-2 flex flex-wrap items-center gap-2">
+                      <div class="text-lg font-semibold text-white">${p.title}</div>
+                      <span class="rounded-full px-2 py-0.5 text-xs ${badgeTone(p.status)}">${p.status}</span>
+                      ${p.pinned ? '<span class="rounded-full bg-amber-400/15 px-2 py-0.5 text-xs text-amber-300">pinned</span>' : ''}
+                    </div>
+                    <div class="text-sm text-slate-300">${p.description || ''}</div>
+                    ${p.reviewNote ? `<div class="mt-2 text-xs text-sky-300">Review note: ${p.reviewNote}</div>` : ''}
+                    <div class="mt-2 text-xs text-slate-400">/${p.slug}</div>
+                    <div class="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
+                      <span>Created: ${new Date(p.pubDate).toLocaleString('zh-CN')}</span>
+                      ${p.scheduledAt ? `<span>Scheduled: ${new Date(p.scheduledAt).toLocaleString('zh-CN')}</span>` : ''}
+                    </div>
+                  </a>
                 </div>
-                <div class="text-sm text-slate-300">${p.description || ''}</div>
-                <div class="mt-2 text-xs text-slate-400">/${p.slug}</div>
-                <div class="mt-2 text-xs text-slate-500">${new Date(p.pubDate).toLocaleString('zh-CN')}</div>
-                </a>
-                <div class="mt-4 flex justify-end">
-                  <button data-delete-slug="${encodeURIComponent(p.slug)}" class="rounded-lg border border-red-400/50 px-3 py-1.5 text-xs text-red-300 hover:bg-red-500/10" type="button">Delete</button>
-                </div>
-              </article>
-            `,
-          )
+              </div>
+              <div class="mt-4 flex flex-wrap justify-end gap-2">
+                ${p.status === 'review' ? '<button data-action="approve" data-slug="' + encodeURIComponent(p.slug) + '" class="rounded-lg border border-emerald-400/50 px-3 py-1.5 text-xs text-emerald-300" type="button">Approve</button>' : ''}
+                ${p.status === 'review' ? '<button data-action="reject" data-slug="' + encodeURIComponent(p.slug) + '" class="rounded-lg border border-sky-400/50 px-3 py-1.5 text-xs text-sky-300" type="button">Reject to Draft</button>' : ''}
+                ${p.status === 'deleted' ? '<button data-action="restore" data-slug="' + encodeURIComponent(p.slug) + '" class="rounded-lg border border-emerald-400/50 px-3 py-1.5 text-xs text-emerald-300" type="button">Restore</button>' : ''}
+                <button data-action="publish" data-slug="${encodeURIComponent(p.slug)}" class="rounded-lg border border-emerald-400/50 px-3 py-1.5 text-xs text-emerald-300" type="button">Publish</button>
+                <button data-action="draft" data-slug="${encodeURIComponent(p.slug)}" class="rounded-lg border border-slate-400/50 px-3 py-1.5 text-xs text-slate-300" type="button">Move to Draft</button>
+                <button data-action="archive" data-slug="${encodeURIComponent(p.slug)}" class="rounded-lg border border-amber-400/50 px-3 py-1.5 text-xs text-amber-300" type="button">Archive</button>
+                <button data-action="delete" data-slug="${encodeURIComponent(p.slug)}" class="rounded-lg border border-red-400/50 px-3 py-1.5 text-xs text-red-300" type="button">Recycle</button>
+                ${p.status === 'deleted' ? '<button data-action="hard-delete" data-slug="' + encodeURIComponent(p.slug) + '" class="rounded-lg border border-rose-500/50 px-3 py-1.5 text-xs text-rose-300" type="button">Permanent Delete</button>' : ''}
+              </div>
+            </article>
+          `)
           .join('');
 
-        list.querySelectorAll('[data-delete-slug]').forEach((button) => {
-          button.addEventListener('click', async (event) => {
-            event.preventDefault();
-            const slug = decodeURIComponent(button.dataset.deleteSlug);
-            if (!confirm(`Delete post "${slug}"? This action cannot be undone.`)) return;
-            const resp = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}`, { method: 'DELETE' });
-            const raw = await resp.text();
-            if (!resp.ok) {
-              msg.textContent = `Delete failed: ${raw}`;
-              return;
-            }
-            msg.textContent = `Deleted: ${slug}`;
-            button.closest('article')?.remove();
+        list.querySelectorAll('[data-select-slug]').forEach((checkbox) => {
+          checkbox.addEventListener('change', () => {
+            const slug = decodeURIComponent(checkbox.dataset.selectSlug);
+            if (checkbox.checked) selected.add(slug);
+            else selected.delete(slug);
           });
         });
-      })();
+
+        list.querySelectorAll('[data-action]').forEach((button) => {
+          button.addEventListener('click', async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const action = button.dataset.action;
+            const slug = decodeURIComponent(button.dataset.slug);
+
+            if (action === 'delete') {
+              if (!confirm(`Move post "${slug}" to recycle bin?`)) return;
+              if (await softDelete(slug)) {
+                msg.textContent = `Moved to recycle bin: ${slug}`;
+                await refresh();
+              }
+              return;
+            }
+            if (action === 'hard-delete') {
+              if (!confirm(`Permanently delete "${slug}"?`)) return;
+              const resp = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}?hard=1`, { method: 'DELETE' });
+              if (!resp.ok) {
+                msg.textContent = `Delete failed: ${await resp.text()}`;
+                return;
+              }
+              msg.textContent = `Permanently deleted: ${slug}`;
+              await refresh();
+              return;
+            }
+
+            if (action === 'approve') {
+              if (await updateStatus(slug, 'published', 'Approved')) {
+                msg.textContent = `Approved: ${slug}`;
+                await refresh();
+              }
+              return;
+            }
+            if (action === 'reject') {
+              const note = prompt('Rejection note', 'Need revision') || 'Need revision';
+              if (await updateStatus(slug, 'draft', note)) {
+                msg.textContent = `Rejected to draft: ${slug}`;
+                await refresh();
+              }
+              return;
+            }
+
+            const nextStatus = action === 'publish' ? 'published' : action === 'draft' ? 'draft' : action === 'restore' ? 'draft' : 'archived';
+            if (await updateStatus(slug, nextStatus)) {
+              msg.textContent = `Updated: ${slug} -> ${nextStatus}`;
+              await refresh();
+            }
+          });
+        });
+      }
+
+      tabs.querySelectorAll('[data-tab]').forEach((button) => {
+        button.addEventListener('click', () => switchTab(button.dataset.tab));
+      });
+
+      selectAll.addEventListener('change', () => {
+        const visible = filteredPosts();
+        if (selectAll.checked) visible.forEach((p) => selected.add(p.slug));
+        else visible.forEach((p) => selected.delete(p.slug));
+        render();
+      });
+
+      document.getElementById('batch-publish').addEventListener('click', () => runBatch('publish'));
+      document.getElementById('batch-draft').addEventListener('click', () => runBatch('draft'));
+      document.getElementById('batch-archive').addEventListener('click', () => runBatch('archive'));
+      document.getElementById('batch-delete').addEventListener('click', () => runBatch('delete'));
+
+      switchTab('all');
+      refresh();
     })();
   </script>
 </AdminLayout>

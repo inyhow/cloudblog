@@ -7,10 +7,12 @@ interface Props {
 
 const { title } = Astro.props;
 const nav = [
+  { href: '/admin/overview', label: 'Overview' },
   { href: '/admin/posts', label: 'Articles' },
   { href: '/admin/pages', label: 'Pages' },
   { href: '/admin/templates', label: 'Templates' },
   { href: '/admin/media', label: 'Media' },
+  { href: '/admin/ops', label: 'Ops' },
   { href: '/admin/settings', label: 'Settings' },
 ];
 ---

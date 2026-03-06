@@ -1,0 +1,70 @@
+﻿---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="Overview">
+  <div class="mb-6">
+    <h1 class="text-3xl font-semibold text-white">Overview</h1>
+    <p class="mt-2 text-sm text-slate-300">Daily operations snapshot for publishing workflow.</p>
+  </div>
+  <div id="cards" class="grid gap-3 md:grid-cols-4"></div>
+  <div class="mt-6 grid gap-3 md:grid-cols-2">
+    <section class="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+      <h2 class="mb-3 text-sm font-medium text-slate-200">Upcoming Scheduled</h2>
+      <div id="upcoming" class="grid gap-2 text-sm"></div>
+    </section>
+    <section class="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+      <h2 class="mb-3 text-sm font-medium text-slate-200">Review Queue</h2>
+      <div id="queue" class="grid gap-2 text-sm"></div>
+    </section>
+  </div>
+
+  <script is:inline>
+    (() => {
+      const cards = document.getElementById('cards');
+      const upcoming = document.getElementById('upcoming');
+      const queue = document.getElementById('queue');
+
+      (async () => {
+        const resp = await fetch('/api/admin/posts');
+        if (resp.status === 401) {
+          location.href = '/admin';
+          return;
+        }
+        const posts = await resp.json();
+        const now = Date.now();
+
+        const review = posts.filter((p) => p.status === 'review');
+        const scheduled = posts.filter((p) => p.status === 'scheduled');
+        const published = posts.filter((p) => p.status === 'published');
+        const deleted = posts.filter((p) => p.status === 'deleted');
+
+        const next7d = scheduled.filter((p) => p.scheduledAt && (new Date(p.scheduledAt).valueOf() - now) < 7 * 86400000);
+
+        const stat = [
+          { label: 'All Posts', value: posts.length },
+          { label: 'Review Queue', value: review.length },
+          { label: 'Published', value: published.length },
+          { label: 'Recycle Bin', value: deleted.length },
+        ];
+
+        cards.innerHTML = stat.map((s) => `<div class="rounded-2xl border border-white/10 bg-slate-900/60 p-4"><div class="text-xs uppercase tracking-[0.2em] text-slate-400">${s.label}</div><div class="mt-2 text-3xl font-semibold text-white">${s.value}</div></div>`).join('');
+
+        upcoming.innerHTML = next7d.length
+          ? next7d
+              .sort((a, b) => new Date(a.scheduledAt).valueOf() - new Date(b.scheduledAt).valueOf())
+              .slice(0, 8)
+              .map((p) => `<a class="rounded-xl border border-white/10 bg-slate-950/40 p-2 text-slate-200" href="/admin/posts/new?slug=${encodeURIComponent(p.slug)}"><div>${p.title}</div><div class="text-xs text-slate-400">${new Date(p.scheduledAt).toLocaleString('zh-CN')}</div></a>`)
+              .join('')
+          : '<div class="text-slate-400">No scheduled posts in next 7 days.</div>';
+
+        queue.innerHTML = review.length
+          ? review
+              .slice(0, 8)
+              .map((p) => `<a class="rounded-xl border border-white/10 bg-slate-950/40 p-2 text-slate-200" href="/admin/posts/new?slug=${encodeURIComponent(p.slug)}"><div>${p.title}</div><div class="text-xs text-slate-400">${p.reviewNote || 'No review note'}</div></a>`)
+              .join('')
+          : '<div class="text-slate-400">No pending reviews.</div>';
+      })();
+    })();
+  </script>
+</AdminLayout>

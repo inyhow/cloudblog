@@ -56,6 +56,8 @@ article.prose td {
 #editor pre,
 #editor table {
   margin-bottom: 0.85rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 #editor blockquote {
@@ -70,14 +72,23 @@ article.prose td {
   border-radius: 0.75rem;
   padding: 1rem;
   overflow-x: auto;
+  max-width: 100%;
 }
 
 #editor table {
   width: 100%;
   border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 #editor td {
   border: 1px solid #cbd5e1;
   padding: 0.5rem;
+}
+
+#editor img {
+  max-width: 100%;
+  height: auto;
 }

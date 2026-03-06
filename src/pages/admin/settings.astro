@@ -11,6 +11,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   <div class="mb-4 flex flex-wrap gap-2" id="tabs">
     <button data-tab="base" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Base</button>
     <button data-tab="seo" class="rounded-xl border border-white/10 px-3 py-2 text-sm">SEO & Google</button>
+    <button data-tab="ads" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Ads</button>
     <button data-tab="category" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Categories</button>
     <button data-tab="template" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Template</button>
     <button data-tab="vars" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Variables</button>
@@ -38,8 +39,25 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       </div>
     </section>
 
+    <section data-panel="ads" class="panel hidden rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+      <div class="grid gap-3">
+        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adHomeTop" placeholder="Ad slot: home top HTML"></textarea>
+        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adListTop" placeholder="Ad slot: blog list top HTML"></textarea>
+        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostTop" placeholder="Ad slot: post top HTML"></textarea>
+        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostBottom" placeholder="Ad slot: post bottom HTML"></textarea>
+        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostSidebar" placeholder="Ad slot: post sidebar HTML"></textarea>
+      </div>
+    </section>
+
     <section data-panel="category" class="panel hidden rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-      <textarea class="min-h-48 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="categories" placeholder='Categories JSON: [{"slug":"tech","name":"Tech"}]'></textarea>
+      <div class="mb-3 flex flex-wrap gap-2">
+        <button id="cat-add" type="button" class="rounded-lg border border-emerald-400/50 px-3 py-1.5 text-xs text-emerald-300">Add Category</button>
+        <button id="cat-sync-json" type="button" class="rounded-lg border border-sky-400/50 px-3 py-1.5 text-xs text-sky-300">Sync to JSON</button>
+        <button id="cat-apply-json" type="button" class="rounded-lg border border-amber-400/50 px-3 py-1.5 text-xs text-amber-300">Apply JSON to Table</button>
+      </div>
+      <div id="cat-table" class="mb-3 grid gap-2"></div>
+      <textarea class="min-h-56 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="categories" placeholder='Categories JSON: [{"slug":"tech","name":"Tech","description":"Category intro","seoTitle":"Tech News","seoDescription":"Tech articles","template":"grid","sort":10,"showInMenu":true,"adTop":"<div>ad</div>","adSidebar":"<div>ad</div>","modules":["hero","list","sidebar"]}]'></textarea>
+      <p class="mt-2 text-xs text-slate-400">Supports: slug, name, description, seoTitle, seoDescription, template, sort, showInMenu, adTop, adSidebar, modules(hero/list/sidebar).</p>
     </section>
 
     <section data-panel="template" class="panel hidden rounded-2xl border border-white/10 bg-slate-900/60 p-5">
@@ -133,6 +151,11 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         googleAnalyticsId: form.querySelector('input[name="googleAnalyticsId"]'),
         googleSiteVerification: form.querySelector('input[name="googleSiteVerification"]'),
         googleAdsenseClient: form.querySelector('input[name="googleAdsenseClient"]'),
+        adHomeTop: form.querySelector('textarea[name="adHomeTop"]'),
+        adListTop: form.querySelector('textarea[name="adListTop"]'),
+        adPostTop: form.querySelector('textarea[name="adPostTop"]'),
+        adPostBottom: form.querySelector('textarea[name="adPostBottom"]'),
+        adPostSidebar: form.querySelector('textarea[name="adPostSidebar"]'),
         categories: form.querySelector('textarea[name="categories"]'),
         homeTemplate: form.querySelector('select[name="homeTemplate"]'),
         postTemplate: form.querySelector('select[name="postTemplate"]'),
@@ -145,6 +168,95 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         templateVariables: form.querySelector('textarea[name="templateVariables"]'),
         css: document.getElementById('css'),
       };
+      const catTable = document.getElementById('cat-table');
+      const catAdd = document.getElementById('cat-add');
+      const catSyncJson = document.getElementById('cat-sync-json');
+      const catApplyJson = document.getElementById('cat-apply-json');
+      let categoryRows = [];
+
+      function renderCategoryTable() {
+        catTable.innerHTML = categoryRows
+          .map((item, idx) => `
+            <div class="grid gap-2 rounded-xl border border-white/10 bg-slate-950/40 p-2 md:grid-cols-12">
+              <input class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-2" data-k="slug" data-i="${idx}" value="${item.slug || ''}" placeholder="slug" />
+              <input class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-1" data-k="name" data-i="${idx}" value="${item.name || ''}" placeholder="name" />
+              <input class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-1" data-k="description" data-i="${idx}" value="${item.description || ''}" placeholder="description" />
+              <input class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-1" data-k="seoTitle" data-i="${idx}" value="${item.seoTitle || ''}" placeholder="seo title" />
+              <select class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-1" data-k="template" data-i="${idx}">
+                <option value="classic" ${item.template === 'classic' ? 'selected' : ''}>classic</option>
+                <option value="grid" ${item.template === 'grid' ? 'selected' : ''}>grid</option>
+                <option value="minimal" ${item.template === 'minimal' ? 'selected' : ''}>minimal</option>
+              </select>
+              <input class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-1" data-k="sort" data-i="${idx}" type="number" value="${item.sort || 0}" placeholder="sort" />
+              <input class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-2" data-k="adTop" data-i="${idx}" value="${item.adTop || ''}" placeholder="ad top html" />
+              <input class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-1" data-k="adSidebar" data-i="${idx}" value="${item.adSidebar || ''}" placeholder="ad sidebar html" />
+              <input class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-1" data-k="modulesText" data-i="${idx}" value="${Array.isArray(item.modules) ? item.modules.join(',') : 'hero,list,sidebar'}" placeholder="modules" />
+              <label class="flex items-center gap-1 text-xs md:col-span-1"><input data-k="showInMenu" data-i="${idx}" type="checkbox" ${item.showInMenu ? 'checked' : ''} />menu</label>
+              <div class="flex items-center justify-end gap-1 md:col-span-1">
+                <button type="button" data-action="up" data-i="${idx}" class="rounded border border-white/10 px-1.5 py-0.5 text-xs">↑</button>
+                <button type="button" data-action="down" data-i="${idx}" class="rounded border border-white/10 px-1.5 py-0.5 text-xs">↓</button>
+                <button type="button" data-action="remove" data-i="${idx}" class="rounded border border-red-400/40 px-1.5 py-0.5 text-xs text-red-300">x</button>
+              </div>
+            </div>
+          `)
+          .join('');
+        catTable.querySelectorAll('[data-k]').forEach((el) => {
+          el.addEventListener('input', () => {
+            const i = Number(el.dataset.i);
+            const k = el.dataset.k;
+            categoryRows[i][k] = el.type === 'checkbox' ? el.checked : el.value;
+          });
+          el.addEventListener('change', () => {
+            const i = Number(el.dataset.i);
+            const k = el.dataset.k;
+            categoryRows[i][k] = el.type === 'checkbox' ? el.checked : el.value;
+          });
+        });
+        catTable.querySelectorAll('[data-action]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const i = Number(btn.dataset.i);
+            const action = btn.dataset.action;
+            if (action === 'remove') categoryRows.splice(i, 1);
+            if (action === 'up' && i > 0) [categoryRows[i - 1], categoryRows[i]] = [categoryRows[i], categoryRows[i - 1]];
+            if (action === 'down' && i < categoryRows.length - 1) [categoryRows[i + 1], categoryRows[i]] = [categoryRows[i], categoryRows[i + 1]];
+            renderCategoryTable();
+          });
+        });
+      }
+
+      function syncCategoriesToJson() {
+        const normalized = categoryRows
+          .map((row, idx) => ({
+            slug: String(row.slug || '').trim(),
+            name: String(row.name || '').trim(),
+            description: String(row.description || '').trim(),
+            seoTitle: String(row.seoTitle || '').trim(),
+            seoDescription: String(row.seoDescription || '').trim(),
+            template: ['classic', 'grid', 'minimal'].includes(String(row.template)) ? String(row.template) : 'classic',
+            sort: Number.isFinite(Number(row.sort)) ? Number(row.sort) : idx,
+            showInMenu: !!row.showInMenu,
+            adTop: String(row.adTop || '').trim(),
+            adSidebar: String(row.adSidebar || '').trim(),
+            modules: String(row.modulesText || 'hero,list,sidebar').split(',').map((x) => x.trim()).filter((x) => ['hero', 'list', 'sidebar'].includes(x)),
+          }))
+          .filter((row) => row.slug && row.name);
+        f.categories.value = JSON.stringify(normalized, null, 2);
+      }
+
+      function applyJsonToCategories() {
+        try {
+          const parsed = JSON.parse(f.categories.value || '[]');
+          categoryRows = Array.isArray(parsed)
+            ? parsed.map((row) => ({
+                ...row,
+                modulesText: Array.isArray(row.modules) ? row.modules.join(',') : 'hero,list,sidebar',
+              }))
+            : [];
+          renderCategoryTable();
+        } catch (error) {
+          msg.textContent = `Categories JSON invalid: ${error.message}`;
+        }
+      }
 
       (async () => {
         const settingsResp = await fetch('/api/admin/settings');
@@ -163,7 +275,13 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         f.googleAnalyticsId.value = settings.seo?.googleAnalyticsId || '';
         f.googleSiteVerification.value = settings.seo?.googleSiteVerification || '';
         f.googleAdsenseClient.value = settings.seo?.googleAdsenseClient || '';
+        f.adHomeTop.value = settings.adSlots?.homeTop || '';
+        f.adListTop.value = settings.adSlots?.listTop || '';
+        f.adPostTop.value = settings.adSlots?.postTop || '';
+        f.adPostBottom.value = settings.adSlots?.postBottom || '';
+        f.adPostSidebar.value = settings.adSlots?.postSidebar || '';
         f.categories.value = JSON.stringify(settings.categories || [], null, 2);
+        applyJsonToCategories();
         f.homeTemplate.value = settings.templates?.home || 'classic';
         f.postTemplate.value = settings.templates?.post || 'classic';
         f.tagTemplate.value = settings.templates?.tag || 'classic';
@@ -181,9 +299,17 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         }
       })();
 
+      catAdd.addEventListener('click', () => {
+        categoryRows.push({ slug: '', name: '', description: '', seoTitle: '', seoDescription: '', template: 'classic', sort: categoryRows.length, showInMenu: false, adTop: '', adSidebar: '', modulesText: 'hero,list,sidebar' });
+        renderCategoryTable();
+      });
+      catSyncJson.addEventListener('click', syncCategoriesToJson);
+      catApplyJson.addEventListener('click', applyJsonToCategories);
+
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         msg.textContent = 'Saving...';
+        syncCategoriesToJson();
         const payload = {
           title: f.title.value,
           description: f.description.value,
@@ -196,6 +322,13 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
             googleAnalyticsId: f.googleAnalyticsId.value,
             googleSiteVerification: f.googleSiteVerification.value,
             googleAdsenseClient: f.googleAdsenseClient.value,
+          },
+          adSlots: {
+            homeTop: f.adHomeTop.value,
+            listTop: f.adListTop.value,
+            postTop: f.adPostTop.value,
+            postBottom: f.adPostBottom.value,
+            postSidebar: f.adPostSidebar.value,
           },
           categories: JSON.parse(f.categories.value || '[]'),
           templates: {
