@@ -1,13 +1,14 @@
 ---
 title: "如何将 CPA 接入 OpenClaw"
 description: ""
+category: "openclaw"
 tags:
   -
 status: published
 pinned: true
 coverImage: "https://cdn.jsdelivr.net/gh/inyhow/cloudblog@master/cloudblog/images/1772716573634.jpg"
-pubDate: 2026-03-06T03:06:54.578Z
-updatedDate: 2026-03-06T03:06:54.578Z
+pubDate: 2026-03-06T06:03:15.995Z
+updatedDate: 2026-03-06T06:03:15.995Z
 ---
 
 # 如何将 CPA 接入 OpenClaw
