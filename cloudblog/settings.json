@@ -20,6 +20,13 @@
     "googleSiteVerification": "",
     "googleAdsenseClient": ""
   },
+  "adSlots": {
+    "homeTop": "",
+    "listTop": "",
+    "postTop": "",
+    "postBottom": "",
+    "postSidebar": ""
+  },
   "categories": [],
   "templates": {
     "home": "classic",
