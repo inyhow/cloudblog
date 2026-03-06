@@ -30,6 +30,7 @@ const posts = (await listPosts(runtimeEnv))
         <div class:list={[listTemplate === 'minimal' ? '' : 'p-5']}>
           <div class="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-slate-400">
             {post.pinned && <span class="rounded-full bg-amber-100 px-2 py-1 text-amber-700">Pinned</span>}
+            {post.category && <span class="rounded-full bg-sky-100 px-2 py-1 text-sky-700">{post.category}</span>}
             <span>{new Date(post.pubDate).toLocaleDateString('zh-CN')}</span>
           </div>
           <h2 class="text-lg font-semibold text-slate-950">{post.title}</h2>

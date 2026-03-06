@@ -4,12 +4,22 @@ import { listPosts } from '../lib/posts';
 import { readSettings } from '../lib/settings';
 import { getRuntimeEnv } from '../lib/runtime-env';
 import { getTemplateFile } from '../lib/template-files';
+import { renderTemplateVariables } from '../lib/template-vars';
 
 const runtimeEnv = getRuntimeEnv(Astro.locals);
 const settings = await readSettings(runtimeEnv);
+const homeTitle = settings.seo?.homeTitle || settings.title;
+const homeDescription = settings.seo?.homeDescription || settings.description;
 const homeTemplate = settings.templates?.home ?? 'classic';
 const homeFile = await getTemplateFile('home', runtimeEnv);
-const homeHeroHtml = homeFile?.content || settings.templateContent?.homeHeroHtml || '';
+const homeHeroRaw = homeFile?.content || settings.templateContent?.homeHeroHtml || '';
+const homeHeroHtml = renderTemplateVariables(homeHeroRaw, {
+  'site.title': settings.title,
+  'site.description': settings.description,
+  'seo.homeTitle': homeTitle,
+  'seo.homeDescription': homeDescription,
+  ...settings.templateVariables,
+});
 const posts = (await listPosts(runtimeEnv))
   .filter((post) => post.status === 'published')
   .sort((a, b) => {
@@ -21,7 +31,7 @@ const featured = posts[0];
 const restPosts = posts.slice(1);
 ---
 
-<SiteLayout title={settings.title} description={settings.description}>
+<SiteLayout title={homeTitle} description={homeDescription}>
   <section class="mb-10 overflow-hidden rounded-[2rem] border border-amber-200/60 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_50%,#fffbeb_100%)] p-8 shadow-[0_20px_80px_-40px_rgba(245,158,11,0.45)]">
     {homeHeroHtml && <div class="mb-6" set:html={homeHeroHtml} />}
     <div class="grid gap-8 md:grid-cols-[1.2fr_0.8fr] md:items-end">
@@ -75,6 +85,7 @@ const restPosts = posts.slice(1);
         <div class:list={[homeTemplate === 'minimal' ? '' : 'p-5']}>
           <div class="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-slate-400">
             {post.pinned && <span class="rounded-full bg-amber-100 px-2 py-1 text-amber-700">Pinned</span>}
+            {post.category && <span class="rounded-full bg-sky-100 px-2 py-1 text-sky-700">{post.category}</span>}
             <span>{new Date(post.pubDate).toLocaleDateString('zh-CN')}</span>
           </div>
           <h2 class="text-xl font-bold tracking-tight text-slate-950">{post.title}</h2>

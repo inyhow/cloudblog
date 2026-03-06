@@ -6,9 +6,18 @@ const THEME_PATH = 'cloudblog/theme.css';
 export interface SiteSettings {
   title: string;
   description: string;
+  categories: Array<{ slug: string; name: string }>;
   menu: Array<{ label: string; href: string }>;
   footer: string;
   analyticsJs: string;
+  seo: {
+    homeTitle: string;
+    homeDescription: string;
+    googleAnalyticsId: string;
+    googleSiteVerification: string;
+    googleAdsenseClient: string;
+  };
+  templateVariables: Record<string, string>;
   templates: {
     home: 'classic' | 'magazine' | 'minimal';
     post: 'classic' | 'cover' | 'minimal';
@@ -32,12 +41,21 @@ export interface SiteSettings {
 const defaults: SiteSettings = {
   title: 'Cloud Blog',
   description: 'Blog powered by Astro + Cloudflare Pages',
+  categories: [],
   menu: [
     { label: 'Home', href: '/' },
     { label: 'Blog', href: '/blog' },
   ],
   footer: '© Cloud Blog',
   analyticsJs: '',
+  seo: {
+    homeTitle: 'Cloud Blog',
+    homeDescription: 'Blog powered by Astro + Cloudflare Pages',
+    googleAnalyticsId: '',
+    googleSiteVerification: '',
+    googleAdsenseClient: '',
+  },
+  templateVariables: {},
   templates: {
     home: 'classic',
     post: 'classic',

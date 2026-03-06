@@ -4,16 +4,23 @@ import { listPosts } from '../../lib/posts';
 import { getRuntimeEnv } from '../../lib/runtime-env';
 import { readSettings } from '../../lib/settings';
 import { getTemplateFile } from '../../lib/template-files';
+import { renderTemplateVariables } from '../../lib/template-vars';
 
 const tag = decodeURIComponent(Astro.params.tag!);
 const runtimeEnv = getRuntimeEnv(Astro.locals);
 const settings = await readSettings(runtimeEnv);
 const tagTemplate = settings.templates?.tag ?? 'classic';
 const tagFile = await getTemplateFile('tag', runtimeEnv);
-const tagHeaderHtml = tagFile?.content || settings.templateContent?.tagHeaderHtml || '';
+const tagHeaderRaw = tagFile?.content || settings.templateContent?.tagHeaderHtml || '';
 const posts = (await listPosts(runtimeEnv))
   .filter((post) => post.status === 'published' && post.tags.includes(tag))
   .sort((a, b) => new Date(b.pubDate).valueOf() - new Date(a.pubDate).valueOf());
+const tagHeaderHtml = renderTemplateVariables(tagHeaderRaw, {
+  'site.title': settings.title,
+  'tag.name': tag,
+  'tag.count': String(posts.length),
+  ...settings.templateVariables,
+});
 ---
 
 <SiteLayout title={`Tag: ${tag}`} description={`Posts tagged ${tag}`}>

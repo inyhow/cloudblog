@@ -3,6 +3,7 @@ import BaseHead from '../components/BaseHead.astro';
 import { readSettings, readThemeCss } from '../lib/settings';
 import { getRuntimeEnv } from '../lib/runtime-env';
 import { getTemplateFile } from '../lib/template-files';
+import { renderTemplateVariables } from '../lib/template-vars';
 
 interface Props {
   title: string;
@@ -14,6 +15,14 @@ const runtimeEnv = getRuntimeEnv(Astro.locals);
 const settings = await readSettings(runtimeEnv);
 const themeCss = await readThemeCss(runtimeEnv);
 const templateTheme = await getTemplateFile('theme', runtimeEnv);
+const googleAnalyticsId = settings.seo?.googleAnalyticsId || '';
+const googleSiteVerification = settings.seo?.googleSiteVerification || '';
+const googleAdsenseClient = settings.seo?.googleAdsenseClient || '';
+const renderedTheme = renderTemplateVariables(templateTheme?.content ?? '', {
+  'site.title': settings.title,
+  'site.description': settings.description,
+  ...settings.templateVariables,
+});
 ---
 
 <!doctype html>
@@ -21,7 +30,25 @@ const templateTheme = await getTemplateFile('theme', runtimeEnv);
   <head>
     <BaseHead title={title} description={description || settings.description} />
     <style is:inline>{themeCss}</style>
-    <style is:inline>{templateTheme?.content ?? ''}</style>
+    <style is:inline>{renderedTheme}</style>
+    {googleSiteVerification && <meta name="google-site-verification" content={googleSiteVerification} />}
+    {
+      googleAdsenseClient && (
+        <script
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${googleAdsenseClient}`}
+          crossOrigin="anonymous"
+        />
+      )
+    }
+    {
+      googleAnalyticsId && (
+        <>
+          <script async src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`} />
+          <script is:inline>{`window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '${googleAnalyticsId}');`}</script>
+        </>
+      )
+    }
   </head>
   <body class="min-h-screen bg-[linear-gradient(180deg,#fff7ed_0%,#ffffff_24%,#f8fafc_100%)] text-slate-800">
     <header class="sticky top-0 z-20 border-b border-slate-200/80 bg-white/85 backdrop-blur">

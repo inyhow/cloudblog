@@ -1,9 +1,10 @@
 ---
 import SiteLayout from '../../layouts/SiteLayout.astro';
-import { getPostBySlug, markdownToHtml } from '../../lib/posts';
+import { getPostBySlug, renderPostWithToc } from '../../lib/posts';
 import { readSettings } from '../../lib/settings';
 import { getRuntimeEnv } from '../../lib/runtime-env';
 import { getTemplateFile } from '../../lib/template-files';
+import { renderTemplateVariables } from '../../lib/template-vars';
 
 const slug = Astro.params.slug!;
 const runtimeEnv = getRuntimeEnv(Astro.locals);
@@ -15,13 +16,36 @@ if (!post || post.status !== 'published') {
 const settings = await readSettings(runtimeEnv);
 const postTemplate = settings.templates?.post ?? 'classic';
 const postFile = await getTemplateFile('post', runtimeEnv);
-const postHeaderHtml = postFile?.content || settings.templateContent?.postHeaderHtml || '';
-const html = markdownToHtml(post.content);
+const postHeaderRaw = postFile?.content || settings.templateContent?.postHeaderHtml || '';
+const postHeaderHtml = renderTemplateVariables(postHeaderRaw, {
+  'site.title': settings.title,
+  'post.title': post.title,
+  'post.description': post.description,
+  'post.category': post.category || '',
+  'post.pubDate': post.pubDate,
+  ...settings.templateVariables,
+});
+const { html, toc } = renderPostWithToc(post.content);
 ---
 
 <SiteLayout title={post.title} description={post.description}>
   {postHeaderHtml && <div class="mb-4" set:html={postHeaderHtml} />}
-  <article class:list={["prose max-w-none rounded-[2rem] border border-slate-200 bg-white shadow-sm", postTemplate === 'minimal' ? 'p-5' : 'p-7']}>
+  <div class="grid gap-6 lg:grid-cols-[240px_1fr]">
+    <aside class="order-2 lg:order-1">
+      {toc.length > 0 && (
+        <nav class="sticky top-24 rounded-2xl border border-slate-200 bg-white p-4">
+          <div class="mb-3 text-sm font-semibold text-slate-800">Contents</div>
+          <ul class="grid gap-2 text-sm text-slate-600">
+            {toc.map((item) => (
+              <li class:list={[item.level === 3 ? 'ml-3' : '']}>
+                <a class="transition hover:text-slate-900" href={`#${item.id}`}>{item.title}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
+    </aside>
+    <article class:list={["order-1 prose max-w-none rounded-[2rem] border border-slate-200 bg-white shadow-sm lg:order-2", postTemplate === 'minimal' ? 'p-5' : 'p-7']}>
     {post.coverImage && (
       <img
         class:list={["mb-6 w-full rounded-[1.5rem] object-cover", postTemplate === 'cover' ? 'h-[32rem]' : 'h-80']}
@@ -30,13 +54,19 @@ const html = markdownToHtml(post.content);
       />
     )}
     <div class="mb-5 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+      {post.category && (
+        <a class="rounded-full bg-sky-100 px-2 py-1 text-xs text-sky-700" href={`/category/${encodeURIComponent(post.category)}`}>
+          {post.category}
+        </a>
+      )}
       <span>{new Date(post.pubDate).toLocaleString('zh-CN')}</span>
       {post.updatedDate && <span>Updated {new Date(post.updatedDate).toLocaleString('zh-CN')}</span>}
       {post.pinned && <span class="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-700">Pinned</span>}
     </div>
     <h1>{post.title}</h1>
     <div set:html={html} />
-  </article>
+    </article>
+  </div>
   <div class="mt-5 flex flex-wrap gap-2">
     {post.tags.map((tag) => (
       <a class="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600" href={`/tags/${encodeURIComponent(tag)}`}>#{tag}</a>

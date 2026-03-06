@@ -4,6 +4,7 @@ import { getRuntimeEnv } from '../../lib/runtime-env';
 import { getCustomPageBySlug } from '../../lib/custom-pages';
 import { readSettings } from '../../lib/settings';
 import { getTemplateFile } from '../../lib/template-files';
+import { renderTemplateVariables } from '../../lib/template-vars';
 
 const slug = Astro.params.slug!;
 const runtimeEnv = getRuntimeEnv(Astro.locals);
@@ -14,7 +15,13 @@ if (!page) {
 }
 const pageTemplate = settings.templates?.page ?? 'classic';
 const pageFile = await getTemplateFile('page', runtimeEnv);
-const pageHeaderHtml = pageFile?.content || settings.templateContent?.pageHeaderHtml || '';
+const pageHeaderRaw = pageFile?.content || settings.templateContent?.pageHeaderHtml || '';
+const pageHeaderHtml = renderTemplateVariables(pageHeaderRaw, {
+  'site.title': settings.title,
+  'page.title': page.title,
+  'page.description': page.description,
+  ...settings.templateVariables,
+});
 ---
 
 <SiteLayout title={page.title} description={page.description}>
