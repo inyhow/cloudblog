@@ -21,7 +21,7 @@
     "googleAdsenseClient": ""
   },
   "adSlots": {
-    "homeTop": "<div>top ads</div>",
+    "homeTop": "",
     "listTop": "",
     "postTop": "",
     "postBottom": "",
