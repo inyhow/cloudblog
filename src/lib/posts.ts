@@ -1,7 +1,7 @@
 import { marked } from 'marked';
 import { markedHighlight } from 'marked-highlight';
 import hljs from 'highlight.js';
-import { getFile, listDir, putFile } from './github';
+import { deleteFile, getFile, listDir, putFile } from './github';
 
 const POSTS_DIR = 'cloudblog/posts';
 
@@ -171,6 +171,10 @@ export async function savePost(
   }, input.content);
   await putFile(filePathFromSlug(slug), body, `feat: update post ${slug}`, undefined, runtimeEnv);
   return slug;
+}
+
+export async function deletePost(slug: string, runtimeEnv?: Record<string, string>): Promise<void> {
+  await deleteFile(filePathFromSlug(slug), `feat: delete post ${slug}`, runtimeEnv);
 }
 
 export function markdownToHtml(markdown: string): string {

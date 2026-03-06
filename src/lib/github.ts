@@ -94,3 +94,20 @@ export async function putFile(
   });
   if (!resp.ok) throw new Error(`GitHub put file failed: ${resp.status}`);
 }
+
+export async function deleteFile(path: string, message: string, runtimeEnv?: Record<string, string>): Promise<void> {
+  const { owner, repo, token, branch } = repoConfig(runtimeEnv);
+  const current = await getFile(path, runtimeEnv);
+  if (!current) return;
+  const url = `${apiBase}/repos/${owner}/${repo}/contents/${path}`;
+  const resp = await fetch(url, {
+    method: 'DELETE',
+    headers: jsonHeaders(token),
+    body: JSON.stringify({
+      message,
+      sha: current.sha,
+      branch,
+    }),
+  });
+  if (!resp.ok) throw new Error(`GitHub delete file failed: ${resp.status}`);
+}
