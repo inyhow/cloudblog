@@ -1,71 +1,106 @@
 ---
-import SiteLayout from '../../layouts/SiteLayout.astro';
+import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
 
-<SiteLayout title="网站设置">
-  <h1 class="mb-4 text-2xl font-bold">网站设置</h1>
-  <form id="settings-form" class="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-    <input class="rounded border px-3 py-2" name="title" placeholder="SEO 标题" />
-    <input class="rounded border px-3 py-2" name="description" placeholder="SEO 描述" />
-    <textarea class="rounded border px-3 py-2" name="menu" placeholder='菜单 JSON: [{"label":"首页","href":"/"}]'></textarea>
-    <textarea class="rounded border px-3 py-2" name="footer" placeholder="页脚文本"></textarea>
-    <textarea class="rounded border px-3 py-2" name="analyticsJs" placeholder="统计 JS"></textarea>
-    <div class="grid gap-3 md:grid-cols-2">
-      <label class="grid gap-1">
-        <span class="text-sm">首页模板</span>
-        <select class="rounded border px-3 py-2" name="homeTemplate">
-          <option value="classic">classic</option>
-          <option value="magazine">magazine</option>
-          <option value="minimal">minimal</option>
-        </select>
-      </label>
-      <label class="grid gap-1">
-        <span class="text-sm">内页模板</span>
-        <select class="rounded border px-3 py-2" name="postTemplate">
-          <option value="classic">classic</option>
-          <option value="cover">cover</option>
-          <option value="minimal">minimal</option>
-        </select>
-      </label>
-      <label class="grid gap-1">
-        <span class="text-sm">Tag 模板</span>
-        <select class="rounded border px-3 py-2" name="tagTemplate">
-          <option value="classic">classic</option>
-          <option value="grid">grid</option>
-          <option value="minimal">minimal</option>
-        </select>
-      </label>
-      <label class="grid gap-1">
-        <span class="text-sm">单页模板</span>
-        <select class="rounded border px-3 py-2" name="pageTemplate">
-          <option value="classic">classic</option>
-          <option value="minimal">minimal</option>
-        </select>
-      </label>
+<AdminLayout title="Settings">
+  <div class="mb-6">
+    <h1 class="text-3xl font-semibold text-white">Site Settings</h1>
+    <p class="mt-2 text-sm text-slate-300">Manage global config, template presets, HTML fragments, and theme CSS.</p>
+  </div>
+
+  <form id="settings-form" class="grid gap-6">
+    <section class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+      <h2 class="mb-4 text-lg font-semibold text-amber-300">Base</h2>
+      <div class="grid gap-3">
+        <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="title" placeholder="SEO title" />
+        <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="description" placeholder="SEO description" />
+        <textarea class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="menu" placeholder='Menu JSON'></textarea>
+        <textarea class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="footer" placeholder="Footer text"></textarea>
+        <textarea class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="analyticsJs" placeholder="Analytics JS"></textarea>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+      <h2 class="mb-4 text-lg font-semibold text-amber-300">Template Presets</h2>
+      <div class="grid gap-3 md:grid-cols-2">
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-300">Home</span>
+          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="homeTemplate">
+            <option value="classic">classic</option>
+            <option value="magazine">magazine</option>
+            <option value="minimal">minimal</option>
+          </select>
+        </label>
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-300">Post</span>
+          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="postTemplate">
+            <option value="classic">classic</option>
+            <option value="cover">cover</option>
+            <option value="minimal">minimal</option>
+          </select>
+        </label>
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-300">Tag</span>
+          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="tagTemplate">
+            <option value="classic">classic</option>
+            <option value="grid">grid</option>
+            <option value="minimal">minimal</option>
+          </select>
+        </label>
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-300">Page</span>
+          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="pageTemplate">
+            <option value="classic">classic</option>
+            <option value="minimal">minimal</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+      <h2 class="mb-4 text-lg font-semibold text-amber-300">Template Fragments</h2>
+      <div class="grid gap-4">
+        <textarea class="min-h-28 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="homeHeroHtml" placeholder="Home hero HTML"></textarea>
+        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="postHeaderHtml" placeholder="Post header HTML"></textarea>
+        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="tagHeaderHtml" placeholder="Tag header HTML"></textarea>
+        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="pageHeaderHtml" placeholder="Page header HTML"></textarea>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+      <h2 class="mb-4 text-lg font-semibold text-amber-300">Theme CSS</h2>
+      <textarea class="min-h-64 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="css" id="css"></textarea>
+    </section>
+
+    <div class="flex gap-3">
+      <button class="rounded-xl bg-amber-400 px-4 py-2 font-medium text-slate-950" type="submit">Save Settings</button>
+      <a class="rounded-xl border border-white/10 px-4 py-2 text-slate-200" href="/admin/posts">Back</a>
     </div>
-    <button class="rounded bg-slate-900 px-3 py-2 text-white" type="submit">保存设置</button>
   </form>
-  <form id="theme-form" class="mt-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-    <h2 class="text-lg font-semibold">主题样式</h2>
-    <textarea class="min-h-48 rounded border px-3 py-2 font-mono" name="css" placeholder="自定义主题 CSS"></textarea>
-    <button class="rounded bg-slate-900 px-3 py-2 text-white" type="submit">保存主题</button>
-  </form>
-  <p id="msg" class="mt-2 text-sm"></p>
+
+  <p id="msg" class="mt-4 text-sm text-slate-300"></p>
+
   <script is:inline>
     (() => {
       const form = document.getElementById('settings-form');
-      const themeForm = document.getElementById('theme-form');
       const msg = document.getElementById('msg');
-      const titleInput = form.querySelector('input[name="title"]');
-      const descriptionInput = form.querySelector('input[name="description"]');
-      const menuInput = form.querySelector('textarea[name="menu"]');
-      const footerInput = form.querySelector('textarea[name="footer"]');
-      const analyticsInput = form.querySelector('textarea[name="analyticsJs"]');
-      const homeTemplateInput = form.querySelector('select[name="homeTemplate"]');
-      const postTemplateInput = form.querySelector('select[name="postTemplate"]');
-      const tagTemplateInput = form.querySelector('select[name="tagTemplate"]');
-      const pageTemplateInput = form.querySelector('select[name="pageTemplate"]');
-      const cssInput = themeForm.querySelector('textarea[name="css"]');
+      const cssInput = document.getElementById('css');
+
+      const fields = {
+        title: form.querySelector('input[name="title"]'),
+        description: form.querySelector('input[name="description"]'),
+        menu: form.querySelector('textarea[name="menu"]'),
+        footer: form.querySelector('textarea[name="footer"]'),
+        analyticsJs: form.querySelector('textarea[name="analyticsJs"]'),
+        homeTemplate: form.querySelector('select[name="homeTemplate"]'),
+        postTemplate: form.querySelector('select[name="postTemplate"]'),
+        tagTemplate: form.querySelector('select[name="tagTemplate"]'),
+        pageTemplate: form.querySelector('select[name="pageTemplate"]'),
+        homeHeroHtml: form.querySelector('textarea[name="homeHeroHtml"]'),
+        postHeaderHtml: form.querySelector('textarea[name="postHeaderHtml"]'),
+        tagHeaderHtml: form.querySelector('textarea[name="tagHeaderHtml"]'),
+        pageHeaderHtml: form.querySelector('textarea[name="pageHeaderHtml"]'),
+      };
 
       (async () => {
         const settingsResp = await fetch('/api/admin/settings');
@@ -74,15 +109,19 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
           return;
         }
         const settings = await settingsResp.json();
-        titleInput.value = settings.title || '';
-        descriptionInput.value = settings.description || '';
-        menuInput.value = JSON.stringify(settings.menu || [], null, 2);
-        footerInput.value = settings.footer || '';
-        analyticsInput.value = settings.analyticsJs || '';
-        homeTemplateInput.value = settings.templates?.home || 'classic';
-        postTemplateInput.value = settings.templates?.post || 'classic';
-        tagTemplateInput.value = settings.templates?.tag || 'classic';
-        pageTemplateInput.value = settings.templates?.page || 'classic';
+        fields.title.value = settings.title || '';
+        fields.description.value = settings.description || '';
+        fields.menu.value = JSON.stringify(settings.menu || [], null, 2);
+        fields.footer.value = settings.footer || '';
+        fields.analyticsJs.value = settings.analyticsJs || '';
+        fields.homeTemplate.value = settings.templates?.home || 'classic';
+        fields.postTemplate.value = settings.templates?.post || 'classic';
+        fields.tagTemplate.value = settings.templates?.tag || 'classic';
+        fields.pageTemplate.value = settings.templates?.page || 'classic';
+        fields.homeHeroHtml.value = settings.templateContent?.homeHeroHtml || '';
+        fields.postHeaderHtml.value = settings.templateContent?.postHeaderHtml || '';
+        fields.tagHeaderHtml.value = settings.templateContent?.tagHeaderHtml || '';
+        fields.pageHeaderHtml.value = settings.templateContent?.pageHeaderHtml || '';
 
         const themeResp = await fetch('/api/admin/themes');
         if (themeResp.ok) {
@@ -93,40 +132,45 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        msg.textContent = 'Saving...';
         const payload = {
-          title: titleInput.value,
-          description: descriptionInput.value,
-          menu: JSON.parse(menuInput.value || '[]'),
-          footer: footerInput.value,
-          analyticsJs: analyticsInput.value,
+          title: fields.title.value,
+          description: fields.description.value,
+          menu: JSON.parse(fields.menu.value || '[]'),
+          footer: fields.footer.value,
+          analyticsJs: fields.analyticsJs.value,
           templates: {
-            home: homeTemplateInput.value,
-            post: postTemplateInput.value,
-            tag: tagTemplateInput.value,
-            page: pageTemplateInput.value,
+            home: fields.homeTemplate.value,
+            post: fields.postTemplate.value,
+            tag: fields.tagTemplate.value,
+            page: fields.pageTemplate.value,
+          },
+          templateContent: {
+            homeHeroHtml: fields.homeHeroHtml.value,
+            postHeaderHtml: fields.postHeaderHtml.value,
+            tagHeaderHtml: fields.tagHeaderHtml.value,
+            pageHeaderHtml: fields.pageHeaderHtml.value,
           },
         };
-        const resp = await fetch('/api/admin/settings', {
+
+        const settingsResp = await fetch('/api/admin/settings', {
           method: 'PUT',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify(payload),
         });
-        const text = await resp.text();
-        msg.className = resp.ok ? 'mt-2 text-sm text-emerald-600' : 'mt-2 text-sm text-red-600';
-        msg.textContent = resp.ok ? '设置保存成功' : `设置保存失败: ${text}`;
-      });
 
-      themeForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const resp = await fetch('/api/admin/themes', {
+        const themeResp = await fetch('/api/admin/themes', {
           method: 'PUT',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ css: cssInput.value }),
         });
-        const text = await resp.text();
-        msg.className = resp.ok ? 'mt-2 text-sm text-emerald-600' : 'mt-2 text-sm text-red-600';
-        msg.textContent = resp.ok ? '主题保存成功' : `主题保存失败: ${text}`;
+
+        if (settingsResp.ok && themeResp.ok) {
+          msg.textContent = 'Saved';
+        } else {
+          msg.textContent = `Save failed: ${await settingsResp.text()} ${await themeResp.text()}`;
+        }
       });
     })();
   </script>
-</SiteLayout>
+</AdminLayout>

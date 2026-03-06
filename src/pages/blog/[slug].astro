@@ -15,10 +15,12 @@ if (post.status !== 'published') {
 }
 const settings = await readSettings(runtimeEnv);
 const postTemplate = settings.templates?.post ?? 'classic';
+const postHeaderHtml = settings.templateContent?.postHeaderHtml ?? '';
 const html = markdownToHtml(post.content);
 ---
 
 <SiteLayout title={post.title} description={post.description}>
+  {postHeaderHtml && <div class="mb-4" set:html={postHeaderHtml} />}
   <article class:list={["prose max-w-none rounded-lg border border-slate-200 bg-white", postTemplate === 'minimal' ? 'p-4' : 'p-6']}>
     {post.coverImage && (
       <img

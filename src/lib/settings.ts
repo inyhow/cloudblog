@@ -15,6 +15,12 @@ export interface SiteSettings {
     tag: 'classic' | 'grid' | 'minimal';
     page: 'classic' | 'minimal';
   };
+  templateContent: {
+    homeHeroHtml: string;
+    postHeaderHtml: string;
+    tagHeaderHtml: string;
+    pageHeaderHtml: string;
+  };
   giscus?: {
     repo: string;
     repoId: string;
@@ -37,6 +43,12 @@ const defaults: SiteSettings = {
     post: 'classic',
     tag: 'classic',
     page: 'classic',
+  },
+  templateContent: {
+    homeHeroHtml: '',
+    postHeaderHtml: '',
+    tagHeaderHtml: '',
+    pageHeaderHtml: '',
   },
 };
 

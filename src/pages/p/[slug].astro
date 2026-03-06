@@ -12,9 +12,11 @@ if (!page) {
   return Astro.redirect('/');
 }
 const pageTemplate = settings.templates?.page ?? 'classic';
+const pageHeaderHtml = settings.templateContent?.pageHeaderHtml ?? '';
 ---
 
 <SiteLayout title={page.title} description={page.description}>
+  {pageHeaderHtml && <div class="mb-4" set:html={pageHeaderHtml} />}
   <article class:list={["prose max-w-none rounded-lg border border-slate-200 bg-white", pageTemplate === 'minimal' ? 'p-4' : 'p-6']}>
     <h1>{page.title}</h1>
     <div set:html={page.content} />
