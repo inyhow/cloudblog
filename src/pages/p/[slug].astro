@@ -3,6 +3,7 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
 import { getRuntimeEnv } from '../../lib/runtime-env';
 import { getCustomPageBySlug } from '../../lib/custom-pages';
 import { readSettings } from '../../lib/settings';
+import { getTemplateFile } from '../../lib/template-files';
 
 const slug = Astro.params.slug!;
 const runtimeEnv = getRuntimeEnv(Astro.locals);
@@ -12,7 +13,8 @@ if (!page) {
   return Astro.redirect('/');
 }
 const pageTemplate = settings.templates?.page ?? 'classic';
-const pageHeaderHtml = settings.templateContent?.pageHeaderHtml ?? '';
+const pageFile = await getTemplateFile('page', runtimeEnv);
+const pageHeaderHtml = pageFile?.content || settings.templateContent?.pageHeaderHtml || '';
 ---
 
 <SiteLayout title={page.title} description={page.description}>

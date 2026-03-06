@@ -3,41 +3,44 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
 import { getPostBySlug, markdownToHtml } from '../../lib/posts';
 import { readSettings } from '../../lib/settings';
 import { getRuntimeEnv } from '../../lib/runtime-env';
+import { getTemplateFile } from '../../lib/template-files';
 
 const slug = Astro.params.slug!;
 const runtimeEnv = getRuntimeEnv(Astro.locals);
 const post = await getPostBySlug(slug, runtimeEnv);
-if (!post) {
+if (!post || post.status !== 'published') {
   return Astro.redirect('/blog');
 }
-if (post.status !== 'published') {
-  return Astro.redirect('/blog');
-}
+
 const settings = await readSettings(runtimeEnv);
 const postTemplate = settings.templates?.post ?? 'classic';
-const postHeaderHtml = settings.templateContent?.postHeaderHtml ?? '';
+const postFile = await getTemplateFile('post', runtimeEnv);
+const postHeaderHtml = postFile?.content || settings.templateContent?.postHeaderHtml || '';
 const html = markdownToHtml(post.content);
 ---
 
 <SiteLayout title={post.title} description={post.description}>
   {postHeaderHtml && <div class="mb-4" set:html={postHeaderHtml} />}
-  <article class:list={["prose max-w-none rounded-lg border border-slate-200 bg-white", postTemplate === 'minimal' ? 'p-4' : 'p-6']}>
+  <article class:list={["prose max-w-none rounded-[2rem] border border-slate-200 bg-white shadow-sm", postTemplate === 'minimal' ? 'p-5' : 'p-7']}>
     {post.coverImage && (
       <img
-        class:list={["mb-4 w-full rounded object-cover", postTemplate === 'cover' ? 'h-[28rem]' : 'h-72']}
+        class:list={["mb-6 w-full rounded-[1.5rem] object-cover", postTemplate === 'cover' ? 'h-[32rem]' : 'h-80']}
         src={post.coverImage}
         alt={post.title}
       />
     )}
+    <div class="mb-5 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+      <span>{new Date(post.pubDate).toLocaleString('zh-CN')}</span>
+      {post.updatedDate && <span>Updated {new Date(post.updatedDate).toLocaleString('zh-CN')}</span>}
+      {post.pinned && <span class="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-700">Pinned</span>}
+    </div>
     <h1>{post.title}</h1>
-    <p class="text-sm text-slate-500">
-      发布时间：{new Date(post.pubDate).toLocaleString('zh-CN')}
-      {post.updatedDate && ` · 更新时间：${new Date(post.updatedDate).toLocaleString('zh-CN')}`}
-    </p>
     <div set:html={html} />
   </article>
-  <div class="mt-4 flex gap-2">
-    {post.tags.map((tag) => <a class="text-sm text-blue-600" href={`/tags/${encodeURIComponent(tag)}`}>#{tag}</a>)}
+  <div class="mt-5 flex flex-wrap gap-2">
+    {post.tags.map((tag) => (
+      <a class="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600" href={`/tags/${encodeURIComponent(tag)}`}>#{tag}</a>
+    ))}
   </div>
   {
     settings.giscus && (

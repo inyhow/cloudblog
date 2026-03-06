@@ -1,0 +1,58 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="Media Library">
+  <div class="mb-6">
+    <h1 class="text-3xl font-semibold text-white">Media Library</h1>
+    <p class="mt-2 text-sm text-slate-300">Browse uploaded images and copy CDN links for reuse.</p>
+  </div>
+  <div id="grid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
+  <p id="msg" class="mt-4 text-sm text-slate-300"></p>
+
+  <script is:inline>
+    (() => {
+      const grid = document.getElementById('grid');
+      const msg = document.getElementById('msg');
+
+      (async () => {
+        const resp = await fetch('/api/admin/media');
+        if (resp.status === 401) {
+          location.href = '/admin';
+          return;
+        }
+        const raw = await resp.text();
+        if (!resp.ok) {
+          msg.textContent = raw;
+          return;
+        }
+        const files = JSON.parse(raw);
+        if (!files.length) {
+          msg.textContent = 'No media uploaded yet.';
+          return;
+        }
+        grid.innerHTML = files
+          .map(
+            (file) => `
+              <article class="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/60">
+                <img class="h-52 w-full object-cover" src="${file.url}" alt="${file.name}" />
+                <div class="grid gap-2 p-4">
+                  <div class="text-sm font-medium text-white">${file.name}</div>
+                  <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-xs text-slate-300" value="${file.url}" readonly />
+                  <button class="rounded-xl border border-white/10 px-3 py-2 text-sm text-slate-200" data-url="${file.url}">Copy CDN URL</button>
+                </div>
+              </article>
+            `,
+          )
+          .join('');
+
+        grid.querySelectorAll('[data-url]').forEach((button) => {
+          button.addEventListener('click', async () => {
+            await navigator.clipboard.writeText(button.dataset.url);
+            msg.textContent = 'CDN URL copied.';
+          });
+        });
+      })();
+    })();
+  </script>
+</AdminLayout>

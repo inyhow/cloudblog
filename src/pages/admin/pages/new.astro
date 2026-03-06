@@ -1,0 +1,72 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="Page Editor">
+  <div class="mb-6">
+    <h1 class="text-3xl font-semibold text-white">Page Editor</h1>
+    <p class="mt-2 text-sm text-slate-300">Create standalone pages rendered at `/p/slug`.</p>
+  </div>
+  <form id="form" class="grid gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+    <div class="grid gap-3 md:grid-cols-2">
+      <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="title" placeholder="Title" required />
+      <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="slug" placeholder="Custom slug" />
+    </div>
+    <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="description" placeholder="Description" />
+    <textarea class="min-h-96 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono" name="content" placeholder="# Page content"></textarea>
+    <div class="flex gap-3">
+      <button class="rounded-xl bg-amber-400 px-4 py-2 font-medium text-slate-950" type="submit">Save Page</button>
+      <a class="rounded-xl border border-white/10 px-4 py-2 text-slate-200" href="/admin/pages">Back</a>
+    </div>
+  </form>
+  <p id="msg" class="mt-3 text-sm text-slate-300"></p>
+  <script is:inline>
+    (() => {
+      const form = document.getElementById('form');
+      const msg = document.getElementById('msg');
+      const slug = new URL(location.href).searchParams.get('slug');
+
+      const titleInput = form.querySelector('input[name="title"]');
+      const slugInput = form.querySelector('input[name="slug"]');
+      const descriptionInput = form.querySelector('input[name="description"]');
+      const contentInput = form.querySelector('textarea[name="content"]');
+
+      (async () => {
+        if (!slug) return;
+        const resp = await fetch(`/api/admin/pages/${encodeURIComponent(slug)}`);
+        if (!resp.ok) return;
+        const page = await resp.json();
+        titleInput.value = page.title || '';
+        slugInput.value = page.slug || '';
+        descriptionInput.value = page.description || '';
+        contentInput.value = page.rawContent || '';
+      })();
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        msg.textContent = 'Saving...';
+        const payload = {
+          title: titleInput.value.trim(),
+          slug: slugInput.value.trim(),
+          description: descriptionInput.value.trim(),
+          content: contentInput.value,
+        };
+        const url = slug ? `/api/admin/pages/${encodeURIComponent(slug)}` : '/api/admin/pages';
+        const method = slug ? 'PUT' : 'POST';
+        const resp = await fetch(url, {
+          method,
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const raw = await resp.text();
+        if (!resp.ok) {
+          msg.textContent = `Save failed: ${raw}`;
+          return;
+        }
+        const data = JSON.parse(raw);
+        msg.textContent = 'Saved';
+        if (data?.slug) history.replaceState({}, '', `/admin/pages/new?slug=${encodeURIComponent(data.slug)}`);
+      });
+    })();
+  </script>
+</AdminLayout>

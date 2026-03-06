@@ -33,8 +33,8 @@ const defaults: SiteSettings = {
   title: 'Cloud Blog',
   description: 'Blog powered by Astro + Cloudflare Pages',
   menu: [
-    { label: '首页', href: '/' },
-    { label: '博客', href: '/blog' },
+    { label: 'Home', href: '/' },
+    { label: 'Blog', href: '/blog' },
   ],
   footer: '© Cloud Blog',
   analyticsJs: '',

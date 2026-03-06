@@ -1,0 +1,121 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="Template Studio">
+  <div class="mb-6">
+    <h1 class="text-3xl font-semibold text-white">Template Studio</h1>
+    <p class="mt-2 text-sm text-slate-300">Edit template files, fragment HTML, and preview structure before publishing.</p>
+  </div>
+
+  <div class="grid gap-6 xl:grid-cols-[320px_1fr]">
+    <section class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+      <div class="mb-4 text-lg font-semibold text-amber-300">Template Files</div>
+      <div id="template-list" class="grid gap-2"></div>
+    </section>
+
+    <section class="grid gap-6">
+      <section class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 id="editor-title" class="text-lg font-semibold text-white">Template Editor</h2>
+            <p id="editor-path" class="mt-1 text-xs text-slate-400"></p>
+          </div>
+          <button class="rounded-xl bg-amber-400 px-4 py-2 font-medium text-slate-950" id="save-template" type="button">Save Template</button>
+        </div>
+        <textarea id="template-content" class="min-h-[26rem] w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm"></textarea>
+      </section>
+
+      <section class="rounded-2xl border border-white/10 bg-slate-900/60 p-3">
+        <div class="mb-3 px-2 text-lg font-semibold text-amber-300">Preview</div>
+        <iframe id="preview-frame" class="h-[60vh] w-full rounded-xl bg-white"></iframe>
+      </section>
+    </section>
+  </div>
+
+  <p id="msg" class="mt-4 text-sm text-slate-300"></p>
+
+  <script is:inline>
+    (() => {
+      const list = document.getElementById('template-list');
+      const content = document.getElementById('template-content');
+      const title = document.getElementById('editor-title');
+      const path = document.getElementById('editor-path');
+      const msg = document.getElementById('msg');
+      const frame = document.getElementById('preview-frame');
+      const saveBtn = document.getElementById('save-template');
+
+      let activeKey = 'home';
+
+      function renderPreview(key, source) {
+        const body = `
+          <!doctype html>
+          <html>
+            <head>
+              <style>
+                body { font-family: Georgia, serif; margin: 0; padding: 32px; background: linear-gradient(180deg,#fff7ed,#ffffff); color: #0f172a; }
+                .shell { max-width: 1080px; margin: 0 auto; }
+                .content { border: 1px solid #e2e8f0; border-radius: 24px; background: #fff; padding: 24px; box-shadow: 0 20px 60px rgba(15,23,42,.08); }
+              </style>
+            </head>
+            <body>
+              <div class="shell">
+                ${key === 'theme' ? '<div class="content"><h1>Theme CSS Preview</h1><p>Custom CSS file content shown below.</p><pre>' + source.replaceAll('<', '&lt;') + '</pre></div>' : source || '<div class="content"><h1>Empty template</h1><p>Add markup here.</p></div>'}
+              </div>
+            </body>
+          </html>
+        `;
+        frame.srcdoc = body;
+      }
+
+      async function openTemplate(key) {
+        const resp = await fetch(`/api/admin/templates?key=${encodeURIComponent(key)}`);
+        if (!resp.ok) {
+          msg.textContent = await resp.text();
+          return;
+        }
+        const file = await resp.json();
+        activeKey = file.key;
+        title.textContent = file.label;
+        path.textContent = file.path;
+        content.value = file.content || '';
+        renderPreview(file.key, file.content || '');
+      }
+
+      (async () => {
+        const resp = await fetch('/api/admin/templates');
+        if (resp.status === 401) {
+          location.href = '/admin';
+          return;
+        }
+        const files = await resp.json();
+        list.innerHTML = files
+          .map(
+            (item) => `
+              <button class="rounded-xl border border-white/10 bg-slate-950/50 px-4 py-3 text-left text-sm text-slate-200 transition hover:border-amber-400/40" data-key="${item.key}">
+                <div class="font-medium">${item.label}</div>
+                <div class="mt-1 text-xs text-slate-500">${item.path}</div>
+              </button>
+            `,
+          )
+          .join('');
+        list.querySelectorAll('[data-key]').forEach((button) => {
+          button.addEventListener('click', () => openTemplate(button.dataset.key));
+        });
+        openTemplate(activeKey);
+      })();
+
+      content.addEventListener('input', () => renderPreview(activeKey, content.value));
+
+      saveBtn.addEventListener('click', async () => {
+        msg.textContent = 'Saving...';
+        const resp = await fetch('/api/admin/templates', {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ key: activeKey, content: content.value }),
+        });
+        msg.textContent = resp.ok ? 'Saved' : `Save failed: ${await resp.text()}`;
+      });
+    })();
+  </script>
+</AdminLayout>

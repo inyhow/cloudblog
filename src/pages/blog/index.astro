@@ -6,7 +6,7 @@ import { readSettings } from '../../lib/settings';
 
 const runtimeEnv = getRuntimeEnv(Astro.locals);
 const settings = await readSettings(runtimeEnv);
-const tagTemplate = settings.templates?.tag ?? 'classic';
+const listTemplate = settings.templates?.tag ?? 'classic';
 const posts = (await listPosts(runtimeEnv))
   .filter((post) => post.status === 'published')
   .sort((a, b) => {
@@ -15,18 +15,26 @@ const posts = (await listPosts(runtimeEnv))
   });
 ---
 
-<SiteLayout title="博客列表">
-  <h1 class="mb-6 text-2xl font-bold">博客列表</h1>
-  <div class:list={["grid gap-4", tagTemplate === 'grid' ? 'md:grid-cols-2' : '', tagTemplate === 'minimal' ? 'gap-2' : '']}>
+<SiteLayout title="Blog" description={settings.description}>
+  <section class="mb-8 flex items-end justify-between gap-4">
+    <div>
+      <p class="mb-2 text-xs uppercase tracking-[0.24em] text-slate-400">Archive</p>
+      <h1 class="text-3xl font-black tracking-tight text-slate-950">All Posts</h1>
+    </div>
+    <p class="text-sm text-slate-500">{posts.length} published articles</p>
+  </section>
+  <div class:list={["grid gap-4", listTemplate === 'grid' ? 'md:grid-cols-2' : 'md:grid-cols-3', listTemplate === 'minimal' ? 'gap-3 md:grid-cols-1' : '']}>
     {posts.map((post) => (
-      <a href={`/blog/${post.slug}`} class:list={["rounded-lg border border-slate-200 bg-white transition hover:shadow", tagTemplate === 'minimal' ? 'p-3' : 'p-4']}>
-        {post.coverImage && <img class="mb-3 h-44 w-full rounded object-cover" src={post.coverImage} alt={post.title} />}
-        <div class="mb-2 flex items-center gap-2">
-          {post.pinned && <span class="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-700">置顶</span>}
-          <h2 class="text-lg font-semibold">{post.title}</h2>
+      <a href={`/blog/${post.slug}`} class:list={["rounded-[1.5rem] border border-slate-200 bg-white transition hover:-translate-y-1 hover:shadow-xl", listTemplate === 'minimal' ? 'p-4' : 'overflow-hidden']}>
+        {listTemplate !== 'minimal' && post.coverImage && <img class="h-48 w-full object-cover" src={post.coverImage} alt={post.title} />}
+        <div class:list={[listTemplate === 'minimal' ? '' : 'p-5']}>
+          <div class="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-slate-400">
+            {post.pinned && <span class="rounded-full bg-amber-100 px-2 py-1 text-amber-700">Pinned</span>}
+            <span>{new Date(post.pubDate).toLocaleDateString('zh-CN')}</span>
+          </div>
+          <h2 class="text-lg font-semibold text-slate-950">{post.title}</h2>
+          <p class="mt-2 text-slate-600">{post.description}</p>
         </div>
-        <p class="mt-2 text-slate-600">{post.description}</p>
-        <p class="mt-2 text-xs text-slate-500">发布时间：{new Date(post.pubDate).toLocaleString('zh-CN')}</p>
       </a>
     ))}
   </div>

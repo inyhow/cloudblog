@@ -1,0 +1,45 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="Pages">
+  <div class="mb-6 flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-semibold text-white">Pages</h1>
+      <p class="mt-2 text-sm text-slate-300">Manage standalone pages such as About, Contact, or landing pages.</p>
+    </div>
+    <a class="rounded-xl bg-amber-400 px-4 py-2 font-medium text-slate-950" href="/admin/pages/new">New Page</a>
+  </div>
+  <div id="list" class="grid gap-3"></div>
+  <p id="msg" class="mt-3 text-sm text-red-300"></p>
+  <script is:inline>
+    (() => {
+      const list = document.getElementById('list');
+      const msg = document.getElementById('msg');
+      (async () => {
+        const resp = await fetch('/api/admin/pages');
+        if (resp.status === 401) {
+          location.href = '/admin';
+          return;
+        }
+        const raw = await resp.text();
+        if (!resp.ok) {
+          msg.textContent = raw;
+          return;
+        }
+        const pages = JSON.parse(raw);
+        list.innerHTML = pages
+          .map(
+            (p) => `
+              <a class="rounded-2xl border border-white/10 bg-slate-900/60 p-5 transition hover:border-amber-400/40" href="/admin/pages/new?slug=${encodeURIComponent(p.slug)}">
+                <div class="text-lg font-semibold text-white">${p.title}</div>
+                <div class="mt-1 text-sm text-slate-300">${p.description || ''}</div>
+                <div class="mt-2 text-xs text-slate-500">/p/${p.slug}</div>
+              </a>
+            `,
+          )
+          .join('');
+      })();
+    })();
+  </script>
+</AdminLayout>

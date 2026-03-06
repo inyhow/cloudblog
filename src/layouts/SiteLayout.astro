@@ -2,6 +2,7 @@
 import BaseHead from '../components/BaseHead.astro';
 import { readSettings, readThemeCss } from '../lib/settings';
 import { getRuntimeEnv } from '../lib/runtime-env';
+import { getTemplateFile } from '../lib/template-files';
 
 interface Props {
   title: string;
@@ -12,6 +13,7 @@ const { title, description = '' } = Astro.props;
 const runtimeEnv = getRuntimeEnv(Astro.locals);
 const settings = await readSettings(runtimeEnv);
 const themeCss = await readThemeCss(runtimeEnv);
+const templateTheme = await getTemplateFile('theme', runtimeEnv);
 ---
 
 <!doctype html>
@@ -19,22 +21,30 @@ const themeCss = await readThemeCss(runtimeEnv);
   <head>
     <BaseHead title={title} description={description || settings.description} />
     <style is:inline>{themeCss}</style>
+    <style is:inline>{templateTheme?.content ?? ''}</style>
   </head>
-  <body class="bg-slate-50 text-slate-800">
-    <header class="border-b border-slate-200 bg-white">
-      <nav class="mx-auto flex max-w-5xl items-center gap-6 px-4 py-4">
-        <a class="text-xl font-bold" href="/">{settings.title}</a>
-        <div class="flex gap-4 text-sm">
-          {settings.menu.map((item) => <a href={item.href}>{item.label}</a>)}
+  <body class="min-h-screen bg-[linear-gradient(180deg,#fff7ed_0%,#ffffff_24%,#f8fafc_100%)] text-slate-800">
+    <header class="sticky top-0 z-20 border-b border-slate-200/80 bg-white/85 backdrop-blur">
+      <nav class="mx-auto flex max-w-6xl items-center gap-6 px-4 py-4">
+        <a class="text-xl font-black tracking-tight text-slate-950" href="/">{settings.title}</a>
+        <div class="flex gap-4 text-sm text-slate-600">
+          {settings.menu.map((item) => (
+            <a class="transition hover:text-slate-950" href={item.href}>{item.label}</a>
+          ))}
         </div>
-        <a href="/admin" class="ml-auto text-sm text-slate-500">后台</a>
+        <a
+          href="/admin"
+          class="ml-auto rounded-full border border-slate-200 px-3 py-1.5 text-sm text-slate-600 transition hover:border-slate-900 hover:text-slate-900"
+        >
+          Admin
+        </a>
       </nav>
     </header>
-    <main class="mx-auto max-w-5xl px-4 py-8">
+    <main class="mx-auto max-w-6xl px-4 py-10">
       <slot />
     </main>
-    <footer class="border-t border-slate-200 bg-white py-6">
-      <div class="mx-auto max-w-5xl px-4 text-sm text-slate-500">{settings.footer}</div>
+    <footer class="border-t border-slate-200 bg-white/80 py-6 backdrop-blur">
+      <div class="mx-auto max-w-6xl px-4 text-sm text-slate-500">{settings.footer}</div>
     </footer>
     {settings.analyticsJs && <script is:inline set:html={settings.analyticsJs} />}
   </body>
