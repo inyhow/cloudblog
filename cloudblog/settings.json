@@ -22,7 +22,7 @@
   },
   "categories": [],
   "templates": {
-    "home": "minimal",
+    "home": "classic",
     "post": "minimal",
     "tag": "grid",
     "page": "minimal"
