@@ -14,8 +14,8 @@
   "footer": "© 奇技赢巧",
   "analyticsJs": "",
   "seo": {
-    "homeTitle": "Cloud Blog",
-    "homeDescription": "Blog powered by Astro + Cloudflare Pages",
+    "homeTitle": "Cloud Blog 演示站",
+    "homeDescription": "Powered by Astro + Cloudflare Pages + Github",
     "googleAnalyticsId": "",
     "googleSiteVerification": "",
     "googleAdsenseClient": ""
