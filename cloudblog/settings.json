@@ -1,6 +1,6 @@
 {
-  "title": "Cloud Blog",
-  "description": "Blog powered by Astro + Cloudflare Pages",
+  "title": "奇技赢巧",
+  "description": "Powered by Astro + Cloudflare Pages + Github",
   "menu": [
     {
       "label": "首页",
@@ -11,8 +11,16 @@
       "href": "/blog"
     }
   ],
-  "footer": "© Cloud Blog",
+  "footer": "© 奇技赢巧",
   "analyticsJs": "",
+  "seo": {
+    "homeTitle": "Cloud Blog",
+    "homeDescription": "Blog powered by Astro + Cloudflare Pages",
+    "googleAnalyticsId": "",
+    "googleSiteVerification": "",
+    "googleAdsenseClient": ""
+  },
+  "categories": [],
   "templates": {
     "home": "minimal",
     "post": "minimal",
@@ -24,5 +32,6 @@
     "postHeaderHtml": "",
     "tagHeaderHtml": "",
     "pageHeaderHtml": ""
-  }
+  },
+  "templateVariables": {}
 }
