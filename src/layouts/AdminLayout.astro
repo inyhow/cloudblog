@@ -35,7 +35,7 @@ const nav = allNav.filter((item) => {
   </head>
   <body class="min-h-screen bg-[radial-gradient(circle_at_top_left,_#f59e0b_0,_transparent_25%),linear-gradient(180deg,#0f172a_0%,#1e293b_100%)] text-slate-100">
     <div class="grid min-h-screen md:grid-cols-[260px_1fr]">
-      <aside class="border-r border-white/10 bg-slate-950/50 p-6 backdrop-blur">
+      <aside class="relative z-10 border-r border-white/10 bg-slate-950/50 p-6 backdrop-blur">
         <a href="/admin/posts" class="mb-8 block text-2xl font-semibold tracking-wide text-amber-300">CloudBlog CMS</a>
         <nav class="grid gap-2">
           {nav.map((item) => (
@@ -46,11 +46,24 @@ const nav = allNav.filter((item) => {
           <a href="/" class="mt-4 rounded-xl px-4 py-3 text-sm text-slate-400 transition hover:bg-white/10">{tr(locale, 'site.viewSite', 'View Site')}</a>
         </nav>
       </aside>
-      <main class="p-6 md:p-8">
+      <main class="relative z-10 p-6 md:p-8">
         <div class="mx-auto max-w-6xl">
           <slot />
         </div>
       </main>
     </div>
+    <script is:inline>
+      (() => {
+        // Defensive reset in case any runtime error/overlay script left the page inert.
+        document.documentElement.style.pointerEvents = 'auto';
+        document.body.style.pointerEvents = 'auto';
+        if ('inert' in document.body) {
+          document.body.inert = false;
+        }
+        document.querySelectorAll('[inert]').forEach((el) => {
+          el.inert = false;
+        });
+      })();
+    </script>
   </body>
 </html>
