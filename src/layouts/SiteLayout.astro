@@ -82,5 +82,18 @@ const categoryMenu = (settings.categories || [])
       <div class="mx-auto max-w-6xl px-4 text-sm text-slate-500">{settings.footer}</div>
     </footer>
     {settings.analyticsJs && <script is:inline set:html={settings.analyticsJs} />}
+    <script is:inline>
+      (() => {
+        // Defensive reset: if page ever enters inert/non-clickable state, recover.
+        document.documentElement.style.pointerEvents = 'auto';
+        document.body.style.pointerEvents = 'auto';
+        if ('inert' in document.body) {
+          document.body.inert = false;
+        }
+        document.querySelectorAll('[inert]').forEach((el) => {
+          el.inert = false;
+        });
+      })();
+    </script>
   </body>
 </html>

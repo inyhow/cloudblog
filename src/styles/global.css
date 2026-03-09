@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @import "highlight.js/styles/github-dark.css";
 
+html,
+body {
+  pointer-events: auto;
+}
+
 article.prose h1,
 article.prose h2,
 article.prose h3 {
