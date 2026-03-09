@@ -1,10 +1,11 @@
 import type { APIRoute } from 'astro';
-import { isAuthed } from '../../../../lib/auth';
+import { requireRole } from '../../../../lib/auth';
 import { getRuntimeEnv } from '../../../../lib/runtime-env';
 import { getCustomPageBySlug, saveCustomPage } from '../../../../lib/custom-pages';
 
 export const GET: APIRoute = async (context) => {
-  if (!isAuthed(context)) return new Response('Unauthorized', { status: 401 });
+  const denied = requireRole(context, 'author');
+  if (denied) return denied;
   const slug = context.params.slug!;
   const page = await getCustomPageBySlug(slug, getRuntimeEnv(context.locals));
   if (!page) return new Response('Not Found', { status: 404 });
@@ -12,7 +13,8 @@ export const GET: APIRoute = async (context) => {
 };
 
 export const PUT: APIRoute = async (context) => {
-  if (!isAuthed(context)) return new Response('Unauthorized', { status: 401 });
+  const denied = requireRole(context, 'author');
+  if (denied) return denied;
   try {
     const currentSlug = context.params.slug!;
     const body = await context.request.json();

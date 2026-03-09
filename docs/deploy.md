@@ -23,6 +23,7 @@ In Cloudflare Dashboard:
 3. Add these variables for both `Production` and `Preview` as needed:
 
 - `ADMIN_PASSWORD`
+- `ADMIN_USERS_JSON` (recommended, RBAC)
 - `GITHUB_TOKEN`
 - `GITHUB_OWNER`
 - `GITHUB_REPO`
@@ -31,6 +32,18 @@ In Cloudflare Dashboard:
 - `GITHUB_CDN_PREFIX` (optional, recommended)
 
 Mark sensitive values as encrypted/secret in Cloudflare UI when available.
+
+`ADMIN_USERS_JSON` format:
+
+```json
+[
+  { "username": "owner", "password": "strong-pass-1", "role": "admin" },
+  { "username": "editor1", "password": "strong-pass-2", "role": "editor" },
+  { "username": "author1", "password": "strong-pass-3", "role": "author" }
+]
+```
+
+If `ADMIN_USERS_JSON` is not set, system falls back to legacy `ADMIN_PASSWORD` with username `admin` and role `admin`.
 
 ## 3) Build settings
 

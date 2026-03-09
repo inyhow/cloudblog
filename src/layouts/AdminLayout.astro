@@ -1,5 +1,6 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
+import { getAuthRole } from '../lib/auth';
 import { tr } from '../lib/i18n';
 import { getRuntimeEnv } from '../lib/runtime-env';
 import { readSettings } from '../lib/settings';
@@ -11,7 +12,8 @@ interface Props {
 const { title } = Astro.props;
 const settings = await readSettings(getRuntimeEnv(Astro.locals));
 const locale = settings.locale || 'en';
-const nav = [
+const role = getAuthRole(Astro as any) || 'author';
+const allNav = [
   { href: '/admin/overview', label: tr(locale, 'nav.overview', 'Overview') },
   { href: '/admin/posts', label: tr(locale, 'nav.articles', 'Articles') },
   { href: '/admin/pages', label: tr(locale, 'nav.pages', 'Pages') },
@@ -19,6 +21,11 @@ const nav = [
   { href: '/admin/media', label: tr(locale, 'nav.media', 'Media') },
   { href: '/admin/settings', label: tr(locale, 'nav.settings', 'Settings') },
 ];
+const nav = allNav.filter((item) => {
+  if (role === 'admin') return true;
+  if (role === 'editor') return item.href !== '/admin/settings';
+  return item.href === '/admin/overview' || item.href === '/admin/posts' || item.href === '/admin/pages' || item.href === '/admin/media';
+});
 ---
 
 <!doctype html>

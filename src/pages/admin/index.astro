@@ -7,6 +7,7 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
     <h1 class="mb-4 text-2xl font-semibold">Admin Login</h1>
     <p class="mb-4 text-sm text-slate-500">Sign in to the management console.</p>
     <form id="login-form" class="space-y-3">
+      <input class="w-full rounded-xl border px-3 py-2" type="text" name="username" placeholder="Username (default: admin)" />
       <input class="w-full rounded-xl border px-3 py-2" type="password" name="password" placeholder="Admin password" />
       <button class="w-full rounded-xl bg-slate-900 px-3 py-2 text-white" type="submit">Login</button>
     </form>
@@ -22,7 +23,7 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
         const resp = await fetch('/api/admin/login', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ password: fd.get('password') }),
+          body: JSON.stringify({ username: fd.get('username') || 'admin', password: fd.get('password') }),
         });
         if (!resp.ok) {
           msg.textContent = 'Login failed. Check the password.';

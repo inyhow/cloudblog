@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { isAuthed } from '../../../lib/auth';
+import { requireRole } from '../../../lib/auth';
 import { putFile } from '../../../lib/github';
 import { getRuntimeEnv } from '../../../lib/runtime-env';
 
@@ -8,7 +8,8 @@ function readEnv(name: string, runtimeEnv?: Record<string, string>): string {
 }
 
 export const POST: APIRoute = async (context) => {
-  if (!isAuthed(context)) return new Response('Unauthorized', { status: 401 });
+  const denied = requireRole(context, 'author');
+  if (denied) return denied;
   const form = await context.request.formData();
   const file = form.get('file');
   if (!(file instanceof File)) return new Response('Bad Request', { status: 400 });

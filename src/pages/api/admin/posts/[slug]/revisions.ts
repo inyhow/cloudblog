@@ -1,11 +1,12 @@
 ﻿import type { APIRoute } from 'astro';
-import { isAuthed } from '../../../../../lib/auth';
+import { requireRole } from '../../../../../lib/auth';
 import { appendOpsLog } from '../../../../../lib/ops-log';
 import { listPostRevisions, restorePostRevision } from '../../../../../lib/posts';
 import { getRuntimeEnv } from '../../../../../lib/runtime-env';
 
 export const GET: APIRoute = async (context) => {
-  if (!isAuthed(context)) return new Response('Unauthorized', { status: 401 });
+  const denied = requireRole(context, 'editor');
+  if (denied) return denied;
   try {
     const slug = context.params.slug!;
     const revisions = await listPostRevisions(slug, getRuntimeEnv(context.locals));
@@ -16,7 +17,8 @@ export const GET: APIRoute = async (context) => {
 };
 
 export const POST: APIRoute = async (context) => {
-  if (!isAuthed(context)) return new Response('Unauthorized', { status: 401 });
+  const denied = requireRole(context, 'editor');
+  if (denied) return denied;
   try {
     const slug = context.params.slug!;
     const body = await context.request.json();

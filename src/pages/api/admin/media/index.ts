@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { isAuthed } from '../../../../lib/auth';
+import { requireRole } from '../../../../lib/auth';
 import { listDir } from '../../../../lib/github';
 import { getRuntimeEnv } from '../../../../lib/runtime-env';
 
@@ -8,7 +8,8 @@ function readEnv(name: string, runtimeEnv?: Record<string, string>): string {
 }
 
 export const GET: APIRoute = async (context) => {
-  if (!isAuthed(context)) return new Response('Unauthorized', { status: 401 });
+  const denied = requireRole(context, 'author');
+  if (denied) return denied;
   const runtimeEnv = getRuntimeEnv(context.locals);
   const owner = readEnv('GITHUB_OWNER', runtimeEnv);
   const repo = readEnv('GITHUB_REPO', runtimeEnv);

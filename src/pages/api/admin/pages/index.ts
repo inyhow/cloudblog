@@ -1,15 +1,17 @@
 import type { APIRoute } from 'astro';
-import { isAuthed } from '../../../../lib/auth';
+import { requireRole } from '../../../../lib/auth';
 import { getRuntimeEnv } from '../../../../lib/runtime-env';
 import { listCustomPages, saveCustomPage } from '../../../../lib/custom-pages';
 
 export const GET: APIRoute = async (context) => {
-  if (!isAuthed(context)) return new Response('Unauthorized', { status: 401 });
+  const denied = requireRole(context, 'author');
+  if (denied) return denied;
   return new Response(JSON.stringify(await listCustomPages(getRuntimeEnv(context.locals))));
 };
 
 export const POST: APIRoute = async (context) => {
-  if (!isAuthed(context)) return new Response('Unauthorized', { status: 401 });
+  const denied = requireRole(context, 'author');
+  if (denied) return denied;
   try {
     const body = await context.request.json();
     const slug = await saveCustomPage(body, getRuntimeEnv(context.locals));

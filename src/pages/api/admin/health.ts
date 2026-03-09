@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { isAuthed } from '../../../lib/auth';
+import { requireRole } from '../../../lib/auth';
 import { getRuntimeEnv } from '../../../lib/runtime-env';
 import { listDir, putFile } from '../../../lib/github';
 
@@ -26,7 +26,8 @@ async function githubProbe(runtimeEnv?: Record<string, string>) {
 }
 
 export const GET: APIRoute = async (context) => {
-  if (!isAuthed(context)) return new Response('Unauthorized', { status: 401 });
+  const denied = requireRole(context, 'admin');
+  if (denied) return denied;
   const runtimeEnv = getRuntimeEnv(context.locals);
   const envCheck = {
     GITHUB_OWNER: Boolean(runtimeEnv?.GITHUB_OWNER || import.meta.env.GITHUB_OWNER),
@@ -59,7 +60,8 @@ export const GET: APIRoute = async (context) => {
 };
 
 export const POST: APIRoute = async (context) => {
-  if (!isAuthed(context)) return new Response('Unauthorized', { status: 401 });
+  const denied = requireRole(context, 'admin');
+  if (denied) return denied;
   const runtimeEnv = getRuntimeEnv(context.locals);
   try {
     const path = `cloudblog/posts/__health-${Date.now()}.md`;
