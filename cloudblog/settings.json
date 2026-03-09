@@ -1,4 +1,5 @@
 {
+  "locale": "zh-CN",
   "title": "奇技赢巧",
   "description": "Powered by Astro + Cloudflare Pages + Github",
   "menu": [
