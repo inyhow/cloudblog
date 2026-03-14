@@ -3,20 +3,213 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 ---
 
 <AdminLayout title="Post Editor">
-  <div class="mb-6">
-    <h1 class="text-3xl font-semibold text-white">Post Editor</h1>
-    <p class="mt-2 text-sm text-slate-300">Write with the visual editor, upload images, and control slug, status, and cover.</p>
-  </div>
-  <form id="form" class="grid gap-4 overflow-x-hidden rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-sm">
-    <div class="grid gap-3 md:grid-cols-2">
-      <input class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="title" placeholder="Title" required />
-      <input class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="slug" placeholder="Custom URL slug" />
+  <!-- EasyMDE CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.css" />
+
+  <style>
+    /* ── 编辑器区域整体样式覆盖 ── */
+    .EasyMDEContainer {
+      border: none !important;
+      background: transparent !important;
+    }
+    .EasyMDEContainer .CodeMirror {
+      background: #0d1117;
+      color: #e2e8f0;
+      border: none !important;
+      min-height: 26rem;
+      font-size: 14px;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      line-height: 1.7;
+      padding: 1rem 1.25rem;
+    }
+    .EasyMDEContainer .CodeMirror-scroll {
+      min-height: 26rem;
+    }
+    .EasyMDEContainer .editor-toolbar {
+      background: #0f172a;
+      border: none !important;
+      border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+      padding: 0.5rem 0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+    }
+    .EasyMDEContainer .editor-toolbar button {
+      background: transparent;
+      color: #94a3b8 !important;
+      border: 1px solid transparent !important;
+      border-radius: 6px;
+      padding: 4px 8px;
+      transition: all 0.15s;
+      font-size: 13px;
+      height: auto;
+      line-height: 1.4;
+    }
+    .EasyMDEContainer .editor-toolbar button:hover,
+    .EasyMDEContainer .editor-toolbar button.active {
+      background: rgba(255,255,255,0.08) !important;
+      border-color: rgba(255,255,255,0.12) !important;
+      color: #f1f5f9 !important;
+    }
+    .EasyMDEContainer .editor-toolbar i.separator {
+      border-color: rgba(255,255,255,0.1) !important;
+    }
+    .EasyMDEContainer .editor-preview {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 1.25rem 1.5rem;
+    }
+    .EasyMDEContainer .editor-preview-side {
+      background: #0d1117;
+      border-left: 1px solid rgba(255,255,255,0.08) !important;
+      color: #e2e8f0;
+      padding: 1rem 1.25rem;
+    }
+    .EasyMDEContainer .CodeMirror-cursor {
+      border-color: #f59e0b !important;
+    }
+    .EasyMDEContainer .CodeMirror-selected {
+      background: rgba(245,158,11,0.2) !important;
+    }
+
+    /* Markdown preview content styles */
+    .editor-preview h1, .editor-preview-side h1 { font-size: 1.75rem; font-weight: 700; margin: 1rem 0 0.5rem; color: #f1f5f9; }
+    .editor-preview h2, .editor-preview-side h2 { font-size: 1.4rem; font-weight: 600; margin: 1rem 0 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
+    .editor-preview h3, .editor-preview-side h3 { font-size: 1.15rem; font-weight: 600; margin: 0.8rem 0 0.4rem; color: #cbd5e1; }
+    .editor-preview h4, .editor-preview-side h4 { font-size: 1rem; font-weight: 600; margin: 0.6rem 0 0.3rem; }
+    .editor-preview p, .editor-preview-side p { margin: 0.6rem 0; line-height: 1.75; }
+    .editor-preview a, .editor-preview-side a { color: #fbbf24; text-decoration: underline; }
+    .editor-preview blockquote, .editor-preview-side blockquote { border-left: 3px solid #f59e0b; margin: 0.75rem 0; padding: 0.5rem 1rem; background: rgba(245,158,11,0.07); color: #94a3b8; border-radius: 0 6px 6px 0; }
+    .editor-preview code, .editor-preview-side code { background: rgba(255,255,255,0.08); color: #fcd34d; padding: 1px 5px; border-radius: 4px; font-family: monospace; font-size: 0.88em; }
+    .editor-preview pre, .editor-preview-side pre { background: #1e293b; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 1rem; overflow-x: auto; margin: 0.75rem 0; }
+    .editor-preview pre code, .editor-preview-side pre code { background: none; color: #e2e8f0; padding: 0; }
+    .editor-preview table, .editor-preview-side table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 0.9rem; }
+    .editor-preview th, .editor-preview-side th { background: rgba(245,158,11,0.12); color: #fbbf24; font-weight: 600; padding: 8px 12px; border: 1px solid rgba(255,255,255,0.1); text-align: left; }
+    .editor-preview td, .editor-preview-side td { padding: 7px 12px; border: 1px solid rgba(255,255,255,0.07); }
+    .editor-preview tr:nth-child(even), .editor-preview-side tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+    .editor-preview ul, .editor-preview-side ul { list-style: disc; padding-left: 1.5rem; margin: 0.5rem 0; }
+    .editor-preview ol, .editor-preview-side ol { list-style: decimal; padding-left: 1.5rem; margin: 0.5rem 0; }
+    .editor-preview li, .editor-preview-side li { margin: 0.25rem 0; line-height: 1.7; }
+    .editor-preview img, .editor-preview-side img { max-width: 100%; border-radius: 8px; margin: 0.5rem 0; }
+    .editor-preview hr, .editor-preview-side hr { border: none; border-top: 1px solid rgba(255,255,255,0.12); margin: 1.5rem 0; }
+
+    /* ── Tab 切换样式 ── */
+    .editor-tab-bar {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 0.5rem 0.75rem 0;
+      background: #0f172a;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .editor-tab {
+      padding: 6px 16px;
+      font-size: 13px;
+      border-radius: 6px 6px 0 0;
+      border: 1px solid transparent;
+      cursor: pointer;
+      color: #94a3b8;
+      background: transparent;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .editor-tab.active {
+      background: #0d1117;
+      color: #f1f5f9;
+      border-color: rgba(255,255,255,0.1);
+      border-bottom-color: #0d1117;
+    }
+    .editor-tab:not(.active):hover {
+      color: #cbd5e1;
+      background: rgba(255,255,255,0.04);
+    }
+    .tab-icon { opacity: 0.7; font-size: 12px; }
+
+    /* ── 纯 Markdown 文本编辑区 (tab=markdown) ── */
+    #raw-md-area {
+      width: 100%;
+      min-height: 30rem;
+      background: #0d1117;
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 14px;
+      line-height: 1.7;
+      padding: 1rem 1.25rem;
+      border: none;
+      outline: none;
+      resize: vertical;
+      tab-size: 2;
+    }
+    #raw-md-area::placeholder { color: #475569; }
+
+    /* ── 预览区 (tab=preview) ── */
+    #preview-pane {
+      min-height: 26rem;
+      padding: 1.25rem 1.5rem;
+      background: #0d1117;
+      color: #e2e8f0;
+      line-height: 1.75;
+    }
+
+    /* ── 表单输入样式增强 ── */
+    .field-input {
+      min-width: 0;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(15,23,42,0.6);
+      padding: 9px 13px;
+      color: #e2e8f0;
+      font-size: 14px;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    .field-input:focus {
+      outline: none;
+      border-color: rgba(245,158,11,0.5);
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.08);
+    }
+    .field-input::placeholder { color: #475569; }
+
+    /* ── 工具提示文字 (CodeMirror 行号) ── */
+    .EasyMDEContainer .CodeMirror-linenumber { color: #334155; }
+
+    /* ── 字符计数 ── */
+    .editor-statusbar {
+      background: #0f172a;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 4px 1rem;
+      font-size: 11px;
+      color: #475569;
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      border-radius: 0 0 14px 14px;
+    }
+  </style>
+
+  <div class="mb-5 flex items-center justify-between gap-4">
+    <div>
+      <h1 id="page-heading" class="text-2xl font-semibold text-white">New Post</h1>
+      <p class="mt-1 text-xs text-slate-400">Write with the visual editor, upload images, and control the post metadata.</p>
     </div>
-    <input class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="description" placeholder="Description" />
-    <div class="grid gap-3 md:grid-cols-5">
-      <input class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="category" placeholder="Category slug" />
-      <input class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 md:col-span-2" name="tags" placeholder="Tags (comma separated)" />
-      <select class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="status">
+    <a href="/admin/posts" class="rounded-xl border border-white/10 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 transition">← All Posts</a>
+  </div>
+
+  <form id="form" class="grid gap-4">
+
+    <!-- ── Metadata fields ── -->
+    <div class="grid gap-3 rounded-2xl border border-white/10 bg-slate-900/60 p-4 md:grid-cols-2">
+      <input class="field-input" id="f-title" name="title" placeholder="Post title *" required />
+      <input class="field-input" id="f-slug" name="slug" placeholder="URL slug (auto-generated)" />
+      <input class="field-input md:col-span-2" id="f-desc" name="description" placeholder="Short description / excerpt" />
+    </div>
+
+    <div class="grid gap-3 rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:grid-cols-2 lg:grid-cols-4">
+      <input class="field-input" id="f-category" name="category" placeholder="Category slug" />
+      <input class="field-input" id="f-tags" name="tags" placeholder="Tags (comma separated)" />
+      <select class="field-input" id="f-status" name="status">
         <option value="published">Published</option>
         <option value="draft">Draft</option>
         <option value="review">In Review</option>
@@ -24,250 +217,277 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         <option value="archived">Archived</option>
         <option value="deleted">Deleted (Recycle Bin)</option>
       </select>
-      <label class="min-w-0 flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2">
-        <input type="checkbox" name="pinned" />
-        <span>Pinned</span>
+      <label class="field-input flex cursor-pointer items-center gap-2">
+        <input type="checkbox" id="f-pinned" name="pinned" class="accent-amber-400" />
+        <span class="select-none text-sm text-slate-300">Pinned</span>
       </label>
     </div>
-    <textarea class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="reviewNote" placeholder="Review note (approval/rejection feedback)"></textarea>
-    <input class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="scheduledAt" type="datetime-local" placeholder="Scheduled publish time" />
-    <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
-      <input class="min-w-0 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="coverImage" placeholder="Cover image URL" />
-      <div class="flex flex-wrap gap-2">
-        <input class="hidden" type="file" id="cover-file" accept="image/*" />
-        <button class="rounded-xl border border-white/10 px-3 py-2" type="button" id="cover-pick">Choose Cover</button>
-        <button class="rounded-xl border border-white/10 px-3 py-2" type="button" id="cover-upload">Upload Cover</button>
+
+    <div class="grid gap-3 rounded-2xl border border-white/10 bg-slate-900/60 p-4 md:grid-cols-2">
+      <textarea class="field-input resize-none" id="f-reviewnote" name="reviewNote" rows="2" placeholder="Review / rejection note"></textarea>
+      <input class="field-input" id="f-scheduledat" name="scheduledAt" type="datetime-local" />
+    </div>
+
+    <!-- Cover image -->
+    <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+      <input class="field-input flex-1" id="f-cover" name="coverImage" placeholder="Cover image URL" />
+      <input class="hidden" type="file" id="cover-file" accept="image/*" />
+      <button class="rounded-xl border border-white/15 px-3 py-2 text-sm text-slate-200 hover:bg-white/5 transition" type="button" id="cover-pick">Choose</button>
+      <button class="rounded-xl border border-amber-400/40 px-3 py-2 text-sm text-amber-300 hover:bg-amber-400/10 transition" type="button" id="cover-upload">Upload Cover</button>
+    </div>
+
+    <!-- ── Editor card ── -->
+    <div class="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/60 shadow-lg">
+
+      <!-- Tab bar -->
+      <div class="editor-tab-bar" id="editor-tabs">
+        <button type="button" class="editor-tab active" data-tab="visual">
+          <span class="tab-icon">✏️</span> Visual
+        </button>
+        <button type="button" class="editor-tab" data-tab="markdown">
+          <span class="tab-icon">⌨️</span> Markdown
+        </button>
+        <button type="button" class="editor-tab" data-tab="preview">
+          <span class="tab-icon">👁️</span> Preview
+        </button>
+
+        <!-- inline image upload (right-aligned) -->
+        <div class="ml-auto flex items-center gap-2 pb-1">
+          <input class="hidden" type="file" id="inline-image-file" accept="image/*" />
+          <button type="button" id="pick-inline-image"
+            class="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/5 transition"
+            title="Insert image into editor">
+            🖼 Insert Image
+          </button>
+        </div>
+      </div>
+
+      <!-- Visual tab: EasyMDE -->
+      <div id="tab-visual">
+        <textarea id="easymde-editor"></textarea>
+      </div>
+
+      <!-- Markdown tab: raw textarea -->
+      <div id="tab-markdown" class="hidden">
+        <textarea id="raw-md-area" spellcheck="false" placeholder="# Your markdown here..."></textarea>
+      </div>
+
+      <!-- Preview tab -->
+      <div id="tab-preview" class="hidden">
+        <div id="preview-pane" class="editor-preview"></div>
+      </div>
+
+      <!-- Status bar -->
+      <div class="editor-statusbar">
+        <span id="char-count">0 chars</span>
+        <span id="word-count">0 words</span>
+        <span id="line-count">0 lines</span>
       </div>
     </div>
-    <div class="rounded-2xl border border-white/10 bg-slate-950/50">
-      <div class="flex flex-wrap gap-2 border-b border-white/10 p-3">
-        <button class="rounded-lg border border-white/10 bg-slate-900 px-3 py-1.5 text-sm" type="button" data-command="bold">Bold</button>
-        <button class="rounded-lg border border-white/10 bg-slate-900 px-3 py-1.5 text-sm" type="button" data-command="italic">Italic</button>
-        <button class="rounded-lg border border-white/10 bg-slate-900 px-3 py-1.5 text-sm" type="button" data-command="formatBlock" data-value="h2">H2</button>
-        <button class="rounded-lg border border-white/10 bg-slate-900 px-3 py-1.5 text-sm" type="button" data-command="formatBlock" data-value="blockquote">Quote</button>
-        <button class="rounded-lg border border-white/10 bg-slate-900 px-3 py-1.5 text-sm" type="button" data-command="insertUnorderedList">List</button>
-        <button class="rounded-lg border border-white/10 bg-slate-900 px-3 py-1.5 text-sm" type="button" id="insert-link">Link</button>
-        <button class="rounded-lg border border-white/10 bg-slate-900 px-3 py-1.5 text-sm" type="button" id="insert-code">Code</button>
-        <button class="rounded-lg border border-white/10 bg-slate-900 px-3 py-1.5 text-sm" type="button" id="insert-table">Table</button>
-        <button class="rounded-lg border border-white/10 bg-slate-900 px-3 py-1.5 text-sm" type="button" id="pick-inline-image">Image</button>
-        <input class="hidden" type="file" id="inline-image-file" accept="image/*" />
-      </div>
-      <div
-        id="editor"
-        class="min-h-[28rem] bg-white p-4 text-slate-900 outline-none"
-        contenteditable="true"
-        spellcheck="false"
-        data-placeholder="Write your post here..."
-      ></div>
+
+    <!-- hidden field that holds final markdown for submit -->
+    <textarea id="md-hidden" name="content" class="hidden"></textarea>
+
+    <!-- Actions -->
+    <div class="flex flex-wrap gap-3">
+      <button class="rounded-xl bg-amber-400 px-5 py-2.5 font-semibold text-slate-950 hover:bg-amber-300 transition" type="submit" id="save-btn">Save Post</button>
+      <button class="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-300 hover:bg-white/5 transition" type="button" id="save-draft-btn">Save as Draft</button>
+      <span class="flex items-center text-sm text-slate-500" id="autosave-indicator"></span>
     </div>
-    <details class="rounded-xl border border-white/10 bg-slate-950/50">
-      <summary class="cursor-pointer px-4 py-3 text-sm font-medium">Markdown source</summary>
-      <textarea class="min-h-80 w-full border-t border-white/10 bg-transparent px-4 py-3 font-mono text-sm outline-none" name="content" id="md" placeholder="# Content"></textarea>
-    </details>
-    <div class="flex gap-3">
-      <button class="rounded-xl bg-amber-400 px-4 py-2 font-medium text-slate-950" type="submit">Save Post</button>
-      <button class="rounded-xl border border-white/10 px-4 py-2" type="button" id="sync-markdown">Sync from Markdown</button>
-    </div>
+    <p id="msg" class="text-sm"></p>
   </form>
+
+  <!-- Revisions panel -->
   <section id="revisions-panel" class="mt-6 hidden rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-    <div class="mb-3 text-sm font-medium text-slate-200">Revision History</div>
+    <div class="mb-3 text-sm font-medium text-slate-200">📋 Revision History</div>
     <div id="revisions-list" class="grid gap-2"></div>
   </section>
-  <p id="msg" class="mt-3 text-sm"></p>
+
+  <!-- EasyMDE JS -->
+  <script is:inline src="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.js"></script>
+  <!-- marked for preview rendering -->
+  <script is:inline src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
 
   <script is:inline>
     (() => {
-      const form = document.getElementById('form');
-      const editor = document.getElementById('editor');
-      const md = document.getElementById('md');
-      const msg = document.getElementById('msg');
-      const slug = new URL(location.href).searchParams.get('slug');
+      /* ─────────────────────────────────── helpers ─ */
+      const $ = (id) => document.getElementById(id);
+      const form       = $('form') || document.querySelector('form');
+      const msg        = $('msg');
+      const mdHidden   = $('md-hidden');
+      const slug       = new URL(location.href).searchParams.get('slug');
+
+      // form fields
+      const fTitle      = $('f-title');
+      const fSlug       = $('f-slug');
+      const fDesc       = $('f-desc');
+      const fCategory   = $('f-category');
+      const fTags       = $('f-tags');
+      const fStatus     = $('f-status');
+      const fPinned     = $('f-pinned');
+      const fCover      = $('f-cover');
+      const fScheduled  = $('f-scheduledat');
+      const fReviewNote = $('f-reviewnote');
+
+      // editor elements
+      const rawMdArea     = $('raw-md-area');
+      const previewPane   = $('preview-pane');
+      const charCount     = $('char-count');
+      const wordCount     = $('word-count');
+      const lineCount     = $('line-count');
+
+      let easyMDE = null;
+      let currentTab = 'visual';
       let isDirty = false;
       let isSaving = false;
 
-      const titleInput = form.querySelector('input[name="title"]');
-      const descriptionInput = form.querySelector('input[name="description"]');
-      const slugInput = form.querySelector('input[name="slug"]');
-      const categoryInput = form.querySelector('input[name="category"]');
-      const tagsInput = form.querySelector('input[name="tags"]');
-      const statusInput = form.querySelector('select[name="status"]');
-      const pinnedInput = form.querySelector('input[name="pinned"]');
-      const coverImageInput = form.querySelector('input[name="coverImage"]');
-      const scheduledAtInput = form.querySelector('input[name="scheduledAt"]');
-      const reviewNoteInput = form.querySelector('textarea[name="reviewNote"]');
-
-      const coverFile = document.getElementById('cover-file');
-      const coverPick = document.getElementById('cover-pick');
-      const coverUpload = document.getElementById('cover-upload');
-      const inlineImageFile = document.getElementById('inline-image-file');
-      const syncMarkdownBtn = document.getElementById('sync-markdown');
-      const revisionsPanel = document.getElementById('revisions-panel');
-      const revisionsList = document.getElementById('revisions-list');
-
-      function escapeHtml(value) {
-        return value
-          .replaceAll('&', '&amp;')
-          .replaceAll('<', '&lt;')
-          .replaceAll('>', '&gt;');
+      /* ── configure marked ── */
+      if (typeof marked !== 'undefined') {
+        marked.setOptions({
+          breaks: true,
+          gfm: true,
+        });
       }
 
-      function markdownToHtml(markdown) {
-        const lines = markdown.replace(/\r/g, '').split('\n');
-        const html = [];
-        let inList = false;
-        let inCode = false;
-        let codeBuffer = [];
-
-        const closeList = () => {
-          if (inList) {
-            html.push('</ul>');
-            inList = false;
-          }
-        };
-
-        const flushCode = () => {
-          if (inCode) {
-            html.push(`<pre><code>${escapeHtml(codeBuffer.join('\n'))}</code></pre>`);
-            inCode = false;
-            codeBuffer = [];
-          }
-        };
-
-        for (const line of lines) {
-          if (line.startsWith('```')) {
-            closeList();
-            if (inCode) {
-              flushCode();
-            } else {
-              inCode = true;
-            }
-            continue;
-          }
-          if (inCode) {
-            codeBuffer.push(line);
-            continue;
-          }
-          if (!line.trim()) {
-            closeList();
-            html.push('<p><br></p>');
-            continue;
-          }
-          if (line.startsWith('## ')) {
-            closeList();
-            html.push(`<h2>${escapeHtml(line.slice(3))}</h2>`);
-            continue;
-          }
-          if (line.startsWith('# ')) {
-            closeList();
-            html.push(`<h1>${escapeHtml(line.slice(2))}</h1>`);
-            continue;
-          }
-          if (line.startsWith('> ')) {
-            closeList();
-            html.push(`<blockquote>${escapeHtml(line.slice(2))}</blockquote>`);
-            continue;
-          }
-          if (line.startsWith('- ')) {
-            if (!inList) {
-              html.push('<ul>');
-              inList = true;
-            }
-            html.push(`<li>${escapeInline(line.slice(2))}</li>`);
-            continue;
-          }
-          closeList();
-          if (/^\|.+\|$/.test(line)) {
-            const cells = line.split('|').slice(1, -1).map((cell) => `<td>${escapeInline(cell.trim())}</td>`).join('');
-            html.push(`<table><tbody><tr>${cells}</tr></tbody></table>`);
-            continue;
-          }
-          html.push(`<p>${escapeInline(line)}</p>`);
-        }
-        closeList();
-        flushCode();
-        return html.join('');
+      function renderMarkdown(src) {
+        if (typeof marked === 'undefined') return '<p>' + src + '</p>';
+        try { return marked.parse(src || ''); } catch(e) { return src; }
       }
 
-      function escapeInline(value) {
-        let output = escapeHtml(value);
-        output = output.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img alt="$1" src="$2" />');
-        output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-        output = output.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-        output = output.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-        output = output.replace(/`([^`]+)`/g, '<code>$1</code>');
-        return output;
-      }
+      /* ─────────────────── EasyMDE init ─ */
+      easyMDE = new EasyMDE({
+        element: $('easymde-editor'),
+        spellChecker: false,
+        autofocus: false,
+        placeholder: '# Start writing your post...\n\nSupports full GFM Markdown — tables, code blocks, lists, images, and more.',
+        minHeight: '28rem',
+        maxHeight: '60rem',
+        autosave: { enabled: false },
+        renderingConfig: {
+          singleLineBreaks: false,
+          codeSyntaxHighlighting: false,
+        },
+        previewRender(src) {
+          return renderMarkdown(src);
+        },
+        toolbar: [
+          { name: 'bold',        action: EasyMDE.toggleBold,          className: 'fa fa-bold',          title: 'Bold (Ctrl+B)' },
+          { name: 'italic',      action: EasyMDE.toggleItalic,        className: 'fa fa-italic',        title: 'Italic (Ctrl+I)' },
+          { name: 'strikethrough', action: EasyMDE.toggleStrikethrough, className: 'fa fa-strikethrough', title: 'Strikethrough' },
+          '|',
+          { name: 'heading-1',   action: EasyMDE.toggleHeading1,      className: 'fa fa-header fa-header-x fa-header-1', title: 'Heading 1' },
+          { name: 'heading-2',   action: EasyMDE.toggleHeading2,      className: 'fa fa-header fa-header-x fa-header-2', title: 'Heading 2' },
+          { name: 'heading-3',   action: EasyMDE.toggleHeading3,      className: 'fa fa-header fa-header-x fa-header-3', title: 'Heading 3' },
+          '|',
+          { name: 'unordered-list', action: EasyMDE.toggleUnorderedList, className: 'fa fa-list-ul',   title: 'Bullet List' },
+          { name: 'ordered-list',   action: EasyMDE.toggleOrderedList,   className: 'fa fa-list-ol',   title: 'Numbered List' },
+          { name: 'quote',          action: EasyMDE.toggleBlockquote,    className: 'fa fa-quote-left', title: 'Blockquote' },
+          '|',
+          { name: 'code',           action: EasyMDE.toggleCodeBlock,     className: 'fa fa-code',       title: 'Code Block' },
+          { name: 'table',          action: EasyMDE.drawTable,            className: 'fa fa-table',      title: 'Insert Table' },
+          { name: 'link',           action: EasyMDE.drawLink,             className: 'fa fa-link',       title: 'Insert Link (Ctrl+K)' },
+          { name: 'image',          action: EasyMDE.drawImage,            className: 'fa fa-picture-o',  title: 'Insert Image' },
+          { name: 'horizontal-rule', action: EasyMDE.drawHorizontalRule,  className: 'fa fa-minus',     title: 'Horizontal Rule' },
+          '|',
+          { name: 'preview',        action: EasyMDE.togglePreview,        className: 'fa fa-eye no-disable', title: 'Toggle Preview' },
+          { name: 'side-by-side',   action: EasyMDE.toggleSideBySide,     className: 'fa fa-columns no-disable no-mobile', title: 'Side-by-Side' },
+          { name: 'fullscreen',     action: EasyMDE.toggleFullScreen,     className: 'fa fa-arrows-alt no-disable no-mobile', title: 'Fullscreen' },
+          '|',
+          {
+            name: 'undo',
+            action: (editor) => editor.codemirror.execCommand('undo'),
+            className: 'fa fa-undo',
+            title: 'Undo',
+          },
+          {
+            name: 'redo',
+            action: (editor) => editor.codemirror.execCommand('redo'),
+            className: 'fa fa-repeat',
+            title: 'Redo',
+          },
+        ],
+      });
 
-      function inlineToMarkdown(node) {
-        if (node.nodeType === Node.TEXT_NODE) return node.textContent;
-        if (node.nodeType !== Node.ELEMENT_NODE) return '';
-        const tag = node.tagName.toLowerCase();
-        const content = Array.from(node.childNodes).map(inlineToMarkdown).join('');
-        if (tag === 'strong' || tag === 'b') return `**${content}**`;
-        if (tag === 'em' || tag === 'i') return `*${content}*`;
-        if (tag === 'code' && node.parentElement?.tagName.toLowerCase() !== 'pre') return `\`${content}\``;
-        if (tag === 'a') return `[${content}](${node.getAttribute('href') || ''})`;
-        if (tag === 'img') return `![${node.getAttribute('alt') || ''}](${node.getAttribute('src') || ''})`;
-        if (tag === 'br') return '\n';
-        return content;
-      }
-
-      function blockToMarkdown(node) {
-        if (node.nodeType === Node.TEXT_NODE) return node.textContent.trim();
-        if (node.nodeType !== Node.ELEMENT_NODE) return '';
-        const tag = node.tagName.toLowerCase();
-        if (tag === 'h1') return `# ${Array.from(node.childNodes).map(inlineToMarkdown).join('')}`;
-        if (tag === 'h2') return `## ${Array.from(node.childNodes).map(inlineToMarkdown).join('')}`;
-        if (tag === 'blockquote') return `> ${Array.from(node.childNodes).map(inlineToMarkdown).join('')}`;
-        if (tag === 'ul') {
-          return Array.from(node.children).map((li) => `- ${Array.from(li.childNodes).map(inlineToMarkdown).join('')}`).join('\n');
-        }
-        if (tag === 'pre') {
-          const code = node.textContent.replace(/\n+$/, '');
-          return `\`\`\`\n${code}\n\`\`\``;
-        }
-        if (tag === 'table') {
-          return Array.from(node.querySelectorAll('tr'))
-            .map((row) => `| ${Array.from(row.children).map((cell) => cell.textContent.trim()).join(' | ')} |`)
-            .join('\n');
-        }
-        return Array.from(node.childNodes).map(inlineToMarkdown).join('');
-      }
-
-      function htmlToMarkdown(root) {
-        return Array.from(root.childNodes)
-          .map(blockToMarkdown)
-          .filter(Boolean)
-          .join('\n\n')
-          .replace(/\n{3,}/g, '\n\n')
-          .trim();
-      }
-
-      function syncEditorFromMarkdown() {
-        editor.innerHTML = markdownToHtml(md.value || '');
-      }
-
-      function syncMarkdownFromEditor() {
-        md.value = htmlToMarkdown(editor);
-      }
-
-      function setMessage(text, tone) {
-        msg.className = `mt-3 text-sm ${tone === 'error' ? 'text-red-600' : tone === 'success' ? 'text-emerald-600' : 'text-slate-600'}`;
-        msg.textContent = text;
-      }
-
-      function markDirty() {
-        if (isSaving) return;
+      /* sync EasyMDE → rawMdArea / statusbar on every change */
+      easyMDE.codemirror.on('change', () => {
+        const val = easyMDE.value();
+        rawMdArea.value = val;
+        updateStatusBar(val);
         isDirty = true;
+      });
+
+      /* ─────────────────── Tab switching ─ */
+      function getMdValue() {
+        if (currentTab === 'visual')   return easyMDE.value();
+        if (currentTab === 'markdown') return rawMdArea.value;
+        return rawMdArea.value; // preview reads from rawMdArea
       }
 
+      function switchTab(tab) {
+        // flush current tab → shared buffer
+        const current = getMdValue();
+        rawMdArea.value = current;
+
+        // hide all panels
+        $('tab-visual').classList.add('hidden');
+        $('tab-markdown').classList.add('hidden');
+        $('tab-preview').classList.add('hidden');
+
+        // update tab buttons
+        document.querySelectorAll('.editor-tab').forEach((btn) => {
+          btn.classList.toggle('active', btn.dataset.tab === tab);
+        });
+
+        currentTab = tab;
+
+        if (tab === 'visual') {
+          $('tab-visual').classList.remove('hidden');
+          // sync rawMdArea → EasyMDE only if values differ
+          if (easyMDE.value() !== current) easyMDE.value(current);
+          setTimeout(() => easyMDE.codemirror.refresh(), 50);
+        } else if (tab === 'markdown') {
+          $('tab-markdown').classList.remove('hidden');
+          rawMdArea.focus();
+        } else if (tab === 'preview') {
+          $('tab-preview').classList.remove('hidden');
+          previewPane.innerHTML = renderMarkdown(current);
+        }
+
+        updateStatusBar(current);
+      }
+
+      document.querySelectorAll('.editor-tab').forEach((btn) => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      });
+
+      /* raw textarea → sync to EasyMDE on leave */
+      rawMdArea.addEventListener('input', () => {
+        updateStatusBar(rawMdArea.value);
+        isDirty = true;
+      });
+      rawMdArea.addEventListener('blur', () => {
+        if (currentTab === 'markdown') {
+          easyMDE.value(rawMdArea.value);
+        }
+      });
+
+      /* ─────────────────── Status bar ─ */
+      function updateStatusBar(val) {
+        const chars = val.length;
+        const words = val.trim() ? val.trim().split(/\s+/).length : 0;
+        const lines = val.split('\n').length;
+        charCount.textContent = chars.toLocaleString() + ' chars';
+        wordCount.textContent = words.toLocaleString() + ' words';
+        lineCount.textContent = lines.toLocaleString() + ' lines';
+      }
+
+      /* ─────────────────── Image upload ─ */
       async function fetchWithRetry(url, options = {}, retries = 1) {
         let lastError;
-        for (let i = 0; i <= retries; i += 1) {
+        for (let i = 0; i <= retries; i++) {
           try {
             const resp = await fetch(url, options);
             if (resp.ok || i === retries) return resp;
-            lastError = new Error(`HTTP ${resp.status}`);
           } catch (err) {
             lastError = err;
             if (i === retries) throw err;
@@ -286,147 +506,118 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         return body;
       }
 
-      function insertHtml(html) {
-        editor.focus();
-        document.execCommand('insertHTML', false, html);
-        syncMarkdownFromEditor();
+      // Insert image into EasyMDE at cursor
+      function insertImageMarkdown(url, alt) {
+        const cm = easyMDE.codemirror;
+        const cursor = cm.getCursor();
+        cm.replaceRange(`![${alt}](${url})`, cursor);
+        cm.focus();
+        const newVal = easyMDE.value();
+        rawMdArea.value = newVal;
+        updateStatusBar(newVal);
       }
 
-      form.querySelectorAll('[data-command]').forEach((button) => {
-        button.addEventListener('click', () => {
-          editor.focus();
-          document.execCommand(button.dataset.command, false, button.dataset.value || null);
-          syncMarkdownFromEditor();
-        });
+      // Inline image picker
+      const inlineImageFile = $('inline-image-file');
+      $('pick-inline-image').addEventListener('click', () => {
+        // switch to visual tab first so insert lands in editor
+        if (currentTab !== 'visual') switchTab('visual');
+        inlineImageFile.click();
       });
-
-      document.getElementById('insert-link').addEventListener('click', () => {
-        const url = prompt('Link URL');
-        if (!url) return;
-        editor.focus();
-        document.execCommand('createLink', false, url);
-        syncMarkdownFromEditor();
-      });
-
-      document.getElementById('insert-code').addEventListener('click', () => {
-        insertHtml('<pre><code>const example = true;</code></pre>');
-      });
-
-      document.getElementById('insert-table').addEventListener('click', () => {
-        insertHtml('<table><tbody><tr><td>Header 1</td><td>Header 2</td></tr><tr><td>Cell 1</td><td>Cell 2</td></tr></tbody></table>');
-      });
-
-      document.getElementById('pick-inline-image').addEventListener('click', () => inlineImageFile.click());
-      coverPick.addEventListener('click', () => coverFile.click());
-
-      coverUpload.addEventListener('click', async () => {
-        const file = coverFile.files?.[0];
-        if (!file) return;
-        try {
-          setMessage('Uploading cover...', 'info');
-          const body = await uploadImage(file);
-          coverImageInput.value = body.url;
-          setMessage('Cover uploaded', 'success');
-        } catch (error) {
-          setMessage(`Cover upload failed: ${error.message}`, 'error');
-        }
-      });
-
       inlineImageFile.addEventListener('change', async () => {
         const file = inlineImageFile.files?.[0];
         if (!file) return;
         try {
-          setMessage('Uploading image...', 'info');
+          setMessage('Uploading image…', 'info');
           const body = await uploadImage(file);
-          insertHtml(`<p><img src="${body.url}" alt="${file.name}" /></p>`);
-          setMessage('Image inserted', 'success');
+          insertImageMarkdown(body.url, file.name.replace(/\.[^.]+$/, ''));
+          setMessage('Image inserted ✓', 'success');
           inlineImageFile.value = '';
-        } catch (error) {
-          setMessage(`Image upload failed: ${error.message}`, 'error');
+        } catch (err) {
+          setMessage('Image upload failed: ' + err.message, 'error');
         }
       });
 
-      editor.addEventListener('input', syncMarkdownFromEditor);
-      editor.addEventListener('input', markDirty);
-      md.addEventListener('input', () => {
-        if (document.activeElement === md) syncEditorFromMarkdown();
-      });
-      md.addEventListener('input', markDirty);
-      syncMarkdownBtn.addEventListener('click', syncEditorFromMarkdown);
-      form.addEventListener('input', markDirty);
-      window.addEventListener('beforeunload', (event) => {
-        if (!isDirty || isSaving) return;
-        event.preventDefault();
-        event.returnValue = '';
-      });
-
-      editor.addEventListener('keydown', (event) => {
-        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'b') {
-          event.preventDefault();
-          document.execCommand('bold');
-          syncMarkdownFromEditor();
-        }
-        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'i') {
-          event.preventDefault();
-          document.execCommand('italic');
-          syncMarkdownFromEditor();
-        }
-        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
-          event.preventDefault();
-          document.getElementById('insert-link').click();
+      // Cover image
+      const coverFile = $('cover-file');
+      $('cover-pick').addEventListener('click', () => coverFile.click());
+      $('cover-upload').addEventListener('click', async () => {
+        const file = coverFile.files?.[0];
+        if (!file) return;
+        try {
+          setMessage('Uploading cover…', 'info');
+          const body = await uploadImage(file);
+          fCover.value = body.url;
+          setMessage('Cover uploaded ✓', 'success');
+        } catch (err) {
+          setMessage('Cover upload failed: ' + err.message, 'error');
         }
       });
 
+      /* ─────────────────── Helpers ─ */
+      function setMessage(text, tone) {
+        msg.className = 'text-sm ' + (
+          tone === 'error'   ? 'text-red-400' :
+          tone === 'success' ? 'text-emerald-400' :
+          'text-slate-400'
+        );
+        msg.textContent = text;
+      }
+
+      /* ─────────────────── Load existing post ─ */
       (async () => {
         if (!slug) return;
+        $('page-heading').textContent = 'Edit Post';
+        document.title = 'Edit Post — CloudBlog';
+
         const resp = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}`);
-        if (!resp.ok) return;
+        if (!resp.ok) { setMessage('Could not load post.', 'error'); return; }
         const post = await resp.json();
-        titleInput.value = post.title || '';
-        descriptionInput.value = post.description || '';
-        slugInput.value = post.slug || '';
-        tagsInput.value = (post.tags || []).join(',');
-        categoryInput.value = post.category || '';
-        statusInput.value = post.status || 'published';
-        reviewNoteInput.value = post.reviewNote || '';
-        pinnedInput.checked = !!post.pinned;
-        coverImageInput.value = post.coverImage || '';
+
+        fTitle.value      = post.title       || '';
+        fSlug.value       = post.slug        || '';
+        fDesc.value       = post.description || '';
+        fTags.value       = (post.tags || []).join(', ');
+        fCategory.value   = post.category    || '';
+        fStatus.value     = post.status      || 'published';
+        fReviewNote.value = post.reviewNote  || '';
+        fPinned.checked   = !!post.pinned;
+        fCover.value      = post.coverImage  || '';
         if (post.scheduledAt) {
-          scheduledAtInput.value = new Date(post.scheduledAt).toISOString().slice(0, 16);
+          fScheduled.value = new Date(post.scheduledAt).toISOString().slice(0, 16);
         }
-        md.value = post.content || '';
-        syncEditorFromMarkdown();
+
+        const content = post.content || '';
+        easyMDE.value(content);
+        rawMdArea.value = content;
+        updateStatusBar(content);
         isDirty = false;
 
-        const revisionsResp = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}/revisions`);
-        if (revisionsResp.ok) {
-          const revisionData = await revisionsResp.json();
-          const revisions = revisionData.revisions || [];
+        // Load revisions
+        const revResp = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}/revisions`);
+        if (revResp.ok) {
+          const revData = await revResp.json();
+          const revisions = revData.revisions || [];
           if (revisions.length > 0) {
-            revisionsPanel.classList.remove('hidden');
-            revisionsList.innerHTML = revisions
-              .map((path) => {
-                const name = path.split('/').pop().replace('.md', '');
-                return `<div class="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/40 p-2">
-                  <span class="text-xs text-slate-300">${name}</span>
-                  <button class="rounded-lg border border-sky-400/50 px-2 py-1 text-xs text-sky-300" data-restore-revision="${encodeURIComponent(path)}" type="button">Restore</button>
-                </div>`;
-              })
-              .join('');
-            revisionsList.querySelectorAll('[data-restore-revision]').forEach((button) => {
-              button.addEventListener('click', async () => {
+            $('revisions-panel').classList.remove('hidden');
+            $('revisions-list').innerHTML = revisions.map((path) => {
+              const name = path.split('/').pop().replace('.md', '');
+              return `<div class="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/40 p-2">
+                <span class="text-xs text-slate-300">${name}</span>
+                <button class="rounded-lg border border-sky-400/40 px-3 py-1 text-xs text-sky-300 hover:bg-sky-400/10 transition" data-restore-revision="${encodeURIComponent(path)}" type="button">Restore</button>
+              </div>`;
+            }).join('');
+            $('revisions-list').querySelectorAll('[data-restore-revision]').forEach((btn) => {
+              btn.addEventListener('click', async () => {
                 if (!confirm('Restore this revision? Current content will be replaced.')) return;
-                const revisionPath = decodeURIComponent(button.dataset.restoreRevision);
-                const resp = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}/revisions`, {
+                const revPath = decodeURIComponent(btn.dataset.restoreRevision);
+                const r = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}/revisions`, {
                   method: 'POST',
                   headers: { 'content-type': 'application/json' },
-                  body: JSON.stringify({ revisionPath }),
+                  body: JSON.stringify({ revisionPath: revPath }),
                 });
-                if (!resp.ok) {
-                  setMessage(`Restore failed: ${await resp.text()}`, 'error');
-                  return;
-                }
-                setMessage('Revision restored. Reloading...', 'success');
+                if (!r.ok) { setMessage('Restore failed: ' + await r.text(), 'error'); return; }
+                setMessage('Revision restored. Reloading…', 'success');
                 setTimeout(() => location.reload(), 600);
               });
             });
@@ -434,29 +625,41 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         }
       })();
 
-      syncEditorFromMarkdown();
-      isDirty = false;
+      /* ─────────────────── Save as Draft shortcut ─ */
+      $('save-draft-btn').addEventListener('click', () => {
+        fStatus.value = 'draft';
+        form.requestSubmit?.() ?? form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      });
 
+      /* ─────────────────── Submit ─ */
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         isSaving = true;
-        syncMarkdownFromEditor();
-        setMessage('Saving...', 'info');
+
+        // Capture final markdown from whichever tab is active
+        const content = getMdValue();
+        mdHidden.value = content;
+
+        setMessage('Saving…', 'info');
+        $('save-btn').disabled = true;
+
         const payload = {
-          title: titleInput.value.trim(),
-          description: descriptionInput.value.trim(),
-          slug: slugInput.value.trim(),
-          tags: tagsInput.value.split(',').map((s) => s.trim()).filter(Boolean),
-          category: categoryInput.value.trim(),
-          status: statusInput.value,
-          reviewNote: reviewNoteInput.value.trim(),
-          pinned: pinnedInput.checked,
-          coverImage: coverImageInput.value.trim(),
-          scheduledAt: scheduledAtInput.value ? new Date(scheduledAtInput.value).toISOString() : '',
-          content: md.value,
+          title:       fTitle.value.trim(),
+          description: fDesc.value.trim(),
+          slug:        fSlug.value.trim(),
+          tags:        fTags.value.split(',').map((s) => s.trim()).filter(Boolean),
+          category:    fCategory.value.trim(),
+          status:      fStatus.value,
+          reviewNote:  fReviewNote.value.trim(),
+          pinned:      fPinned.checked,
+          coverImage:  fCover.value.trim(),
+          scheduledAt: fScheduled.value ? new Date(fScheduled.value).toISOString() : '',
+          content,
         };
-        const url = slug ? `/api/admin/posts/${encodeURIComponent(slug)}` : '/api/admin/posts';
+
+        const url    = slug ? `/api/admin/posts/${encodeURIComponent(slug)}` : '/api/admin/posts';
         const method = slug ? 'PUT' : 'POST';
+
         try {
           const resp = await fetchWithRetry(url, {
             method,
@@ -472,17 +675,38 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
                 if (location.pathname + location.search !== next) history.replaceState({}, '', next);
               }
             } catch {}
-            setMessage('Saved', 'success');
+            setMessage('✓ Saved successfully', 'success');
             isDirty = false;
-            return;
+          } else {
+            setMessage(`Save failed (${resp.status}): ${text}`, 'error');
           }
-          setMessage(`Save failed (${resp.status}): ${text}`, 'error');
-        } catch (error) {
-          setMessage(`Save failed: ${error instanceof Error ? error.message : String(error)}`, 'error');
+        } catch (err) {
+          setMessage('Save failed: ' + (err instanceof Error ? err.message : String(err)), 'error');
         } finally {
           isSaving = false;
+          $('save-btn').disabled = false;
         }
       });
+
+      /* ─────────────────── Dirty guard ─ */
+      form.addEventListener('input', () => { if (!isSaving) isDirty = true; });
+      window.addEventListener('beforeunload', (e) => {
+        if (!isDirty || isSaving) return;
+        e.preventDefault();
+        e.returnValue = '';
+      });
+
+      /* ─────────────────── Auto-slug from title ─ */
+      fTitle.addEventListener('input', () => {
+        if (slug) return; // don't overwrite slug in edit mode
+        fSlug.value = fTitle.value
+          .toLowerCase()
+          .replace(/[^\w\u4e00-\u9fa5]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      });
+
+      /* initial status bar */
+      updateStatusBar('');
     })();
   </script>
 </AdminLayout>

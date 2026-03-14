@@ -1,15 +1,24 @@
-# CloudBlog
+﻿# CloudBlog
 
-基于 `Astro + Tailwind + Cloudflare Pages` 的博客系统，支持：
+A lightweight blog CMS built with Astro + Cloudflare Pages + GitHub content storage.
 
-- GitHub 仓库存储文章（Markdown）与图片
-- 后台登录、文章列表、发布与编辑
-- 网站设置（SEO、菜单、页脚、统计脚本）
-- 手动主题 CSS 管理
-- 前台首页、详情、标签页
-- Giscus 评论
+## One-click Deploy
 
-## 开发
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/inyhow/cloudblog)
+
+> If the button flow is unavailable in your account, use manual setup in `docs/deploy.md`.
+
+## Features
+
+- Astro-based frontend and Cloudflare Pages deployment
+- GitHub repository as content store (posts, pages, images, settings)
+- Admin panel with visual post editor
+- Post workflow: draft/review/scheduled/published/recycle
+- Category templates and customizable theme CSS
+- Google Analytics / Search Console / AdSense config
+- Role-based access control: admin / editor / author
+
+## Quick Start
 
 ```bash
 npm install
@@ -17,16 +26,40 @@ cp .env.example .env
 npm run dev
 ```
 
-## 环境变量
+Open: `http://localhost:4321/admin`
 
-参考 `.env.example`：
+## Environment Variables
 
-- `ADMIN_PASSWORD`: 后台登录密码
-- `GITHUB_OWNER` / `GITHUB_REPO` / `GITHUB_BRANCH` / `GITHUB_TOKEN`: GitHub API 配置
-- `GITHUB_RAW_PREFIX`: 图片 URL 前缀（可选）
+Core:
 
-## Cloudflare Pages
+- `ADMIN_USERS_JSON` (recommended)
+- `ADMIN_PASSWORD` (legacy fallback)
+- `GITHUB_OWNER`
+- `GITHUB_REPO`
+- `GITHUB_BRANCH`
+- `GITHUB_TOKEN`
 
-1. 构建命令：`npm run build`
-2. 输出目录：`dist`
-3. 在 Pages 项目里配置上述环境变量
+Optional:
+
+- `GITHUB_RAW_PREFIX`
+- `GITHUB_CDN_PREFIX`
+
+`ADMIN_USERS_JSON` example:
+
+```json
+[
+  { "username": "owner", "password": "strong-pass-1", "role": "admin" },
+  { "username": "editor1", "password": "strong-pass-2", "role": "editor" },
+  { "username": "author1", "password": "strong-pass-3", "role": "author" }
+]
+```
+
+## Documentation
+
+- [Project Guide](./docs/project.md)
+- [Deployment Guide](./docs/deploy.md)
+- [Preflight Checklist](./docs/preflight.md)
+
+## License
+
+MIT
