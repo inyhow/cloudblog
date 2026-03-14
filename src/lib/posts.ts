@@ -135,7 +135,7 @@ async function listPostsCore(runtimeEnv?: Record<string, string>): Promise<BlogP
         content: parsed.content,
         affiliate: String(parsed.data.affiliate ?? 'false') === 'true',
         template: parsed.data.template ? String(parsed.data.template) : undefined,
-        customData: parsed.data.customData as Record<string, any> ?? {},
+        customData: typeof parsed.data.customData === 'string' ? JSON.parse(parsed.data.customData) : (parsed.data.customData ?? {}),
       };
     }),
   );
@@ -177,7 +177,7 @@ export async function getPostBySlug(slug: string, runtimeEnv?: Record<string, st
       content: parsed.content,
       affiliate: String(parsed.data.affiliate ?? 'false') === 'true',
       template: parsed.data.template ? String(parsed.data.template) : undefined,
-      customData: parsed.data.customData as Record<string, any> ?? {},
+      customData: typeof parsed.data.customData === 'string' ? JSON.parse(parsed.data.customData) : (parsed.data.customData ?? {}),
     };
   } catch {
     return null;

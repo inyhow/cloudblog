@@ -29,7 +29,8 @@ const postHeaderHtml = renderTemplateVariables(postHeaderRaw, {
 const { html, toc } = renderPostWithToc(post.content);
 
 // Layout Logic
-const isLPImoo = post.template === 'imoo';
+const currentTemplate = post.template || settings.templates?.post || 'classic';
+const isLPImoo = currentTemplate === 'imoo';
 ---
 
 {isLPImoo ? (

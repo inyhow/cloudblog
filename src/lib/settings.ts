@@ -1,4 +1,4 @@
-﻿import { getFile, putFile } from './github';
+import { getFile, putFile } from './github';
 
 const SETTINGS_PATH = 'cloudblog/settings.json';
 const THEME_PATH = 'cloudblog/theme.css';
@@ -41,10 +41,10 @@ export interface SiteSettings {
   };
   templateVariables: Record<string, string>;
   templates: {
-    home: 'classic' | 'magazine' | 'minimal';
-    post: 'classic' | 'cover' | 'minimal';
+    home: 'classic' | 'magazine' | 'minimal' | 'imoo';
+    post: 'classic' | 'cover' | 'minimal' | 'imoo';
     tag: 'classic' | 'grid' | 'minimal';
-    page: 'classic' | 'minimal';
+    page: 'classic' | 'minimal' | 'imoo';
   };
   templateContent: {
     homeHeroHtml: string;
@@ -102,8 +102,8 @@ const defaults: SiteSettings = {
 
 function normalizeCategories(input: unknown): CategoryConfig[] {
   if (!Array.isArray(input)) return [];
-  return input
-    .map((item) => {
+  return (input
+    .map((item): CategoryConfig | null => {
       if (!item || typeof item !== 'object') return null;
       const row = item as Record<string, unknown>;
       const slug = String(row.slug || '').trim();
@@ -123,9 +123,9 @@ function normalizeCategories(input: unknown): CategoryConfig[] {
         modules: Array.isArray(row.modules)
           ? row.modules.filter((m): m is 'hero' | 'list' | 'sidebar' => m === 'hero' || m === 'list' || m === 'sidebar')
           : undefined,
-      } satisfies CategoryConfig;
+      };
     })
-    .filter((item): item is CategoryConfig => Boolean(item))
+    .filter((item): item is CategoryConfig => item !== null))
     .sort((a, b) => (a.sort || 0) - (b.sort || 0));
 }
 

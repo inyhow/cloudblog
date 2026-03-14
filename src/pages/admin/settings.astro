@@ -1,4 +1,4 @@
-﻿---
+---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
 
@@ -58,11 +58,11 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       <div class="grid gap-3 md:grid-cols-2">
         <label class="grid gap-1">
           <span class="text-sm text-slate-300">Home template</span>
-          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="homeTemplate"><option value="classic">classic</option><option value="magazine">magazine</option><option value="minimal">minimal</option></select>
+          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="homeTemplate"><option value="classic">classic</option><option value="magazine">magazine</option><option value="minimal">minimal</option><option value="imoo">imoo</option></select>
         </label>
         <label class="grid gap-1">
           <span class="text-sm text-slate-300">Post template</span>
-          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="postTemplate"><option value="classic">classic</option><option value="cover">cover</option><option value="minimal">minimal</option></select>
+          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="postTemplate"><option value="classic">classic</option><option value="cover">cover</option><option value="minimal">minimal</option><option value="imoo">imoo</option></select>
         </label>
       </div>
       <textarea class="mt-3 min-h-56 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="css" id="css"></textarea>
@@ -81,7 +81,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         <textarea class="hidden" name="categories" placeholder='Categories JSON'></textarea>
         <div class="grid gap-3 md:grid-cols-2">
           <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="tagTemplate"><option value="classic">Tag: classic</option><option value="grid">Tag: grid</option><option value="minimal">Tag: minimal</option></select>
-          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="pageTemplate"><option value="classic">Page: classic</option><option value="minimal">Page: minimal</option></select>
+          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="pageTemplate"><option value="classic">Page: classic</option><option value="minimal">Page: minimal</option><option value="imoo">Page: imoo</option></select>
         </div>
         <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="homeHeroHtml" placeholder="Home fragment HTML"></textarea>
         <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="postHeaderHtml" placeholder="Post fragment HTML"></textarea>

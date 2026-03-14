@@ -1,5 +1,5 @@
----
 import SiteLayout from '../../layouts/SiteLayout.astro';
+import LPImooLayout from '../../layouts/LPImooLayout.astro';
 import { getRuntimeEnv } from '../../lib/runtime-env';
 import { getCustomPageBySlug } from '../../lib/custom-pages';
 import { readSettings } from '../../lib/settings';
@@ -13,7 +13,7 @@ const page = await getCustomPageBySlug(slug, runtimeEnv);
 if (!page) {
   return Astro.redirect('/');
 }
-const pageTemplate = settings.templates?.page ?? 'classic';
+const pageTemplate = page.template || settings.templates?.page || 'classic';
 const pageFile = await getTemplateFile('page', runtimeEnv);
 const pageHeaderRaw = pageFile?.content || settings.templateContent?.pageHeaderHtml || '';
 const pageHeaderHtml = renderTemplateVariables(pageHeaderRaw, {
@@ -22,12 +22,24 @@ const pageHeaderHtml = renderTemplateVariables(pageHeaderRaw, {
   'page.description': page.description,
   ...settings.templateVariables,
 });
+
+// Layout Logic
+const isLPImoo = pageTemplate === 'imoo';
 ---
 
-<SiteLayout title={page.title} description={page.description}>
-  {pageHeaderHtml && <div class="mb-4" set:html={pageHeaderHtml} />}
-  <article class:list={["prose max-w-none rounded-lg border border-slate-200 bg-white", pageTemplate === 'minimal' ? 'p-4' : 'p-6']}>
-    <h1>{page.title}</h1>
-    <div set:html={page.content} />
-  </article>
-</SiteLayout>
+{isLPImoo ? (
+  <LPImooLayout 
+    title={page.title} 
+    description={page.description} 
+    content={page.content} 
+    customData={page.customData} 
+  />
+) : (
+  <SiteLayout title={page.title} description={page.description}>
+    {pageHeaderHtml && <div class="mb-4" set:html={pageHeaderHtml} />}
+    <article class:list={["prose max-w-none rounded-lg border border-slate-200 bg-white", pageTemplate === 'minimal' ? 'p-4' : 'p-6']}>
+      <h1>{page.title}</h1>
+      <div set:html={page.content} />
+    </article>
+  </SiteLayout>
+)}

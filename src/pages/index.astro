@@ -1,5 +1,5 @@
----
 import SiteLayout from '../layouts/SiteLayout.astro';
+import LPImooLayout from '../layouts/LPImooLayout.astro';
 import { isPostPublic, listPosts } from '../lib/posts';
 import { readSettings } from '../lib/settings';
 import { getRuntimeEnv } from '../lib/runtime-env';
@@ -37,9 +37,19 @@ const categorySections = (settings.categories || [])
   }))
   .filter((row) => row.posts.length > 0)
   .slice(0, 6);
+
+const isLPImoo = homeTemplate === 'imoo';
 ---
 
-<SiteLayout title={homeTitle} description={homeDescription}>
+{isLPImoo ? (
+  <LPImooLayout 
+    title={homeTitle} 
+    description={homeDescription} 
+    content={featured ? featured.content : "No content found."} 
+    customData={featured ? featured.customData : {}} 
+  />
+) : (
+  <SiteLayout title={homeTitle} description={homeDescription}>
   {settings.adSlots?.homeTop && <section class="mb-6 rounded-2xl border border-slate-200 bg-white p-4" set:html={settings.adSlots.homeTop} />}
   <section class="mb-10 overflow-hidden rounded-[2rem] border border-amber-200/60 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_50%,#fffbeb_100%)] p-8 shadow-[0_20px_80px_-40px_rgba(245,158,11,0.45)]">
     {homeHeroHtml && <div class="mb-6" set:html={homeHeroHtml} />}
@@ -131,3 +141,4 @@ const categorySections = (settings.categories || [])
     </section>
   )}
 </SiteLayout>
+)}

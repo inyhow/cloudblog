@@ -9,6 +9,8 @@ export interface CustomPage {
   description: string;
   content: string;
   rawContent: string;
+  template?: string;
+  customData?: Record<string, any>;
 }
 
 function normalizeSlug(value: string): string {
@@ -34,8 +36,9 @@ function parseFrontmatter(raw: string): { data: Record<string, string>; content:
   return { data, content };
 }
 
-function stringifyFrontmatter(data: { title: string; description: string }, content: string): string {
-  return `---\ntitle: "${data.title.replace(/"/g, '\\"')}"\ndescription: "${data.description.replace(/"/g, '\\"')}"\n---\n\n${content}`;
+function stringifyFrontmatter(data: { title: string; description: string, template?: string, customData?: Record<string, any> }, content: string): string {
+  const customDataStr = data.customData ? JSON.stringify(data.customData) : '{}';
+  return `---\ntitle: "${data.title.replace(/"/g, '\\"')}"\ndescription: "${data.description.replace(/"/g, '\\"')}"\ntemplate: "${data.template || ''}"\ncustomData: ${customDataStr}\n---\n\n${content}`;
 }
 
 export async function getCustomPageBySlug(
@@ -52,6 +55,8 @@ export async function getCustomPageBySlug(
       description: parsed.data.description || '',
       content: markdownToHtml(parsed.content),
       rawContent: parsed.content,
+      template: parsed.data.template ? String(parsed.data.template) : undefined,
+      customData: typeof parsed.data.customData === 'string' ? JSON.parse(parsed.data.customData) : (parsed.data.customData ?? {}),
     };
   } catch {
     return null;
@@ -88,6 +93,8 @@ export async function saveCustomPage(
     {
       title: input.title,
       description: input.description || '',
+      template: (input as any).template,
+      customData: (input as any).customData,
     },
     input.content,
   );
