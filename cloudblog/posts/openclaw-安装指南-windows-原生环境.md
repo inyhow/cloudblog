@@ -8,11 +8,11 @@ status: published
 reviewNote: ""
 pinned: false
 coverImage: ""
-pubDate: 2026-03-14T12:08:21.860Z
-updatedDate: 2026-03-14T12:08:21.860Z
+pubDate: 2026-03-14T12:09:26.525Z
+updatedDate: 2026-03-14T12:09:26.525Z
 scheduledAt: ""
 affiliate: false
-template: imoo
+template: 
 customData: {"price":"999","affiliateLink":"http://google.com","heroImage":""}
 ---
 
