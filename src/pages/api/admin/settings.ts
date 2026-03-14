@@ -15,7 +15,9 @@ export const PUT: APIRoute = async (context) => {
   if (denied) return denied;
   const body = await context.request.json();
   const runtimeEnv = getRuntimeEnv(context.locals);
-  await saveSettings(body, runtimeEnv);
-  await appendOpsLog({ at: new Date().toISOString(), action: 'settings.update', target: 'site' }, runtimeEnv);
+  await Promise.all([
+      saveSettings(body, runtimeEnv),
+      appendOpsLog({ at: new Date().toISOString(), action: 'settings.update', target: 'site' }, runtimeEnv)
+  ]);
   return new Response(JSON.stringify({ ok: true }));
 };

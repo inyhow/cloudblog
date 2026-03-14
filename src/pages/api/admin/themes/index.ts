@@ -15,7 +15,9 @@ export const PUT: APIRoute = async (context) => {
   if (denied) return denied;
   const body = await context.request.json();
   const runtimeEnv = getRuntimeEnv(context.locals);
-  await saveThemeCss(body.css ?? '', runtimeEnv);
-  await appendOpsLog({ at: new Date().toISOString(), action: 'theme.update', target: 'theme.css' }, runtimeEnv);
+  await Promise.all([
+      saveThemeCss(body.css ?? '', runtimeEnv),
+      appendOpsLog({ at: new Date().toISOString(), action: 'theme.update', target: 'theme.css' }, runtimeEnv)
+  ]);
   return new Response(JSON.stringify({ ok: true }));
 };

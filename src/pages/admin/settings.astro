@@ -201,6 +201,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         templateVariables: pick('textarea[name="templateVariables"]'),
         css: document.getElementById('css'),
       };
+      let initialCss = '';
       const catTable = document.getElementById('cat-table');
       const catAdd = document.getElementById('cat-add');
       let categoryRows = [];
@@ -327,6 +328,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         if (themeResp.ok) {
           const theme = await themeResp.json();
           f.css.value = theme.css || '';
+          initialCss = f.css.value;
         }
         updatePreset();
         isDirty = false;
@@ -414,21 +416,34 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         };
 
         try {
-          const settingsResp = await fetchWithRetry('/api/admin/settings', {
-            method: 'PUT',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify(payload),
-          }, 2);
-          const themeResp = await fetchWithRetry('/api/admin/themes', {
-            method: 'PUT',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ css: f.css.value }),
-          }, 2);
-          if (!settingsResp.ok || !themeResp.ok) {
-            setMessage(`Save failed: ${await settingsResp.text()} ${await themeResp.text()}`, 'error');
+          const tasks = [
+            fetchWithRetry('/api/admin/settings', {
+              method: 'PUT',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify(payload),
+            }, 1)
+          ];
+          
+          const cssChanged = f.css.value !== initialCss;
+          if (cssChanged) {
+            tasks.push(
+               fetchWithRetry('/api/admin/themes', {
+                method: 'PUT',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ css: f.css.value }),
+              }, 1)
+            );
+          }
+
+          const results = await Promise.all(tasks);
+          const allOk = results.every(r => r.ok);
+
+          if (!allOk) {
+            setMessage(`Save failed: ${results.map(r => r.status).join(', ')}`, 'error');
             return;
           }
-          setMessage('Saved', 'success');
+          if (cssChanged) initialCss = f.css.value;
+          setMessage('Saved Successfully', 'success');
           isDirty = false;
         } catch (error) {
           setMessage(`Save failed: ${error instanceof Error ? error.message : String(error)}`, 'error');
