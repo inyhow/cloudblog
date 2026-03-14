@@ -58,11 +58,17 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       <div class="grid gap-3 md:grid-cols-2">
         <label class="grid gap-1">
           <span class="text-sm text-slate-300">Home template</span>
-          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="homeTemplate"><option value="classic">classic</option><option value="magazine">magazine</option><option value="minimal">minimal</option><option value="imoo">imoo</option></select>
+          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="homeTemplate">
+            <option value="classic">Classic Blog</option>
+            <option value="imoo">imoo Landing Page</option>
+          </select>
         </label>
         <label class="grid gap-1">
           <span class="text-sm text-slate-300">Post template</span>
-          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="postTemplate"><option value="classic">classic</option><option value="cover">cover</option><option value="minimal">minimal</option><option value="imoo">imoo</option></select>
+          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="postTemplate">
+            <option value="classic">Classic Article</option>
+            <option value="imoo">imoo Product Page</option>
+          </select>
         </label>
       </div>
       <textarea class="mt-3 min-h-56 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="css" id="css"></textarea>
