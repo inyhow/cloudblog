@@ -55,21 +55,51 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     </section>
 
     <section data-panel="theme" class="panel hidden grid gap-6">
+      <div class="rounded-2xl border border-white/10 bg-slate-900/60 p-5 font-display">
+        <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-slate-400">Site-wide Theme Preset</h3>
+        <div class="grid gap-4">
+          <label class="grid gap-1">
+            <span class="text-sm text-slate-300">Choose Preset Layout Style</span>
+            <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-lg font-bold text-amber-400" id="theme-preset">
+              <option value="classic">Standard Blog (Dynamic)</option>
+              <option value="imoo">Amazon Affiliate Landing (imoo)</option>
+              <option value="custom">Custom (Manual Override)</option>
+            </select>
+            <p class="text-[10px] text-slate-500 mt-1">Note: Selecting a preset will automatically update all page layout settings below.</p>
+          </label>
+        </div>
+      </div>
+
       <div class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-        <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-slate-400">Global Layouts</h3>
+        <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-slate-400">Detailed Layout Config</h3>
         <div class="grid gap-3 md:grid-cols-2">
           <label class="grid gap-1">
-            <span class="text-sm text-slate-300">Default Home Layout</span>
+            <span class="text-sm text-slate-300">Home Template</span>
             <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="homeTemplate">
               <option value="classic">Classic Blog</option>
-              <option value="imoo">imoo Landing</option>
+              <option value="minimal">Minimalist</option>
+              <option value="imoo">imoo index.html</option>
             </select>
           </label>
           <label class="grid gap-1">
-            <span class="text-sm text-slate-300">Default Article Layout</span>
+            <span class="text-sm text-slate-300">Article Template</span>
             <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="postTemplate">
               <option value="classic">Classic Blog</option>
-              <option value="imoo">imoo Detail</option>
+              <option value="imoo">imoo product_detail.html</option>
+            </select>
+          </label>
+          <label class="grid gap-1">
+            <span class="text-sm text-slate-300">Single Page Template</span>
+            <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="pageTemplate">
+              <option value="classic">Classic Page</option>
+              <option value="imoo">imoo single.html</option>
+            </select>
+          </label>
+          <label class="grid gap-1">
+            <span class="text-sm text-slate-300">Tags Template</span>
+            <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="tagTemplate">
+              <option value="classic">Classic Tag</option>
+              <option value="grid">Grid Layout</option>
             </select>
           </label>
         </div>
@@ -298,6 +328,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
           const theme = await themeResp.json();
           f.css.value = theme.css || '';
         }
+        updatePreset();
         isDirty = false;
       })();
 
@@ -313,6 +344,32 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         event.preventDefault();
         event.returnValue = '';
       });
+
+      const preset = document.getElementById('theme-preset');
+      preset?.addEventListener('change', () => {
+          if (preset.value === 'imoo') {
+              f.homeTemplate.value = 'imoo';
+              f.postTemplate.value = 'imoo';
+              f.pageTemplate.value = 'imoo';
+          } else if (preset.value === 'classic') {
+              f.homeTemplate.value = 'classic';
+              f.postTemplate.value = 'classic';
+              f.pageTemplate.value = 'classic';
+          }
+          markDirty();
+      });
+
+      function updatePreset() {
+          const h = f.homeTemplate.value;
+          const p = f.postTemplate.value;
+          if (h === 'imoo' && p === 'imoo') {
+              preset.value = 'imoo';
+          } else if (h === 'classic' && p === 'classic') {
+              preset.value = 'classic';
+          } else {
+              preset.value = 'custom';
+          }
+      }
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();

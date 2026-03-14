@@ -1,7 +1,7 @@
 <html lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>imoo Z6 Product Detail</title>
+<title>{{ post.title }} | {{ site.title }}</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -37,7 +37,7 @@
 <header class="flex items-center bg-background-light dark:bg-background-dark p-4 sticky top-0 z-50 border-b border-primary/10 justify-between">
 <div class="flex items-center gap-2">
 <span class="material-symbols-outlined text-primary text-2xl" data-icon="ArrowBack">arrow_back</span>
-<h2 class="text-lg font-bold leading-tight tracking-tight">imoo Z6 Smartwatch</h2>
+<h2 class="text-lg font-bold leading-tight tracking-tight">{{ post.title }}</h2>
 </div>
 <div class="flex gap-4 items-center">
 <span class="material-symbols-outlined text-slate-600 dark:text-slate-400" data-icon="Share">share</span>
@@ -49,7 +49,7 @@
 <!-- Image Gallery Section -->
 <section class="p-4 flex flex-col gap-4">
 <div class="relative aspect-square w-full rounded-xl overflow-hidden bg-white shadow-sm">
-<img class="h-full w-full object-cover" data-alt="Front view of imoo Z6 kids smartwatch" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkZajYwKD4D1qRpoxTWxK9mXTUn15bTwQgfWuHXJ_7Vcsp9-Sxm1snAuIt7QxEziZHw6naGeKaIC-FKs0MUkMV004vnRFWlT1aTdENVJ1f80cUooJvKygJiC-z0bPMO3sLdPtvaUs1z25qXttCOkHhuQ0FB_rk7nuuIYHkloa4Ly0HSJI0bZdDDoA3ykBnPFhWNpdIk_8LimYrolza-RSe6iD7aLVInLkuy4ZGtke861tLLo7xChHIaYXno-3Ri6i_RII-NOdIpPM"/>
+<img class="h-full w-full object-cover" data-alt="{{ post.title }}" src="{{ post.heroImage }}"/>
 <div class="absolute top-4 left-4 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">
             Amazon's Choice
           </div>
@@ -82,9 +82,9 @@
 </div>
 <span class="text-xs font-semibold text-slate-500">4.8 (2,482 reviews)</span>
 </div>
-<h1 class="text-2xl font-extrabold text-slate-900 dark:text-white leading-tight mb-2">imoo Kids Watch Phone Z6 - Dual Camera, Flip Design</h1>
+<h1 class="text-2xl font-extrabold text-slate-900 dark:text-white leading-tight mb-2">{{ post.title }}</h1>
 <div class="flex items-baseline gap-2 mb-4">
-<span class="text-3xl font-bold text-primary">$219.00</span>
+<span class="text-3xl font-bold text-primary">{{ post.price }}</span>
 <span class="text-sm text-slate-400 line-through">$249.00</span>
 </div>
 <!-- Highlights -->
@@ -106,7 +106,7 @@
 <span class="material-symbols-outlined text-green-500 text-lg">verified_user</span>
 <span class="text-xs font-semibold uppercase text-slate-500 tracking-wider">Trusted Affiliate Partner</span>
 </div>
-<a class="block w-full bg-primary text-white text-center py-4 rounded-full font-bold text-lg shadow-lg shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all" href="#">
+<a class="block w-full bg-primary text-white text-center py-4 rounded-full font-bold text-lg shadow-lg shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all" href="{{ post.affiliateLink }}">
             Buy on Amazon
           </a>
 <div class="flex justify-center gap-4 mt-4 opacity-60 grayscale">
@@ -124,24 +124,7 @@
 <button class="px-4 py-2 text-sm font-semibold text-slate-500 whitespace-nowrap">User Q&amp;A</button>
 </div>
 <div class="prose dark:prose-invert max-w-none mb-8">
-<h3 class="text-lg font-bold mb-3">Flip Camera Innovation</h3>
-<p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
-            The imoo Z6 features the world's first dual-camera flip design. Switch between the front camera for video calls and the rear camera for capturing the world around them.
-          </p>
-<ul class="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-<li class="flex gap-2">
-<span class="material-symbols-outlined text-primary text-sm">check_circle</span>
-              IPX8 Water Resistance
-            </li>
-<li class="flex gap-2">
-<span class="material-symbols-outlined text-primary text-sm">check_circle</span>
-              4G Network Global Support
-            </li>
-<li class="flex gap-2">
-<span class="material-symbols-outlined text-primary text-sm">check_circle</span>
-              Safe Contact White List
-            </li>
-</ul>
+  {{ post.content }}
 </div>
 </section>
 <!-- Related Products Sidebar-style list -->

@@ -2,8 +2,8 @@
 <html class="light" lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Best GPS Tracker Watch for Kids | imoo Kids Smartwatch Reviews</title>
-<meta content="Discover why the imoo X10 is the best GPS tracker watch for kids. Features real-time tracking, HD video calling, and class mode. View exclusive Amazon deals." name="description"/>
+<title>{{ site.title }} | {{ site.description }}</title>
+<meta content="{{ site.description }}" name="description"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -45,7 +45,10 @@
 <nav class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
 <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
 <div class="flex items-center gap-2">
-<span class="text-2xl font-extrabold tracking-tighter text-primary">imoo</span>
+<span class="text-2xl font-extrabold tracking-tighter text-primary">{{ site.title }}</span>
+</div>
+<div class="hidden md:flex gap-4">
+  {{ site.menu }}
 </div>
 <a class="bg-primary hover:bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-bold transition-all shadow-lg shadow-orange-500/20" href="#amazon-cta">
                 View on Amazon
@@ -58,13 +61,13 @@
                 Top Rated for 2024
             </span>
 <h1 class="text-4xl font-extrabold leading-tight mb-4 tracking-tight">
-                The Best GPS Tracker <span class="text-primary">Watch for Kids</span>
+    {{ post.title }}
 </h1>
 <p class="text-gray-600 dark:text-gray-400 text-lg mb-8 leading-relaxed">
-                Stay connected with your child anywhere. HD Video calls, Real-time GPS, and water-resistant.
-            </p>
+    {{ post.description }}
+</p>
 <div class="relative mb-8">
-<img alt="Happy kids wearing smartwatches" class="rounded-3xl shadow-2xl w-full h-64 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9b1wvfZ8wKN0y3XhAja6RB0XLtJu9NnJENRGyLcogOr5cACerNKMMTwNBggBJ2HbFT9C3IDzjESGmh2vhxTmff-kPKA7eb9zW2ntr7S4_jbAE6nhfkTxdXwjQggj9MnrRyKsrMpLJJ9Wdn6MsjqNAGPobpBwg-vdHgQUuCa779VsBmnAHjB0cbeiydc4txHLoHZB4jgfR_4KuPbEqMQxWDXryYo6nn-MgtZCtsSfxKYPymmdZp54a70vYDHF3cMyrWrnN5nzphFI"/>
+<img alt="{{ post.title }}" class="rounded-3xl shadow-2xl w-full h-64 object-cover" src="{{ post.heroImage }}"/>
 <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 w-4/5 bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-xl flex justify-around items-center border border-gray-100 dark:border-gray-700">
 <div class="text-center">
 <div class="text-primary font-bold text-xl">4.8/5</div>
@@ -82,7 +85,7 @@
 </div>
 </div>
 </div>
-<a class="inline-flex items-center justify-center gap-2 w-full bg-primary text-white font-bold py-4 rounded-2xl text-lg hover:bg-orange-600 transition-all mt-4 shadow-xl shadow-orange-500/30" href="#amazon-cta">
+<a class="inline-flex items-center justify-center gap-2 w-full bg-primary text-white font-bold py-4 rounded-2xl text-lg hover:bg-orange-600 transition-all mt-4 shadow-xl shadow-orange-500/30" href="{{ post.affiliateLink }}">
                 Check Price on Amazon
                 <span class="material-icons">arrow_forward</span>
 </a>

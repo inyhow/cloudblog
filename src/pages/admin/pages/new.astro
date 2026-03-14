@@ -12,13 +12,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="title" placeholder="Title *" required />
       <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="slug" placeholder="Slug (leave empty to auto-generate)" />
     </div>
-    <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="description" placeholder="Short description" />
-    
     <div class="grid gap-4 md:grid-cols-2">
-      <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="template" id="f-template">
-        <option value="classic">Standard Page</option>
-        <option value="imoo">imoo Detail Landing</option>
-      </select>
     </div>
 
     <!-- imoo Params -->
@@ -49,7 +43,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       const titleInput = form.querySelector('input[name="title"]');
       const slugInput = form.querySelector('input[name="slug"]');
       const descriptionInput = form.querySelector('input[name="description"]');
-      const templateSelect = form.querySelector('select[name="template"]');
       const contentInput = form.querySelector('textarea[name="content"]');
       
       const imooPanel = document.getElementById('imoo-params');
@@ -91,7 +84,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         titleInput.value = page.title || '';
         slugInput.value = page.slug || '';
         descriptionInput.value = page.description || '';
-        templateSelect.value = page.template || 'classic';
         contentInput.value = page.rawContent || '';
         
         if (page.customData) {
@@ -99,15 +91,19 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           imooPrice.value = page.customData.price || '';
           imooLink.value = page.customData.affiliateLink || '';
         }
-        
-        toggleImoo();
         isDirty = false;
       })();
 
-      function toggleImoo() {
-        imooPanel.classList.toggle('hidden', templateSelect.value !== 'imoo');
+      async function initUi() {
+        const resp = await fetch('/api/admin/settings');
+        if (resp.ok) {
+          const settings = await resp.json();
+          if (settings.templates?.page === 'imoo') {
+            imooPanel.classList.remove('hidden');
+          }
+        }
       }
-      templateSelect.addEventListener('change', toggleImoo);
+      initUi();
 
       form.addEventListener('input', markDirty);
       window.addEventListener('beforeunload', (event) => {
@@ -125,7 +121,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           slug: slugInput.value.trim(),
           description: descriptionInput.value.trim(),
           content: contentInput.value,
-          template: templateSelect.value,
           customData: {
             heroImage: imooHero.value.trim(),
             price: imooPrice.value.trim(),

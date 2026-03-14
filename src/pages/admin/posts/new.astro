@@ -90,12 +90,10 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     <div class="grid gap-4 md:grid-cols-3">
       <input class="field-input" id="f-category" name="category" placeholder="Category" />
       <input class="field-input" id="f-tags" name="tags" placeholder="Tags (comma separated)" />
-      <select class="field-input" id="f-status" name="status">
-        <option value="deleted">Recycle Bin</option>
-      </select>
-      <select class="field-input border-emerald-500/30" id="f-template" name="template">
-        <option value="">Default Blog Template</option>
-        <option value="imoo">imoo Landing Page</option>
+      <select class="field-input border-emerald-500/30" id="f-status" name="status">
+        <option value="published">Published</option>
+        <option value="draft">Draft</option>
+        <option value="recycle">Recycle Bin</option>
       </select>
     </div>
 
@@ -231,12 +229,23 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
             $('f-heroImg').value = post.customData.heroImage || '';
           }
           
-          toggleCustomPanel();
-
+          isDirty = false;
           vditor.setValue(post.content || '');
           loadRevisions();
         } catch (e) { console.error(e); }
       }
+
+      // 2.1 Get Global Settings to decide UI
+      async function initUi() {
+        const resp = await fetch('/api/admin/settings');
+        if (resp.ok) {
+          const settings = await resp.json();
+          if (settings.templates?.home === 'imoo' || settings.templates?.post === 'imoo') {
+            $('custom-data-panel').classList.remove('hidden');
+          }
+        }
+      }
+      initUi();
 
       async function loadRevisions() {
         const resp = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}/revisions`);
@@ -291,7 +300,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           status: status,
           pinned: $('f-pinned').checked,
           affiliate: $('f-affiliate').checked,
-          template: $('f-template').value,
           customData: {
             price: $('f-price').value,
             affiliateLink: $('f-affLink').value,
@@ -352,17 +360,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         const template = '[product title="Product Name" price="$99.00" image="https://example.com/img.jpg" link="https://amazon.com/dp/..." desc="Key features and why you should buy it." label="View on Amazon"]';
         vditor.insertValue(template);
       };
-
-      const toggleCustomPanel = () => {
-        const panel = $('custom-data-panel');
-        if ($('f-template').value === 'imoo') {
-            panel.classList.remove('hidden');
-        } else {
-            panel.classList.add('hidden');
-        }
-      };
-
-      $('f-template').onchange = toggleCustomPanel;
     })();
   </script>
 </AdminLayout>

@@ -17,31 +17,50 @@ if (!post || !isPostPublic(post)) {
 const settings = await readSettings(runtimeEnv);
 const postTemplate = settings.templates?.post ?? 'classic';
 const postFile = await getTemplateFile('post', runtimeEnv);
-const postHeaderRaw = postFile?.content || settings.templateContent?.postHeaderHtml || '';
-const postHeaderHtml = renderTemplateVariables(postHeaderRaw, {
-  'site.title': settings.title,
-  'post.title': post.title,
-  'post.description': post.description,
-  'post.category': post.category || '',
-  'post.pubDate': post.pubDate,
-  ...settings.templateVariables,
-});
+
 const { html, toc } = renderPostWithToc(post.content);
+
+const isImoo = postTemplate === 'imoo';
+
+if (isImoo && postFile?.content) {
+  const { renderMenuAsHtml } = await import('../../lib/template-vars');
+  const context = {
+    site: {
+      title: settings.title,
+      description: settings.description,
+      footer: settings.footer,
+      menuHtml: renderMenuAsHtml(settings.menu),
+    },
+    post: {
+        title: post.title,
+        description: post.description,
+        content: html,
+        pubDate: post.pubDate,
+        category: post.category || 'Product',
+        tags: post.tags,
+        coverImage: post.coverImage,
+        ...post.customData
+    },
+    variables: settings.templateVariables,
+  };
+  const rendered = renderTemplateVariables(postFile.content, context);
+  return new Response(rendered, { headers: { 'Content-Type': 'text/html' } });
+}
+
+// Fallback logic for header snippet
+const postHeaderRaw = settings.templateContent?.postHeaderHtml || '';
+const postHeaderHtml = renderTemplateVariables(postHeaderRaw, {
+    site: { title: settings.title, description: settings.description, footer: settings.footer, menuHtml: '' },
+    post: { title: post.title, description: post.description, content: html, pubDate: post.pubDate, category: post.category || '', tags: [], coverImage: '', price: '', affiliateLink: '', heroImage: '' },
+    variables: settings.templateVariables
+});
 
 // Layout Logic
 const currentTemplate = post.template || settings.templates?.post || 'classic';
 const isLPImoo = currentTemplate === 'imoo';
 ---
 
-{isLPImoo ? (
-  <LPImooLayout 
-    title={post.title} 
-    description={post.description} 
-    content={html} 
-    customData={post.customData} 
-  />
-) : (
-  <SiteLayout title={post.title} description={post.description}>
+<SiteLayout title={post.title} description={post.description}>
   {postHeaderHtml && <div class="mb-4" set:html={postHeaderHtml} />}
   {settings.adSlots?.postTop && <section class="mb-4 rounded-2xl border border-slate-200 bg-white p-4" set:html={settings.adSlots.postTop} />}
   <div class:list={["grid gap-6", toc.length > 0 ? 'lg:grid-cols-[minmax(0,1fr)_260px]' : 'lg:grid-cols-1']}>
@@ -60,15 +79,9 @@ const isLPImoo = currentTemplate === 'imoo';
         </a>
       )}
       <span>{new Date(post.pubDate).toLocaleString('zh-CN')}</span>
-      {post.updatedDate && <span>Updated {new Date(post.updatedDate).toLocaleString('zh-CN')}</span>}
       {post.pinned && <span class="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-700">Pinned</span>}
     </div>
     <h1>{post.title}</h1>
-    {post.affiliate && (
-      <div class="mb-6 rounded-xl border border-emerald-500/20 bg-emerald-50/50 p-4 text-xs text-emerald-800 italic">
-        Disclosure: This post contains affiliate links. If you make a purchase through these links, we may earn a small commission at no extra cost to you.
-      </div>
-    )}
     <div set:html={html} />
     </article>
     {
@@ -97,32 +110,4 @@ const isLPImoo = currentTemplate === 'imoo';
       )
     }
   </div>
-  {settings.adSlots?.postBottom && <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-4" set:html={settings.adSlots.postBottom} />}
-  <div class="mt-5 flex flex-wrap gap-2">
-    {post.tags.map((tag) => (
-      <a class="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600" href={`/tags/${encodeURIComponent(tag)}`}>#{tag}</a>
-    ))}
-  </div>
-  {
-    settings.giscus && (
-      <section class="mt-8">
-        <script
-          src="https://giscus.app/client.js"
-          data-repo={settings.giscus.repo}
-          data-repo-id={settings.giscus.repoId}
-          data-category={settings.giscus.category}
-          data-category-id={settings.giscus.categoryId}
-          data-mapping="pathname"
-          data-strict="0"
-          data-reactions-enabled="1"
-          data-emit-metadata="0"
-          data-input-position="top"
-          data-theme="preferred_color_scheme"
-          crossOrigin="anonymous"
-          async
-        />
-      </section>
-    )
-  }
 </SiteLayout>
-)}
