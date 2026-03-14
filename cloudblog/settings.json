@@ -30,8 +30,8 @@
   },
   "categories": [],
   "templates": {
-    "home": "minimal",
-    "post": "minimal",
+    "home": "imoo",
+    "post": "imoo",
     "tag": "grid",
     "page": "minimal"
   },
