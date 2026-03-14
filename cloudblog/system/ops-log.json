@@ -1,5 +1,10 @@
 [
   {
+    "at": "2026-03-14T12:53:58.996Z",
+    "action": "theme.update",
+    "target": "theme.css"
+  },
+  {
     "at": "2026-03-14T12:53:56.850Z",
     "action": "settings.update",
     "target": "site"
