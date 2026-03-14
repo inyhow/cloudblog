@@ -31,6 +31,8 @@ export interface BlogPost {
   scheduledAt?: string;
   content: string;
   affiliate?: boolean;
+  template?: string;
+  customData?: Record<string, any>;
 }
 
 function normalizeSlug(value: string): string {
@@ -95,9 +97,12 @@ function stringifyFrontmatter(data: {
   updatedDate: string;
   scheduledAt?: string;
   affiliate?: boolean;
+  template?: string;
+  customData?: Record<string, any>;
 }, content: string): string {
   const tagsBlock = data.tags.map((t) => `  - ${t}`).join('\n');
-  return `---\ntitle: ${quote(data.title)}\ndescription: ${quote(data.description)}\ncategory: ${quote(data.category || '')}\ntags:\n${tagsBlock || '  -'}\nstatus: ${data.status}\nreviewNote: ${quote(data.reviewNote || '')}\npinned: ${data.pinned}\ncoverImage: ${quote(data.coverImage || '')}\npubDate: ${data.pubDate}\nupdatedDate: ${data.updatedDate}\nscheduledAt: ${quote(data.scheduledAt || '')}\naffiliate: ${data.affiliate ?? false}\n---\n\n${content}`;
+  const customDataStr = data.customData ? JSON.stringify(data.customData) : '{}';
+  return `---\ntitle: ${quote(data.title)}\ndescription: ${quote(data.description)}\ncategory: ${quote(data.category || '')}\ntags:\n${tagsBlock || '  -'}\nstatus: ${data.status}\nreviewNote: ${quote(data.reviewNote || '')}\npinned: ${data.pinned}\ncoverImage: ${quote(data.coverImage || '')}\npubDate: ${data.pubDate}\nupdatedDate: ${data.updatedDate}\nscheduledAt: ${quote(data.scheduledAt || '')}\naffiliate: ${data.affiliate ?? false}\ntemplate: ${data.template || ''}\ncustomData: ${customDataStr}\n---\n\n${content}`;
 }
 
 function normalizeStatus(value: unknown): BlogPost['status'] {
@@ -128,6 +133,9 @@ async function listPostsCore(runtimeEnv?: Record<string, string>): Promise<BlogP
         updatedDate: parsed.data.updatedDate ? String(parsed.data.updatedDate) : undefined,
         scheduledAt: String(parsed.data.scheduledAt ?? '').replace(/^"|"$/g, '') || undefined,
         content: parsed.content,
+        affiliate: String(parsed.data.affiliate ?? 'false') === 'true',
+        template: parsed.data.template ? String(parsed.data.template) : undefined,
+        customData: parsed.data.customData as Record<string, any> ?? {},
       };
     }),
   );
@@ -168,6 +176,8 @@ export async function getPostBySlug(slug: string, runtimeEnv?: Record<string, st
       scheduledAt: String(parsed.data.scheduledAt ?? '').replace(/^"|"$/g, '') || undefined,
       content: parsed.content,
       affiliate: String(parsed.data.affiliate ?? 'false') === 'true',
+      template: parsed.data.template ? String(parsed.data.template) : undefined,
+      customData: parsed.data.customData as Record<string, any> ?? {},
     };
   } catch {
     return null;
@@ -203,6 +213,8 @@ export async function savePost(
     updatedDate: new Date().toISOString(),
     scheduledAt: input.scheduledAt ?? '',
     affiliate: input.affiliate ?? false,
+    template: input.template,
+    customData: input.customData,
   }, input.content);
   await putFile(filePathFromSlug(slug), body, `feat: update post ${slug}`, undefined, runtimeEnv);
   return slug;

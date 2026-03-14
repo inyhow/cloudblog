@@ -91,12 +91,20 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       <input class="field-input" id="f-category" name="category" placeholder="Category" />
       <input class="field-input" id="f-tags" name="tags" placeholder="Tags (comma separated)" />
       <select class="field-input" id="f-status" name="status">
-        <option value="published">Published</option>
-        <option value="draft">Draft</option>
-        <option value="review">In Review</option>
-        <option value="scheduled">Scheduled</option>
         <option value="deleted">Recycle Bin</option>
       </select>
+      <select class="field-input border-emerald-500/30" id="f-template" name="template">
+        <option value="">Default Blog Template</option>
+        <option value="imoo">imoo Landing Page</option>
+      </select>
+    </div>
+
+    <!-- Custom Data Row (Template Specific) -->
+    <div id="custom-data-panel" class="hidden grid gap-4 md:grid-cols-3 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4">
+      <div class="md:col-span-3 text-xs font-bold text-amber-500/80 uppercase tracking-tighter">Template Parameters</div>
+      <input class="field-input" id="f-price" placeholder="Product Price (e.g. $99.00)" />
+      <input class="field-input" id="f-affLink" placeholder="Affiliate Link" />
+      <input class="field-input" id="f-heroImg" placeholder="Hero Image URL" />
     </div>
 
     <!-- Cover & Options -->
@@ -215,6 +223,15 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           $('f-cover').value      = post.coverImage || '';
           $('f-pinned').checked   = !!post.pinned;
           $('f-affiliate').checked = !!post.affiliate;
+          $('f-template').value   = post.template || '';
+          
+          if (post.customData) {
+            $('f-price').value = post.customData.price || '';
+            $('f-affLink').value = post.customData.affiliateLink || '';
+            $('f-heroImg').value = post.customData.heroImage || '';
+          }
+          
+          toggleCustomPanel();
 
           vditor.setValue(post.content || '');
           loadRevisions();
@@ -274,6 +291,12 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           status: status,
           pinned: $('f-pinned').checked,
           affiliate: $('f-affiliate').checked,
+          template: $('f-template').value,
+          customData: {
+            price: $('f-price').value,
+            affiliateLink: $('f-affLink').value,
+            heroImage: $('f-heroImg').value
+          },
           coverImage: $('f-cover').value,
           content: vditor.getValue()
         };
@@ -329,6 +352,17 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         const template = '[product title="Product Name" price="$99.00" image="https://example.com/img.jpg" link="https://amazon.com/dp/..." desc="Key features and why you should buy it." label="View on Amazon"]';
         vditor.insertValue(template);
       };
+
+      const toggleCustomPanel = () => {
+        const panel = $('custom-data-panel');
+        if ($('f-template').value === 'imoo') {
+            panel.classList.remove('hidden');
+        } else {
+            panel.classList.add('hidden');
+        }
+      };
+
+      $('f-template').onchange = toggleCustomPanel;
     })();
   </script>
 </AdminLayout>
