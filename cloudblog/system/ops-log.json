@@ -1,5 +1,10 @@
 [
   {
+    "at": "2026-03-14T12:08:22.713Z",
+    "action": "post.update",
+    "target": "openclaw-安装指南-windows-原生环境"
+  },
+  {
     "at": "2026-03-13T06:53:06.070Z",
     "action": "post.create",
     "target": "openclaw-安装指南-windows-原生环境"
