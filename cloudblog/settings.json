@@ -30,7 +30,7 @@
   },
   "categories": [],
   "templates": {
-    "home": "classic",
+    "home": "minimal",
     "post": "minimal",
     "tag": "grid",
     "page": "minimal"
