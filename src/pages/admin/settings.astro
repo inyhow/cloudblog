@@ -9,10 +9,9 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   </div>
 
   <div class="mb-4 flex flex-wrap gap-2" id="tabs">
-    <button data-tab="base" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Base</button>
-    <button data-tab="seo" class="rounded-xl border border-white/10 px-3 py-2 text-sm">SEO</button>
-    <button data-tab="content" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Content</button>
-    <button data-tab="theme" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Theme</button>
+    <button data-tab="base" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Site Base</button>
+    <button data-tab="seo" class="rounded-xl border border-white/10 px-3 py-2 text-sm">SEO & Ads</button>
+    <button data-tab="theme" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Theme & Layout</button>
   </div>
 
   <form id="settings-form" class="grid gap-6">
@@ -31,68 +30,87 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       </div>
     </section>
 
-    <section data-panel="seo" class="panel hidden rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-      <div class="grid gap-3">
-        <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="homeTitle" placeholder="Homepage SEO title" />
-        <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="homeDescription" placeholder="Homepage SEO description" />
-        <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="googleAnalyticsId" placeholder="Google Analytics ID (G-XXXX)" />
-        <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="googleSiteVerification" placeholder="Google Search Console verification token" />
-        <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="googleAdsenseClient" placeholder="Google AdSense client (ca-pub-xxxx)" />
+    <section data-panel="seo" class="panel hidden grid gap-6">
+      <div class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+        <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-slate-400">SEO Config</h3>
+        <div class="grid gap-3">
+          <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="homeTitle" placeholder="Homepage SEO title" />
+          <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="homeDescription" placeholder="Homepage SEO description" />
+          <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="googleAnalyticsId" placeholder="Google Analytics ID (G-XXXX)" />
+          <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="googleSiteVerification" placeholder="Google Search Console verification token" />
+          <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="googleAdsenseClient" placeholder="Google AdSense client (ca-pub-xxxx)" />
+        </div>
       </div>
-    </section>
 
-    <section data-panel="content" class="panel hidden rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-      <div class="grid gap-3">
-        <textarea class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="menu" placeholder='Menu JSON'></textarea>
-        <div class="rounded-xl border border-white/10 bg-slate-950/40 p-3">
-          <div class="mb-2 flex items-center justify-between gap-2">
-            <div class="text-sm text-slate-300">Categories</div>
-            <button id="cat-add" type="button" class="rounded-lg border border-emerald-400/50 px-3 py-1 text-xs text-emerald-300">Add</button>
-          </div>
-          <div id="cat-table" class="grid gap-2"></div>
+      <div class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+        <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-slate-400">Ad Slots (HTML)</h3>
+        <div class="grid gap-3">
+          <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adHomeTop" placeholder="Home Top Ad"></textarea>
+          <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adListTop" placeholder="List Top Ad"></textarea>
+          <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostTop" placeholder="Post Top Ad"></textarea>
+          <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostBottom" placeholder="Post Bottom Ad"></textarea>
+          <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostSidebar" placeholder="Post Sidebar Ad"></textarea>
         </div>
       </div>
     </section>
 
-    <section data-panel="theme" class="panel hidden rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-      <div class="grid gap-3 md:grid-cols-2">
-        <label class="grid gap-1">
-          <span class="text-sm text-slate-300">Home template</span>
-          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="homeTemplate">
-            <option value="classic">Classic Blog</option>
-            <option value="imoo">imoo Landing Page</option>
-          </select>
-        </label>
-        <label class="grid gap-1">
-          <span class="text-sm text-slate-300">Post template</span>
-          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="postTemplate">
-            <option value="classic">Classic Article</option>
-            <option value="imoo">imoo Product Page</option>
-          </select>
-        </label>
+    <section data-panel="theme" class="panel hidden grid gap-6">
+      <div class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+        <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-slate-400">Global Layouts</h3>
+        <div class="grid gap-3 md:grid-cols-2">
+          <label class="grid gap-1">
+            <span class="text-sm text-slate-300">Default Home Layout</span>
+            <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="homeTemplate">
+              <option value="classic">Classic Blog</option>
+              <option value="imoo">imoo Landing</option>
+            </select>
+          </label>
+          <label class="grid gap-1">
+            <span class="text-sm text-slate-300">Default Article Layout</span>
+            <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="postTemplate">
+              <option value="classic">Classic Blog</option>
+              <option value="imoo">imoo Detail</option>
+            </select>
+          </label>
+        </div>
       </div>
-      <textarea class="mt-3 min-h-56 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="css" id="css"></textarea>
+
+      <div class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+          <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-slate-400">Navigation & Categories</h3>
+          <div class="grid gap-3">
+            <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="menu" placeholder='Navigation Menu JSON: [{"label": "Home", "href": "/"}, ...]'></textarea>
+            <div class="rounded-xl border border-white/10 bg-slate-950/40 p-3">
+              <div class="mb-2 flex items-center justify-between gap-2">
+                <div class="text-xs font-bold uppercase text-slate-400">Categories</div>
+                <button id="cat-add" type="button" class="rounded-lg border border-emerald-400/50 px-3 py-1 text-xs text-emerald-300">Add Cat</button>
+              </div>
+              <div id="cat-table" class="grid gap-2"></div>
+            </div>
+          </div>
+      </div>
+
+      <div class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+        <div class="mb-2 text-sm font-bold uppercase tracking-widest text-slate-400">Global Variables (JSON)</div>
+        <textarea class="min-h-32 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="templateVariables" placeholder='{"contact_email": "...", "amazon_tag": "..."}'></textarea>
+      </div>
+
+      <div class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+        <div class="mb-2 text-sm font-bold uppercase tracking-widest text-slate-400">Global Extra CSS</div>
+        <textarea class="min-h-56 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="css" id="css"></textarea>
+      </div>
     </section>
 
     <details class="rounded-2xl border border-white/10 bg-slate-900/40 p-4">
-      <summary class="cursor-pointer text-sm font-medium text-slate-200">Advanced</summary>
+      <summary class="cursor-pointer text-sm font-medium text-slate-200">System Fragments (Developer Only)</summary>
       <div class="mt-3 grid gap-3">
-        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="analyticsJs" placeholder="Custom analytics JS"></textarea>
-        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adHomeTop" placeholder="Ad slot home top HTML"></textarea>
-        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adListTop" placeholder="Ad slot list top HTML"></textarea>
-        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostTop" placeholder="Ad slot post top HTML"></textarea>
-        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostBottom" placeholder="Ad slot post bottom HTML"></textarea>
-        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostSidebar" placeholder="Ad slot post sidebar HTML"></textarea>
-        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="templateVariables" placeholder='Template vars JSON'></textarea>
-        <textarea class="hidden" name="categories" placeholder='Categories JSON'></textarea>
+        <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="analyticsJs" placeholder="Head Injection JS"></textarea>
+        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="homeHeroHtml" placeholder="Home Hero Snippet"></textarea>
+        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="postHeaderHtml" placeholder="Article Header Snippet"></textarea>
         <div class="grid gap-3 md:grid-cols-2">
-          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="tagTemplate"><option value="classic">Tag: classic</option><option value="grid">Tag: grid</option><option value="minimal">Tag: minimal</option></select>
-          <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="pageTemplate"><option value="classic">Page: classic</option><option value="minimal">Page: minimal</option><option value="imoo">Page: imoo</option></select>
+            <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="tagTemplate"><option value="classic">Tag: classic</option><option value="grid">Tag: grid</option></select>
+            <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="pageTemplate"><option value="classic">Page: classic</option><option value="imoo">Page: imoo</option></select>
         </div>
-        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="homeHeroHtml" placeholder="Home fragment HTML"></textarea>
-        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="postHeaderHtml" placeholder="Post fragment HTML"></textarea>
-        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="tagHeaderHtml" placeholder="Tag fragment HTML"></textarea>
-        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="pageHeaderHtml" placeholder="Page fragment HTML"></textarea>
+        <textarea class="hidden" name="categories" placeholder='Categories JSON'></textarea>
       </div>
     </details>
 

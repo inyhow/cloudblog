@@ -8,12 +8,30 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     <p class="mt-2 text-sm text-slate-300">Create standalone pages rendered at `/p/slug`.</p>
   </div>
   <form id="form" class="grid gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-    <div class="grid gap-3 md:grid-cols-2">
-      <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="title" placeholder="Title" required />
-      <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="slug" placeholder="Custom slug" />
+    <div class="grid gap-3">
+      <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="title" placeholder="Title *" required />
+      <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="slug" placeholder="Slug (leave empty to auto-generate)" />
     </div>
-    <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="description" placeholder="Description" />
-    <textarea class="min-h-96 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono" name="content" placeholder="# Page content"></textarea>
+    <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="description" placeholder="Short description" />
+    
+    <div class="grid gap-4 md:grid-cols-2">
+      <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="template" id="f-template">
+        <option value="classic">Standard Page</option>
+        <option value="imoo">imoo Detail Landing</option>
+      </select>
+    </div>
+
+    <!-- imoo Params -->
+    <div id="imoo-params" class="hidden grid gap-3 rounded-xl border border-amber-400/20 bg-amber-400/5 p-4">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-amber-500">imoo parameters</p>
+      <div class="grid gap-3 md:grid-cols-3">
+        <input class="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm" name="heroImage" placeholder="Hero Image URL" />
+        <input class="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm" name="price" placeholder="Price (e.g. $199)" />
+        <input class="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm" name="affiliateLink" placeholder="Purchase Link" />
+      </div>
+    </div>
+
+    <textarea class="min-h-96 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono" name="content" placeholder="# Layout content (Markdown)"></textarea>
     <div class="flex gap-3">
       <button class="rounded-xl bg-amber-400 px-4 py-2 font-medium text-slate-950" type="submit">Save Page</button>
       <a class="rounded-xl border border-white/10 px-4 py-2 text-slate-200" href="/admin/pages">Back</a>
@@ -31,7 +49,13 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       const titleInput = form.querySelector('input[name="title"]');
       const slugInput = form.querySelector('input[name="slug"]');
       const descriptionInput = form.querySelector('input[name="description"]');
+      const templateSelect = form.querySelector('select[name="template"]');
       const contentInput = form.querySelector('textarea[name="content"]');
+      
+      const imooPanel = document.getElementById('imoo-params');
+      const imooHero = form.querySelector('input[name="heroImage"]');
+      const imooPrice = form.querySelector('input[name="price"]');
+      const imooLink = form.querySelector('input[name="affiliateLink"]');
 
       function setMessage(text, tone = 'info') {
         msg.className = `mt-3 text-sm ${tone === 'error' ? 'text-red-400' : tone === 'success' ? 'text-emerald-300' : 'text-slate-300'}`;
@@ -67,9 +91,23 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         titleInput.value = page.title || '';
         slugInput.value = page.slug || '';
         descriptionInput.value = page.description || '';
+        templateSelect.value = page.template || 'classic';
         contentInput.value = page.rawContent || '';
+        
+        if (page.customData) {
+          imooHero.value = page.customData.heroImage || '';
+          imooPrice.value = page.customData.price || '';
+          imooLink.value = page.customData.affiliateLink || '';
+        }
+        
+        toggleImoo();
         isDirty = false;
       })();
+
+      function toggleImoo() {
+        imooPanel.classList.toggle('hidden', templateSelect.value !== 'imoo');
+      }
+      templateSelect.addEventListener('change', toggleImoo);
 
       form.addEventListener('input', markDirty);
       window.addEventListener('beforeunload', (event) => {
@@ -87,6 +125,12 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           slug: slugInput.value.trim(),
           description: descriptionInput.value.trim(),
           content: contentInput.value,
+          template: templateSelect.value,
+          customData: {
+            heroImage: imooHero.value.trim(),
+            price: imooPrice.value.trim(),
+            affiliateLink: imooLink.value.trim(),
+          }
         };
         const url = slug ? `/api/admin/pages/${encodeURIComponent(slug)}` : '/api/admin/pages';
         const method = slug ? 'PUT' : 'POST';
