@@ -1,4 +1,4 @@
----
+ vc---
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 ---
 
@@ -113,6 +113,10 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         <input type="checkbox" id="f-pinned" name="pinned" class="accent-amber-400" />
         <span class="text-sm text-slate-300">Pinned</span>
       </label>
+      <label class="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl cursor-pointer">
+        <input type="checkbox" id="f-affiliate" name="affiliate" class="accent-emerald-400" />
+        <span class="text-sm text-emerald-300">Affiliate Post</span>
+      </label>
     </div>
 
     <!-- The Editor Container -->
@@ -123,6 +127,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           <span class="mode-tag active" id="mode-wysiwyg">Visual (Word)</span>
           <span class="mode-tag" id="mode-ir">Instant Render</span>
           <span class="mode-tag" id="mode-sv">Split View</span>
+          <button type="button" id="btn-insert-product" class="ml-4 text-xs bg-amber-400/20 text-amber-300 px-2 py-1 rounded border border-amber-400/30 hover:bg-amber-400/30">+ Product</button>
         </div>
       </div>
       <div id="vditor"></div>
@@ -209,6 +214,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           $('f-status').value     = post.status || 'published';
           $('f-cover').value      = post.coverImage || '';
           $('f-pinned').checked   = !!post.pinned;
+          $('f-affiliate').checked = !!post.affiliate;
 
           vditor.setValue(post.content || '');
           loadRevisions();
@@ -267,6 +273,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           tags: $('f-tags').value.split(',').map(t => t.trim()).filter(Boolean),
           status: status,
           pinned: $('f-pinned').checked,
+          affiliate: $('f-affiliate').checked,
           coverImage: $('f-cover').value,
           content: vditor.getValue()
         };
@@ -316,6 +323,11 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       // Auto slug
       $('f-title').oninput = () => {
         if (!slug) $('f-slug').value = $('f-title').value.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '');
+      };
+
+      $('btn-insert-product').onclick = () => {
+        const template = '[product title="Product Name" price="$99.00" image="https://example.com/img.jpg" link="https://amazon.com/dp/..." desc="Key features and why you should buy it." label="View on Amazon"]';
+        vditor.insertValue(template);
       };
     })();
   </script>

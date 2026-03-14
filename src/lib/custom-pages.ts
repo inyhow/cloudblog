@@ -20,16 +20,16 @@ function normalizeSlug(value: string): string {
 }
 
 function parseFrontmatter(raw: string): { data: Record<string, string>; content: string } {
-  if (!raw.startsWith('---\n')) return { data: {}, content: raw };
-  const end = raw.indexOf('\n---\n', 4);
-  if (end === -1) return { data: {}, content: raw };
-  const fm = raw.slice(4, end);
-  const content = raw.slice(end + 5);
+  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
+  if (!match) return { data: {}, content: raw };
+
+  const fm = match[1];
+  const content = raw.slice(match[0].length);
   const data: Record<string, string> = {};
-  for (const line of fm.split('\n')) {
+  for (const line of fm.split(/\r?\n/)) {
     const idx = line.indexOf(':');
     if (idx === -1) continue;
-    data[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^"(.*)"$/, '$1');
+    data[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
   }
   return { data, content };
 }

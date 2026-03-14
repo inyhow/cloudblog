@@ -30,6 +30,7 @@ export interface BlogPost {
   updatedDate?: string;
   scheduledAt?: string;
   content: string;
+  affiliate?: boolean;
 }
 
 function normalizeSlug(value: string): string {
@@ -45,30 +46,33 @@ function filePathFromSlug(slug: string): string {
 }
 
 function parseFrontmatter(raw: string): { data: Record<string, unknown>; content: string } {
-  if (!raw.startsWith('---\n')) return { data: {}, content: raw };
-  const end = raw.indexOf('\n---\n', 4);
-  if (end === -1) return { data: {}, content: raw };
-  const fm = raw.slice(4, end);
-  const content = raw.slice(end + 5);
+  // Support both \n and \r\n, and be more lenient with whitespace
+  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
+  if (!match) return { data: {}, content: raw };
+
+  const fm = match[1];
+  const content = raw.slice(match[0].length);
   const data: Record<string, unknown> = {};
   let currentArrayKey = '';
-  for (const line of fm.split('\n')) {
-    if (line.startsWith('- ') && currentArrayKey) {
+
+  for (const line of fm.split(/\r?\n/)) {
+    const trimmedLine = line.trim();
+    if (trimmedLine.startsWith('- ') && currentArrayKey) {
       const arr = (data[currentArrayKey] as string[]) || [];
-      arr.push(line.slice(2).trim());
+      arr.push(trimmedLine.slice(2).trim());
       data[currentArrayKey] = arr;
       continue;
     }
-    const idx = line.indexOf(':');
+    const idx = trimmedLine.indexOf(':');
     if (idx === -1) continue;
-    const key = line.slice(0, idx).trim();
-    const value = line.slice(idx + 1).trim();
+    const key = trimmedLine.slice(0, idx).trim();
+    const value = trimmedLine.slice(idx + 1).trim();
     if (value === '') {
       currentArrayKey = key;
       data[key] = [];
     } else {
       currentArrayKey = '';
-      data[key] = value.replace(/^"(.*)"$/, '$1');
+      data[key] = value.replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
     }
   }
   return { data, content };
@@ -90,9 +94,10 @@ function stringifyFrontmatter(data: {
   pubDate: string;
   updatedDate: string;
   scheduledAt?: string;
+  affiliate?: boolean;
 }, content: string): string {
   const tagsBlock = data.tags.map((t) => `  - ${t}`).join('\n');
-  return `---\ntitle: ${quote(data.title)}\ndescription: ${quote(data.description)}\ncategory: ${quote(data.category || '')}\ntags:\n${tagsBlock || '  -'}\nstatus: ${data.status}\nreviewNote: ${quote(data.reviewNote || '')}\npinned: ${data.pinned}\ncoverImage: ${quote(data.coverImage || '')}\npubDate: ${data.pubDate}\nupdatedDate: ${data.updatedDate}\nscheduledAt: ${quote(data.scheduledAt || '')}\n---\n\n${content}`;
+  return `---\ntitle: ${quote(data.title)}\ndescription: ${quote(data.description)}\ncategory: ${quote(data.category || '')}\ntags:\n${tagsBlock || '  -'}\nstatus: ${data.status}\nreviewNote: ${quote(data.reviewNote || '')}\npinned: ${data.pinned}\ncoverImage: ${quote(data.coverImage || '')}\npubDate: ${data.pubDate}\nupdatedDate: ${data.updatedDate}\nscheduledAt: ${quote(data.scheduledAt || '')}\naffiliate: ${data.affiliate ?? false}\n---\n\n${content}`;
 }
 
 function normalizeStatus(value: unknown): BlogPost['status'] {
@@ -105,7 +110,7 @@ function normalizeStatus(value: unknown): BlogPost['status'] {
 async function listPostsCore(runtimeEnv?: Record<string, string>): Promise<BlogPost[]> {
   const paths = await listDir(POSTS_DIR, runtimeEnv);
   const posts = await Promise.all(
-    paths.filter((p) => p.endsWith('.md')).map(async (path) => {
+    paths.filter((p) => p.endsWith('.md')).map(async (path): Promise<BlogPost | null> => {
       const f = await getFile(path, runtimeEnv);
       if (!f) return null;
       const parsed = parseFrontmatter(f.content);
@@ -123,11 +128,10 @@ async function listPostsCore(runtimeEnv?: Record<string, string>): Promise<BlogP
         updatedDate: parsed.data.updatedDate ? String(parsed.data.updatedDate) : undefined,
         scheduledAt: String(parsed.data.scheduledAt ?? '').replace(/^"|"$/g, '') || undefined,
         content: parsed.content,
-      } satisfies BlogPost;
+      };
     }),
   );
-  return posts
-    .filter((p): p is BlogPost => Boolean(p))
+  return (posts.filter((p): p is BlogPost => p !== null) as BlogPost[])
     .sort((a, b) => new Date(b.pubDate).valueOf() - new Date(a.pubDate).valueOf());
 }
 
@@ -163,6 +167,7 @@ export async function getPostBySlug(slug: string, runtimeEnv?: Record<string, st
       updatedDate: parsed.data.updatedDate ? String(parsed.data.updatedDate) : undefined,
       scheduledAt: String(parsed.data.scheduledAt ?? '').replace(/^"|"$/g, '') || undefined,
       content: parsed.content,
+      affiliate: String(parsed.data.affiliate ?? 'false') === 'true',
     };
   } catch {
     return null;
@@ -197,6 +202,7 @@ export async function savePost(
     pubDate: input.pubDate ?? new Date().toISOString(),
     updatedDate: new Date().toISOString(),
     scheduledAt: input.scheduledAt ?? '',
+    affiliate: input.affiliate ?? false,
   }, input.content);
   await putFile(filePathFromSlug(slug), body, `feat: update post ${slug}`, undefined, runtimeEnv);
   return slug;
@@ -213,7 +219,44 @@ export async function trashPost(slug: string, runtimeEnv?: Record<string, string
 }
 
 export function markdownToHtml(markdown: string): string {
-  return marked.parse(markdown) as string;
+  if (!markdown) return '';
+  
+  // 1. Fix for broken tables: Remove blank lines between rows in a table block
+  let cleanedMarkdown = markdown.replace(/^(\s*\|.*)\s*\n\s*\n(?=\s*\|)/gm, '$1\n');
+
+  // 2. Process Shortcodes (e.g., [product name="..." price="..." link="..." image="..."])
+  // Syntax: [product title="Sony A7" price="$2499" image="..." link="..." desc="..." label="Buy Now"]
+  cleanedMarkdown = cleanedMarkdown.replace(/\[product\s+([\s\S]*?)\]/g, (_, attrs) => {
+    const data: Record<string, string> = {};
+    const regex = /(\w+)="([^"]*)"/g;
+    let m;
+    while ((m = regex.exec(attrs)) !== null) {
+      data[m[1]] = m[2];
+    }
+    
+    if (!data.title) return '';
+
+    return `
+<div class="product-card my-8 not-prose">
+  <div class="product-card-inner">
+    ${data.image ? `<div class="product-image"><img src="${data.image}" alt="${data.title}" loading="lazy" /></div>` : ''}
+    <div class="product-info">
+      <h3 class="product-title">${data.title}</h3>
+      ${data.price ? `<div class="product-price">${data.price}</div>` : ''}
+      ${data.desc ? `<p class="product-desc">${data.desc}</p>` : ''}
+      <a href="${data.link || '#'}" target="_blank" rel="nofollow sponsored" class="product-btn">
+        <span>${data.label || 'Check Price on Amazon'}</span>
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+      </a>
+    </div>
+  </div>
+</div>`;
+  });
+  
+  return marked.parse(cleanedMarkdown, {
+    gfm: true,
+    breaks: true,
+  }) as string;
 }
 
 export interface TocItem {

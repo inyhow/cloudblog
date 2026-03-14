@@ -51,6 +51,11 @@ const { html, toc } = renderPostWithToc(post.content);
       {post.pinned && <span class="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-700">Pinned</span>}
     </div>
     <h1>{post.title}</h1>
+    {post.affiliate && (
+      <div class="mb-6 rounded-xl border border-emerald-500/20 bg-emerald-50/50 p-4 text-xs text-emerald-800 italic">
+        Disclosure: This post contains affiliate links. If you make a purchase through these links, we may earn a small commission at no extra cost to you.
+      </div>
+    )}
     <div set:html={html} />
     </article>
     {
