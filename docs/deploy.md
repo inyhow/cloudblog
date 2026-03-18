@@ -33,6 +33,28 @@ In Cloudflare Dashboard:
 
 Mark sensitive values as encrypted/secret in Cloudflare UI when available.
 
+## Recommended Setup: Split Code Repo and Content Repo
+
+For this project, the recommended production layout is:
+
+- Code repo: `inyhow/cloudblog`
+- Content repo: `inyhow/cloudblog_content`
+
+Cloudflare Pages should be connected to the code repo only.
+All runtime content operations should point to the content repo via the variables below.
+
+Example values:
+
+```env
+GITHUB_OWNER=inyhow
+GITHUB_REPO=cloudblog_content
+GITHUB_BRANCH=main
+GITHUB_RAW_PREFIX=https://raw.githubusercontent.com/inyhow/cloudblog_content/main
+GITHUB_CDN_PREFIX=https://cdn.jsdelivr.net/gh/inyhow/cloudblog_content@main
+```
+
+This setup prevents article publishing from triggering full site rebuilds.
+
 `ADMIN_USERS_JSON` format:
 
 ```json

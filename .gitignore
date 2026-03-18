@@ -21,6 +21,9 @@ pnpm-debug.log*
 .env.test.local
 .env.production.local
 
+# runtime content should live in the separate content repo
+cloudblog/
+
 # macOS-specific files
 .DS_Store
 

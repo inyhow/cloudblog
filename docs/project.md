@@ -9,6 +9,19 @@ CloudBlog is designed for low-cost, Git-centric publishing with a practical admi
 - **Storage**: GitHub repository via API
 - **Comments**: Giscus (optional)
 
+## Recommended Production Topology
+
+- **Code repo**: deploy source for Cloudflare Pages
+- **Content repo**: posts, pages, images, settings
+
+Recommended for this project:
+
+- Code repo: `inyhow/cloudblog`
+- Content repo: `inyhow/cloudblog_content`
+
+This keeps publishing operations out of the deploy pipeline and makes the site cheaper to operate at scale.
+The code repo should not keep runtime content files under `cloudblog/`; those belong in the content repo only.
+
 ## Content Storage Layout
 
 - `cloudblog/posts/*.md` - blog posts

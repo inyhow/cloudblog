@@ -18,6 +18,18 @@ A lightweight blog CMS built with Astro + Cloudflare Pages + GitHub content stor
 - Google Analytics / Search Console / AdSense config
 - Role-based access control: admin / editor / author
 
+## Recommended Repository Layout
+
+For better publishing speed, keep code and content in separate repositories:
+
+- Code repo: `inyhow/cloudblog`
+- Content repo: `inyhow/cloudblog_content`
+
+Cloudflare Pages should connect to the code repo only.
+The admin panel reads and writes posts, pages, images, and settings to the content repo through the GitHub API.
+
+This avoids full rebuilds every time you publish an article.
+
 ## Quick Start
 
 ```bash
@@ -43,6 +55,16 @@ Optional:
 
 - `GITHUB_RAW_PREFIX`
 - `GITHUB_CDN_PREFIX`
+
+Recommended values for this project:
+
+```env
+GITHUB_OWNER=inyhow
+GITHUB_REPO=cloudblog_content
+GITHUB_BRANCH=main
+GITHUB_RAW_PREFIX=https://raw.githubusercontent.com/inyhow/cloudblog_content/main
+GITHUB_CDN_PREFIX=https://cdn.jsdelivr.net/gh/inyhow/cloudblog_content@main
+```
 
 `ADMIN_USERS_JSON` example:
 

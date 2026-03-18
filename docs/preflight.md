@@ -7,6 +7,8 @@ Use this checklist before and after each production deployment.
 - [ ] `ADMIN_PASSWORD` is set in Cloudflare project variables (Production).
 - [ ] `GITHUB_TOKEN` is set and valid (fine-grained PAT recommended).
 - [ ] `GITHUB_OWNER` / `GITHUB_REPO` / `GITHUB_BRANCH` match target repo.
+- [ ] Cloudflare Pages is connected to the code repo, not the content repo.
+- [ ] `GITHUB_REPO` points to the content repo, not the code repo.
 - [ ] `GITHUB_BRANCH` has no hidden newline or extra spaces.
 - [ ] Optional `GITHUB_CDN_PREFIX` is configured if CDN image links are required.
 - [ ] `.env` is NOT committed to Git.
