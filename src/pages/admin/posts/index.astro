@@ -55,6 +55,18 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         return 'bg-amber-500/20 text-amber-300';
       }
 
+      function editorModeTone(mode) {
+        if (mode === 'wysiwyg') return 'bg-amber-500/15 text-amber-200';
+        if (mode === 'sv') return 'bg-indigo-500/15 text-indigo-200';
+        return 'bg-cyan-500/15 text-cyan-200';
+      }
+
+      function editorModeLabel(mode) {
+        if (mode === 'wysiwyg') return '可视化';
+        if (mode === 'sv') return 'Markdown + 预览';
+        return 'Markdown';
+      }
+
       function filteredPosts() {
         if (activeTab === 'all') return posts;
         return posts.filter((post) => post.status === activeTab);
@@ -132,6 +144,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
                   <div class="mb-2 flex flex-wrap items-center gap-2">
                     <div class="text-lg font-semibold text-white">${p.title}</div>
                     <span class="rounded-full px-2 py-0.5 text-xs ${badgeTone(p.status)}">${p.status}</span>
+                    <span class="rounded-full px-2 py-0.5 text-xs ${editorModeTone(p.editorMode)}">${editorModeLabel(p.editorMode)}</span>
                   </div>
                   <div class="text-sm text-slate-300">${p.description || ''}</div>
                   <div class="mt-2 text-xs text-slate-400">/${p.slug}</div>

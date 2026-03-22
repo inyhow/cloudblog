@@ -11,46 +11,115 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     #vditor {
       border: 1px solid rgba(255,255,255,0.1) !important;
       border-radius: 0 0 16px 16px !important;
-      background-color: #0d1117 !important;
+      background-color: #020617 !important;
+      overflow: hidden;
+    }
+    #vditor:focus-within {
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.12);
     }
     .vditor-toolbar {
       background-color: #0d1117 !important;
       border-bottom: 1px solid rgba(255,255,255,0.08) !important;
       padding: 4px 10px !important;
     }
-    .vditor-content {
-      background-color: #0d1117 !important;
-      color: #e2e8f0 !important;
+    .vditor-toolbar button {
+      color: #cbd5e1 !important;
     }
-    .vditor-reset {
-      color: #e2e8f0 !important;
+    .vditor-toolbar button:hover {
+      background: rgba(148,163,184,0.12) !important;
     }
-    /* 调整 Tab 样式 */
+    .vditor-content,
+    .vditor-reset,
+    .vditor-reset *,
+    #vditor textarea,
+    #vditor .CodeMirror,
+    #vditor .CodeMirror-scroll,
+    #vditor .CodeMirror pre,
+    #vditor .vditor-ir textarea,
+    #vditor .vditor-sv textarea,
+    #vditor .vditor-wysiwyg,
+    #vditor .vditor-preview {
+      background-color: #020617 !important;
+      color: #e5eefb !important;
+      text-shadow: none !important;
+      caret-color: #fbbf24 !important;
+    }
+    #vditor .vditor-wysiwyg {
+      padding: 18px 20px !important;
+    }
+    #vditor textarea::placeholder,
+    #vditor [contenteditable='true'][data-placeholder]:empty::before {
+      color: #64748b !important;
+    }
+    #vditor textarea::selection,
+    #vditor .CodeMirror-line::selection,
+    #vditor .CodeMirror-line > span::selection,
+    #vditor [contenteditable='true']::selection {
+      background: rgba(245,158,11,0.35) !important;
+      color: #fff7ed !important;
+    }
+    #vditor .vditor-counter,
+    #vditor .vditor-tooltipped,
+    #vditor .vditor-outline__item,
+    #vditor .vditor-preview__action {
+      color: #cbd5e1 !important;
+    }
+    #vditor pre,
+    #vditor code {
+      background-color: rgba(15,23,42,0.96) !important;
+      color: #f8fafc !important;
+    }
     .editor-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
       background: #1e293b;
       padding: 10px 16px;
       border-radius: 16px 16px 0 0;
       border: 1px solid rgba(255,255,255,0.1);
       border-bottom: none;
     }
+    .editor-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
     .editor-mode-tags {
       display: flex;
       gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
     }
     .mode-tag {
       font-size: 12px;
-      color: #94a3b8;
+      color: #cbd5e1;
       cursor: pointer;
-      padding: 2px 8px;
-      border-radius: 4px;
+      padding: 6px 10px;
+      border-radius: 999px;
       transition: all 0.2s;
+      border: 1px solid transparent;
+      background: rgba(15,23,42,0.45);
+    }
+    .mode-tag:hover {
+      border-color: rgba(245,158,11,0.35);
+      color: #f8fafc;
     }
     .mode-tag.active {
       background: rgba(245,158,11,0.15);
+      border-color: rgba(245,158,11,0.35);
       color: #fbbf24;
+    }
+    .editor-state {
+      font-size: 12px;
+      color: #fdba74;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(245,158,11,0.12);
+      border: 1px solid rgba(245,158,11,0.25);
+      white-space: nowrap;
     }
 
     /* 表单美化 */
@@ -65,6 +134,9 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       width: 100%;
       outline: none;
       transition: all 0.2s;
+    }
+    .field-input::placeholder {
+      color: #64748b;
     }
     .field-input:focus {
       border-color: #f59e0b;
@@ -93,7 +165,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       <select class="field-input border-emerald-500/30" id="f-status" name="status">
         <option value="published">Published</option>
         <option value="draft">Draft</option>
-        <option value="recycle">Recycle Bin</option>
+        <option value="deleted">Recycle Bin</option>
       </select>
     </div>
 
@@ -107,47 +179,52 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
     <!-- Cover & Options -->
     <div class="flex flex-wrap items-center gap-4 rounded-2xl border border-white/10 bg-slate-900/40 p-4">
-      <div class="flex-1 min-w-[200px]">
+      <div class="min-w-[200px] flex-1">
         <input class="field-input" id="f-cover" name="coverImage" placeholder="Cover Image URL" />
       </div>
       <div class="flex gap-2">
         <input class="hidden" type="file" id="cover-file" accept="image/*" />
         <button class="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200" type="button" id="cover-pick">Pick</button>
-        <button class="rounded-xl bg-amber-400/10 border border-amber-400/30 px-4 py-2 text-sm text-amber-300" type="button" id="cover-upload">Upload</button>
+        <button class="rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-sm text-amber-300" type="button" id="cover-upload">Upload</button>
       </div>
-      <label class="flex items-center gap-2 px-4 py-2 bg-slate-800/50 rounded-xl cursor-pointer">
+      <label class="flex cursor-pointer items-center gap-2 rounded-xl bg-slate-800/50 px-4 py-2">
         <input type="checkbox" id="f-pinned" name="pinned" class="accent-amber-400" />
         <span class="text-sm text-slate-300">Pinned</span>
       </label>
-      <label class="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl cursor-pointer">
+      <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-2">
         <input type="checkbox" id="f-affiliate" name="affiliate" class="accent-emerald-400" />
         <span class="text-sm text-emerald-300">Affiliate Post</span>
       </label>
     </div>
 
+    <input type="hidden" id="f-editor-mode" name="editorMode" value="wysiwyg" />
+
     <!-- The Editor Container -->
     <div class="editor-wrap">
       <div class="editor-header">
-        <span class="text-sm font-medium text-slate-300">Article Content</span>
+        <div class="editor-meta">
+          <span class="text-sm font-medium text-slate-300">Article Content</span>
+          <span id="editor-state" class="editor-state">当前：可视化编辑</span>
+        </div>
         <div class="editor-mode-tags">
-          <span class="mode-tag active" id="mode-wysiwyg">Visual (Word)</span>
-          <span class="mode-tag" id="mode-ir">Instant Render</span>
-          <span class="mode-tag" id="mode-sv">Split View</span>
-          <button type="button" id="btn-insert-product" class="ml-4 text-xs bg-amber-400/20 text-amber-300 px-2 py-1 rounded border border-amber-400/30 hover:bg-amber-400/30">+ Product</button>
+          <button type="button" class="mode-tag active" id="mode-wysiwyg">可视化</button>
+          <button type="button" class="mode-tag" id="mode-ir">Markdown</button>
+          <button type="button" class="mode-tag" id="mode-sv">分栏预览</button>
+          <button type="button" id="btn-insert-product" class="ml-4 rounded border border-amber-400/30 bg-amber-400/20 px-2 py-1 text-xs text-amber-300 hover:bg-amber-400/30">+ Product</button>
         </div>
       </div>
       <div id="vditor"></div>
     </div>
 
     <div class="flex flex-wrap items-center gap-4">
-      <button class="rounded-xl bg-amber-400 px-8 py-3 font-bold text-slate-950 shadow-lg shadow-amber-400/20 active:scale-95 transition" type="submit" id="save-btn">Save Content</button>
+      <button class="rounded-xl bg-amber-400 px-8 py-3 font-bold text-slate-950 shadow-lg shadow-amber-400/20 transition active:scale-95" type="submit" id="save-btn">Save Content</button>
       <button class="rounded-xl border border-white/10 px-6 py-3 text-sm text-slate-300" type="button" id="save-draft-btn">Save as Draft</button>
       <span id="msg" class="text-sm italic"></span>
     </div>
   </form>
 
   <section id="revisions-panel" class="mt-8 hidden space-y-3">
-    <h3 class="text-sm font-bold text-slate-200 uppercase tracking-widest">Revision History</h3>
+    <h3 class="text-sm font-bold uppercase tracking-widest text-slate-200">Revision History</h3>
     <div id="revisions-list" class="grid gap-2"></div>
   </section>
 
@@ -158,13 +235,76 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     (() => {
       const $ = (id) => document.getElementById(id);
       const slug = new URL(location.href).searchParams.get('slug');
+      const modeMeta = {
+        wysiwyg: '可视化编辑',
+        ir: 'Markdown 即时渲染',
+        sv: 'Markdown 分栏预览',
+      };
+      const sanitizeMode = (value) => (value === 'ir' || value === 'sv' || value === 'wysiwyg' ? value : 'wysiwyg');
+      const persistedMode = (() => {
+        try {
+          return sanitizeMode(localStorage.getItem('admin-post-editor-mode'));
+        } catch {
+          return 'wysiwyg';
+        }
+      })();
+
       let vditor = null;
       let isSaving = false;
+      let isDirty = false;
+      let currentEditorMode = persistedMode;
+
+      const form = $('form');
+      const msg = $('msg');
+      const editorState = $('editor-state');
+      const editorModeInput = $('f-editor-mode');
+
+      function setMessage(text, tone = 'info') {
+        msg.textContent = text;
+        msg.className = tone === 'error'
+          ? 'text-sm italic text-rose-400'
+          : tone === 'success'
+            ? 'text-sm italic text-emerald-400'
+            : 'text-sm italic text-amber-400';
+      }
+
+      function rememberMode(mode) {
+        try {
+          localStorage.setItem('admin-post-editor-mode', mode);
+        } catch {
+          // ignore storage errors
+        }
+      }
+
+      function markDirty() {
+        if (isSaving) return;
+        isDirty = true;
+      }
+
+      function setMode(mode, options = {}) {
+        const nextMode = sanitizeMode(mode);
+        const { syncEditor = true, dirty = syncEditor } = options;
+        currentEditorMode = nextMode;
+        if (editorModeInput) editorModeInput.value = nextMode;
+        if (editorState) editorState.textContent = `当前：${modeMeta[nextMode]}`;
+        document.querySelectorAll('.mode-tag').forEach((tag) => {
+          tag.classList.toggle('active', tag.id === `mode-${nextMode}`);
+        });
+        rememberMode(nextMode);
+        if (syncEditor && vditor) {
+          vditor.setMode(nextMode);
+        }
+        if (dirty) {
+          markDirty();
+        }
+      }
+
+      setMode(currentEditorMode, { syncEditor: false, dirty: false });
 
       // 1. Initialize Vditor
       vditor = new Vditor('vditor', {
         height: 600,
-        mode: 'wysiwyg', // 默认开启“所见即所得”模式，像 Word 一样编辑
+        mode: currentEditorMode,
         theme: 'dark',
         cdn: 'https://cdn.jsdelivr.net/npm/vditor@3.10.7',
         toolbarConfig: {
@@ -186,9 +326,11 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           fieldName: 'file',
           linkToImgUrl: '/api/admin/upload-image',
           handler(file) {
-            // 此处可以自定义上传逻辑，对接原本的 API
-            return null; 
+            return null;
           }
+        },
+        input() {
+          markDirty();
         },
         after() {
           if (slug) loadPost();
@@ -196,43 +338,42 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       });
 
       // Mode switch handling
-      $('mode-wysiwyg').onclick = () => { setMode('wysiwyg'); vditor.setMode('wysiwyg'); };
-      $('mode-ir').onclick      = () => { setMode('ir'); vditor.setMode('ir'); };
-      $('mode-sv').onclick      = () => { setMode('sv'); vditor.setMode('sv'); };
-
-      function setMode(m) {
-        document.querySelectorAll('.mode-tag').forEach(t => t.classList.remove('active'));
-        $(`mode-${m}`).classList.add('active');
-      }
+      $('mode-wysiwyg').onclick = () => setMode('wysiwyg');
+      $('mode-ir').onclick = () => setMode('ir');
+      $('mode-sv').onclick = () => setMode('sv');
 
       // 2. Load Existing Post
       async function loadPost() {
         $('page-heading').textContent = 'Edit Content';
         try {
           const resp = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}`);
-          if (!resp.ok) return;
+          if (!resp.ok) {
+            setMessage(`Load failed: ${await resp.text()}`, 'error');
+            return;
+          }
           const post = await resp.json();
 
-          $('f-title').value      = post.title || '';
-          $('f-slug').value       = post.slug || '';
-          $('f-category').value   = post.category || '';
-          $('f-tags').value       = (post.tags || []).join(', ');
-          $('f-status').value     = post.status || 'published';
-          $('f-cover').value      = post.coverImage || '';
-          $('f-pinned').checked   = !!post.pinned;
+          $('f-title').value = post.title || '';
+          $('f-slug').value = post.slug || '';
+          $('f-category').value = post.category || '';
+          $('f-tags').value = (post.tags || []).join(', ');
+          $('f-status').value = post.status || 'published';
+          $('f-cover').value = post.coverImage || '';
+          $('f-pinned').checked = !!post.pinned;
           $('f-affiliate').checked = !!post.affiliate;
-          $('f-template').value   = post.template || '';
-          
-          if (post.customData) {
-            $('f-price').value = post.customData.price || '';
-            $('f-affLink').value = post.customData.affiliateLink || '';
-            $('f-heroImg').value = post.customData.heroImage || '';
-          }
-          
-          isDirty = false;
+
+          $('f-price').value = post.customData?.price || '';
+          $('f-affLink').value = post.customData?.affiliateLink || '';
+          $('f-heroImg').value = post.customData?.heroImage || '';
+
           vditor.setValue(post.content || '');
+          setMode(post.editorMode || currentEditorMode, { dirty: false });
+          isDirty = false;
           loadRevisions();
-        } catch (e) { console.error(e); }
+        } catch (e) {
+          console.error(e);
+          setMessage('Load failed because of a client error.', 'error');
+        }
       }
 
       // 2.1 Get Global Settings to decide UI
@@ -257,8 +398,8 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           $('revisions-list').innerHTML = revisions.map(path => {
             const name = path.split('/').pop();
             return `
-              <div class="flex items-center justify-between p-3 bg-slate-900/50 border border-white/5 rounded-xl">
-                <span class="text-xs text-slate-400 font-mono">${name}</span>
+              <div class="flex items-center justify-between rounded-xl border border-white/5 bg-slate-900/50 p-3">
+                <span class="font-mono text-xs text-slate-400">${name}</span>
                 <button type="button" class="text-xs text-amber-400 hover:underline" onclick="restoreRevision('${encodeURIComponent(path)}')">Restore</button>
               </div>`;
           }).join('');
@@ -275,8 +416,15 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         if (resp.ok) location.reload();
       };
 
+      form.addEventListener('input', markDirty);
+      window.addEventListener('beforeunload', (event) => {
+        if (!isDirty || isSaving) return;
+        event.preventDefault();
+        event.returnValue = '';
+      });
+
       // 3. Save Handling
-      $('form').onsubmit = async (e) => {
+      form.onsubmit = async (e) => {
         e.preventDefault();
         save('published');
       };
@@ -287,17 +435,15 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         if (isSaving) return;
         isSaving = true;
         const status = forceStatus || $('f-status').value;
-        const msg = $('msg');
-        msg.textContent = 'Saving...';
-        msg.className = 'text-amber-400 animate-pulse';
+        setMessage('Saving...', 'info');
 
         const payload = {
           title: $('f-title').value,
           slug: $('f-slug').value,
-          description: '', // Can be expanded
+          description: '',
           category: $('f-category').value,
           tags: $('f-tags').value.split(',').map(t => t.trim()).filter(Boolean),
-          status: status,
+          status,
           pinned: $('f-pinned').checked,
           affiliate: $('f-affiliate').checked,
           customData: {
@@ -306,6 +452,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
             heroImage: $('f-heroImg').value
           },
           coverImage: $('f-cover').value,
+          editorMode: currentEditorMode,
           content: vditor.getValue()
         };
 
@@ -319,18 +466,17 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
             body: JSON.stringify(payload)
           });
           if (resp.ok) {
-            msg.textContent = 'Saved successfully ✓';
-            msg.className = 'text-emerald-400';
             const data = await resp.json();
-            if (!slug && data.slug) {
+            setMessage('Saved successfully ✓', 'success');
+            isDirty = false;
+            if (data.slug && data.slug !== slug) {
               location.href = `/admin/posts/new?slug=${encodeURIComponent(data.slug)}`;
             }
           } else {
-            msg.textContent = 'Error: ' + await resp.text();
-            msg.className = 'text-rose-400';
+            setMessage('Error: ' + await resp.text(), 'error');
           }
         } catch (e) {
-          msg.textContent = 'System error occurred.';
+          setMessage('System error occurred.', 'error');
         } finally {
           isSaving = false;
         }
@@ -347,8 +493,13 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         try {
           const resp = await fetch('/api/admin/upload-image', {method: 'POST', body: fd});
           const data = await resp.json();
-          if (data.url) $('f-cover').value = data.url;
-        } catch (e) { alert('Upload failed'); }
+          if (data.url) {
+            $('f-cover').value = data.url;
+            markDirty();
+          }
+        } catch (e) {
+          alert('Upload failed');
+        }
       };
 
       // Auto slug
@@ -359,6 +510,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       $('btn-insert-product').onclick = () => {
         const template = '[product title="Product Name" price="$99.00" image="https://example.com/img.jpg" link="https://amazon.com/dp/..." desc="Key features and why you should buy it." label="View on Amazon"]';
         vditor.insertValue(template);
+        markDirty();
       };
     })();
   </script>

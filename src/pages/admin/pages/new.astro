@@ -11,8 +11,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     <div class="grid gap-3">
       <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="title" placeholder="Title *" required />
       <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="slug" placeholder="Slug (leave empty to auto-generate)" />
-    </div>
-    <div class="grid gap-4 md:grid-cols-2">
+      <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="description" placeholder="Page description (optional)"></textarea>
     </div>
 
     <!-- imoo Params -->
@@ -42,7 +41,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
       const titleInput = form.querySelector('input[name="title"]');
       const slugInput = form.querySelector('input[name="slug"]');
-      const descriptionInput = form.querySelector('input[name="description"]');
+      const descriptionInput = form.querySelector('textarea[name="description"]');
       const contentInput = form.querySelector('textarea[name="content"]');
       
       const imooPanel = document.getElementById('imoo-params');

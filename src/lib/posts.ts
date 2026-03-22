@@ -16,6 +16,8 @@ marked.use(
   }),
 );
 
+export type EditorMode = 'wysiwyg' | 'ir' | 'sv';
+
 export interface BlogPost {
   slug: string;
   title: string;
@@ -33,6 +35,7 @@ export interface BlogPost {
   affiliate?: boolean;
   template?: string;
   customData?: Record<string, any>;
+  editorMode?: EditorMode;
 }
 
 function normalizeSlug(value: string): string {
@@ -99,10 +102,12 @@ function stringifyFrontmatter(data: {
   affiliate?: boolean;
   template?: string;
   customData?: Record<string, any>;
+  editorMode?: EditorMode;
 }, content: string): string {
   const tagsBlock = data.tags.map((t) => `  - ${t}`).join('\n');
   const customDataStr = data.customData ? JSON.stringify(data.customData) : '{}';
-  return `---\ntitle: ${quote(data.title)}\ndescription: ${quote(data.description)}\ncategory: ${quote(data.category || '')}\ntags:\n${tagsBlock || '  -'}\nstatus: ${data.status}\nreviewNote: ${quote(data.reviewNote || '')}\npinned: ${data.pinned}\ncoverImage: ${quote(data.coverImage || '')}\npubDate: ${data.pubDate}\nupdatedDate: ${data.updatedDate}\nscheduledAt: ${quote(data.scheduledAt || '')}\naffiliate: ${data.affiliate ?? false}\ntemplate: ${data.template || ''}\ncustomData: ${customDataStr}\n---\n\n${content}`;
+  const editorMode = normalizeEditorMode(data.editorMode);
+  return `---\ntitle: ${quote(data.title)}\ndescription: ${quote(data.description)}\ncategory: ${quote(data.category || '')}\ntags:\n${tagsBlock || '  -'}\nstatus: ${data.status}\nreviewNote: ${quote(data.reviewNote || '')}\npinned: ${data.pinned}\ncoverImage: ${quote(data.coverImage || '')}\npubDate: ${data.pubDate}\nupdatedDate: ${data.updatedDate}\nscheduledAt: ${quote(data.scheduledAt || '')}\naffiliate: ${data.affiliate ?? false}\ntemplate: ${data.template || ''}\ncustomData: ${customDataStr}\neditorMode: ${editorMode}\n---\n\n${content}`;
 }
 
 function normalizeStatus(value: unknown): BlogPost['status'] {
@@ -110,6 +115,13 @@ function normalizeStatus(value: unknown): BlogPost['status'] {
     return value;
   }
   return 'published';
+}
+
+export function normalizeEditorMode(value: unknown): EditorMode {
+  if (value === 'ir' || value === 'sv' || value === 'wysiwyg') {
+    return value;
+  }
+  return 'wysiwyg';
 }
 
 async function listPostsCore(runtimeEnv?: Record<string, string>): Promise<BlogPost[]> {
@@ -136,6 +148,7 @@ async function listPostsCore(runtimeEnv?: Record<string, string>): Promise<BlogP
         affiliate: String(parsed.data.affiliate ?? 'false') === 'true',
         template: parsed.data.template ? String(parsed.data.template) : undefined,
         customData: typeof parsed.data.customData === 'string' ? JSON.parse(parsed.data.customData) : (parsed.data.customData ?? {}),
+        editorMode: normalizeEditorMode(parsed.data.editorMode),
       };
     }),
   );
@@ -178,6 +191,7 @@ export async function getPostBySlug(slug: string, runtimeEnv?: Record<string, st
       affiliate: String(parsed.data.affiliate ?? 'false') === 'true',
       template: parsed.data.template ? String(parsed.data.template) : undefined,
       customData: typeof parsed.data.customData === 'string' ? JSON.parse(parsed.data.customData) : (parsed.data.customData ?? {}),
+      editorMode: normalizeEditorMode(parsed.data.editorMode),
     };
   } catch {
     return null;
@@ -215,6 +229,7 @@ export async function savePost(
     affiliate: input.affiliate ?? false,
     template: input.template,
     customData: input.customData,
+    editorMode: input.editorMode,
   }, input.content);
   await putFile(filePathFromSlug(slug), body, `feat: update post ${slug}`, undefined, runtimeEnv);
   return slug;
