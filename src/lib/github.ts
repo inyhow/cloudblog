@@ -75,24 +75,26 @@ export async function putFile(
   path: string,
   content: string,
   message: string,
-  options?: { isBase64?: boolean },
+  options?: { isBase64?: boolean; sha?: string | null },
   runtimeEnv?: Record<string, string>,
-): Promise<void> {
+): Promise<string | null> {
   const { owner, repo, token, branch } = repoConfig(runtimeEnv);
-  const current = await getFile(path, runtimeEnv);
+  const currentSha = options && 'sha' in options ? options.sha : (await getFile(path, runtimeEnv))?.sha;
   const url = `${apiBase}/repos/${owner}/${repo}/contents/${path}`;
   const body: Record<string, unknown> = {
     message,
     content: options?.isBase64 ? content : encodeBase64(content),
     branch,
   };
-  if (current?.sha) body.sha = current.sha;
+  if (currentSha) body.sha = currentSha;
   const resp = await fetch(url, {
     method: 'PUT',
     headers: jsonHeaders(token),
     body: JSON.stringify(body),
   });
   if (!resp.ok) throw new Error(`GitHub put file failed: ${resp.status}`);
+  const data = await resp.json().catch(() => null);
+  return typeof data?.content?.sha === 'string' ? data.content.sha : null;
 }
 
 export async function deleteFile(path: string, message: string, runtimeEnv?: Record<string, string>): Promise<void> {

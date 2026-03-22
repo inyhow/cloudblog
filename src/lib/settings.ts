@@ -129,44 +129,74 @@ function normalizeCategories(input: unknown): CategoryConfig[] {
     .sort((a, b) => (a.sort || 0) - (b.sort || 0));
 }
 
-export async function readSettings(runtimeEnv?: Record<string, string>): Promise<SiteSettings> {
+function mergeSettings(parsed: Record<string, unknown>): SiteSettings {
+  return {
+    ...defaults,
+    ...parsed,
+    categories: normalizeCategories(parsed.categories),
+    seo: { ...defaults.seo, ...(parsed.seo || {}) },
+    adSlots: { ...defaults.adSlots, ...(parsed.adSlots || {}) },
+    templates: { ...defaults.templates, ...(parsed.templates || {}) },
+    templateContent: { ...defaults.templateContent, ...(parsed.templateContent || {}) },
+  };
+}
+
+export async function readSettingsWithMeta(runtimeEnv?: Record<string, string>): Promise<{ settings: SiteSettings; sha: string | null }> {
   try {
     const file = await getFile(SETTINGS_PATH, runtimeEnv);
-    if (!file) return defaults;
-    const parsed = JSON.parse(file.content);
+    if (!file) {
+      return { settings: defaults, sha: null };
+    }
+    const parsed = JSON.parse(file.content) as Record<string, unknown>;
     return {
-      ...defaults,
-      ...parsed,
-      categories: normalizeCategories(parsed.categories),
-      seo: { ...defaults.seo, ...(parsed.seo || {}) },
-      adSlots: { ...defaults.adSlots, ...(parsed.adSlots || {}) },
-      templates: { ...defaults.templates, ...(parsed.templates || {}) },
-      templateContent: { ...defaults.templateContent, ...(parsed.templateContent || {}) },
+      settings: mergeSettings(parsed),
+      sha: file.sha || null,
     };
   } catch {
-    return defaults;
+    return { settings: defaults, sha: null };
   }
 }
 
-export async function saveSettings(settings: SiteSettings, runtimeEnv?: Record<string, string>): Promise<void> {
-  await putFile(
+export async function readSettings(runtimeEnv?: Record<string, string>): Promise<SiteSettings> {
+  return (await readSettingsWithMeta(runtimeEnv)).settings;
+}
+
+export async function saveSettings(
+  settings: SiteSettings,
+  runtimeEnv?: Record<string, string>,
+  sha?: string | null,
+): Promise<string | null> {
+  return await putFile(
     SETTINGS_PATH,
     JSON.stringify(settings, null, 2),
     'chore: update site settings',
-    undefined,
+    typeof sha === 'undefined' ? undefined : { sha },
     runtimeEnv,
   );
 }
 
-export async function readThemeCss(runtimeEnv?: Record<string, string>): Promise<string> {
+export async function readThemeCssWithMeta(runtimeEnv?: Record<string, string>): Promise<{ css: string; sha: string | null }> {
   try {
     const file = await getFile(THEME_PATH, runtimeEnv);
-    return file?.content ?? '';
+    return {
+      css: file?.content ?? '',
+      sha: file?.sha || null,
+    };
   } catch {
-    return '';
+    return { css: '', sha: null };
   }
 }
 
-export async function saveThemeCss(css: string, runtimeEnv?: Record<string, string>): Promise<void> {
-  await putFile(THEME_PATH, css, 'chore: update theme css', undefined, runtimeEnv);
+export async function readThemeCss(runtimeEnv?: Record<string, string>): Promise<string> {
+  return (await readThemeCssWithMeta(runtimeEnv)).css;
+}
+
+export async function saveThemeCss(css: string, runtimeEnv?: Record<string, string>, sha?: string | null): Promise<string | null> {
+  return await putFile(
+    THEME_PATH,
+    css,
+    'chore: update theme css',
+    typeof sha === 'undefined' ? undefined : { sha },
+    runtimeEnv,
+  );
 }

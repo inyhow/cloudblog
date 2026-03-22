@@ -22,8 +22,25 @@ export async function listOpsLogs(runtimeEnv?: Record<string, string>): Promise<
 }
 
 export async function appendOpsLog(item: OpsLogItem, runtimeEnv?: Record<string, string>): Promise<void> {
-  const logs = await listOpsLogs(runtimeEnv);
+  const file = await getFile(OPS_LOG_PATH, runtimeEnv);
+  let logs: OpsLogItem[] = [];
+  if (file?.content) {
+    try {
+      const parsed = JSON.parse(file.content);
+      if (Array.isArray(parsed)) {
+        logs = parsed as OpsLogItem[];
+      }
+    } catch {
+      logs = [];
+    }
+  }
   logs.unshift(item);
   const capped = logs.slice(0, 500);
-  await putFile(OPS_LOG_PATH, JSON.stringify(capped, null, 2), `chore: ops log ${item.action}`, undefined, runtimeEnv);
+  await putFile(
+    OPS_LOG_PATH,
+    JSON.stringify(capped, null, 2),
+    `chore: ops log ${item.action}`,
+    { sha: file?.sha },
+    runtimeEnv,
+  );
 }

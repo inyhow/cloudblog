@@ -136,6 +136,8 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="analyticsJs" placeholder="Head Injection JS"></textarea>
         <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="homeHeroHtml" placeholder="Home Hero Snippet"></textarea>
         <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="postHeaderHtml" placeholder="Article Header Snippet"></textarea>
+        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="tagHeaderHtml" placeholder="Tag Header Snippet"></textarea>
+        <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="pageHeaderHtml" placeholder="Page Header Snippet"></textarea>
         <div class="grid gap-3 md:grid-cols-2">
             <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="tagTemplate"><option value="classic">Tag: classic</option><option value="grid">Tag: grid</option></select>
             <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="pageTemplate"><option value="classic">Page: classic</option><option value="imoo">Page: imoo</option></select>
@@ -145,7 +147,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     </details>
 
     <div class="flex gap-3">
-      <button class="rounded-xl bg-amber-400 px-4 py-2 font-medium text-slate-950" type="submit">Save Settings</button>
+      <button id="save-settings" class="rounded-xl bg-amber-400 px-4 py-2 font-medium text-slate-950 transition disabled:cursor-not-allowed disabled:opacity-60" type="submit"><span data-label>Save Settings</span></button>
       <a class="rounded-xl border border-white/10 px-4 py-2 text-slate-200" href="/admin/posts">Back</a>
     </div>
   </form>
@@ -157,8 +159,12 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       const form = document.getElementById('settings-form');
       const msg = document.getElementById('msg');
       const tabs = document.getElementById('tabs');
+      const saveButton = document.getElementById('save-settings');
+      const saveLabel = saveButton?.querySelector('[data-label]');
       let isDirty = false;
       let isSaving = false;
+      let settingsSha = null;
+      let themeSha = null;
 
       function switchTab(tab) {
         form.querySelectorAll('[data-panel]').forEach((panel) => panel.classList.toggle('hidden', panel.dataset.panel !== tab));
@@ -211,6 +217,11 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         msg.textContent = text;
       }
 
+      function setSavingState(saving) {
+        if (saveButton) saveButton.disabled = saving;
+        if (saveLabel) saveLabel.textContent = saving ? 'Saving...' : 'Save Settings';
+      }
+
       function markDirty() {
         if (isSaving) return;
         isDirty = true;
@@ -230,6 +241,16 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
           await new Promise((r) => setTimeout(r, 400 * (i + 1)));
         }
         throw lastError;
+      }
+
+      function parseJsonField(raw, fallback, label) {
+        const value = String(raw || '').trim();
+        if (!value) return fallback;
+        try {
+          return JSON.parse(value);
+        } catch {
+          throw new Error(`${label} JSON 格式错误`);
+        }
       }
 
       function renderCategories() {
@@ -292,46 +313,49 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       }
 
       (async () => {
-        const settingsResp = await fetchWithRetry('/api/admin/settings');
-        if (settingsResp.status === 401) return (location.href = '/admin');
-        const settings = await settingsResp.json();
-        f.locale.value = settings.locale || 'en';
-        f.title.value = settings.title || '';
-        f.description.value = settings.description || '';
-        f.menu.value = JSON.stringify(settings.menu || [], null, 2);
-        f.footer.value = settings.footer || '';
-        f.analyticsJs.value = settings.analyticsJs || '';
-        f.homeTitle.value = settings.seo?.homeTitle || '';
-        f.homeDescription.value = settings.seo?.homeDescription || '';
-        f.googleAnalyticsId.value = settings.seo?.googleAnalyticsId || '';
-        f.googleSiteVerification.value = settings.seo?.googleSiteVerification || '';
-        f.googleAdsenseClient.value = settings.seo?.googleAdsenseClient || '';
-        f.adHomeTop.value = settings.adSlots?.homeTop || '';
-        f.adListTop.value = settings.adSlots?.listTop || '';
-        f.adPostTop.value = settings.adSlots?.postTop || '';
-        f.adPostBottom.value = settings.adSlots?.postBottom || '';
-        f.adPostSidebar.value = settings.adSlots?.postSidebar || '';
-        f.categories.value = JSON.stringify(settings.categories || [], null, 2);
-        categoryRows = settings.categories || [];
-        renderCategories();
-        f.homeTemplate.value = settings.templates?.home || 'classic';
-        f.postTemplate.value = settings.templates?.post || 'classic';
-        f.tagTemplate.value = settings.templates?.tag || 'classic';
-        f.pageTemplate.value = settings.templates?.page || 'classic';
-        f.homeHeroHtml.value = settings.templateContent?.homeHeroHtml || '';
-        f.postHeaderHtml.value = settings.templateContent?.postHeaderHtml || '';
-        f.tagHeaderHtml.value = settings.templateContent?.tagHeaderHtml || '';
-        f.pageHeaderHtml.value = settings.templateContent?.pageHeaderHtml || '';
-        f.templateVariables.value = JSON.stringify(settings.templateVariables || {}, null, 2);
-
-        const themeResp = await fetchWithRetry('/api/admin/themes');
-        if (themeResp.ok) {
-          const theme = await themeResp.json();
-          f.css.value = theme.css || '';
+        try {
+          setMessage('Loading settings...', 'info');
+          const settingsResp = await fetchWithRetry('/api/admin/settings', {}, 1);
+          if (settingsResp.status === 401) return (location.href = '/admin');
+          const settings = await settingsResp.json();
+          settingsSha = settings._meta?.settingsSha ?? null;
+          themeSha = settings._meta?.themeSha ?? null;
+          f.locale.value = settings.locale || 'en';
+          f.title.value = settings.title || '';
+          f.description.value = settings.description || '';
+          f.menu.value = JSON.stringify(settings.menu || [], null, 2);
+          f.footer.value = settings.footer || '';
+          f.analyticsJs.value = settings.analyticsJs || '';
+          f.homeTitle.value = settings.seo?.homeTitle || '';
+          f.homeDescription.value = settings.seo?.homeDescription || '';
+          f.googleAnalyticsId.value = settings.seo?.googleAnalyticsId || '';
+          f.googleSiteVerification.value = settings.seo?.googleSiteVerification || '';
+          f.googleAdsenseClient.value = settings.seo?.googleAdsenseClient || '';
+          f.adHomeTop.value = settings.adSlots?.homeTop || '';
+          f.adListTop.value = settings.adSlots?.listTop || '';
+          f.adPostTop.value = settings.adSlots?.postTop || '';
+          f.adPostBottom.value = settings.adSlots?.postBottom || '';
+          f.adPostSidebar.value = settings.adSlots?.postSidebar || '';
+          f.categories.value = JSON.stringify(settings.categories || [], null, 2);
+          categoryRows = Array.isArray(settings.categories) ? settings.categories : [];
+          renderCategories();
+          f.homeTemplate.value = settings.templates?.home || 'classic';
+          f.postTemplate.value = settings.templates?.post || 'classic';
+          f.tagTemplate.value = settings.templates?.tag || 'classic';
+          f.pageTemplate.value = settings.templates?.page || 'classic';
+          f.homeHeroHtml.value = settings.templateContent?.homeHeroHtml || '';
+          f.postHeaderHtml.value = settings.templateContent?.postHeaderHtml || '';
+          f.tagHeaderHtml.value = settings.templateContent?.tagHeaderHtml || '';
+          f.pageHeaderHtml.value = settings.templateContent?.pageHeaderHtml || '';
+          f.templateVariables.value = JSON.stringify(settings.templateVariables || {}, null, 2);
+          f.css.value = settings.themeCss || '';
           initialCss = f.css.value;
+          updatePreset();
+          isDirty = false;
+          setMessage('');
+        } catch (error) {
+          setMessage(`Load failed: ${error instanceof Error ? error.message : String(error)}`, 'error');
         }
-        updatePreset();
-        isDirty = false;
       })();
 
       catAdd?.addEventListener('click', () => {
@@ -375,80 +399,81 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (isSaving) return;
         isSaving = true;
-        setMessage('Saving...', 'info');
-        syncCategoriesToJson();
-        const payload = {
-          locale: f.locale.value,
-          title: f.title.value,
-          description: f.description.value,
-          menu: JSON.parse(f.menu.value || '[]'),
-          footer: f.footer.value,
-          analyticsJs: f.analyticsJs.value,
-          seo: {
-            homeTitle: f.homeTitle.value,
-            homeDescription: f.homeDescription.value,
-            googleAnalyticsId: f.googleAnalyticsId.value,
-            googleSiteVerification: f.googleSiteVerification.value,
-            googleAdsenseClient: f.googleAdsenseClient.value,
-          },
-          adSlots: {
-            homeTop: f.adHomeTop.value,
-            listTop: f.adListTop.value,
-            postTop: f.adPostTop.value,
-            postBottom: f.adPostBottom.value,
-            postSidebar: f.adPostSidebar.value,
-          },
-          categories: JSON.parse(f.categories.value || '[]'),
-          templates: {
-            home: f.homeTemplate.value,
-            post: f.postTemplate.value,
-            tag: f.tagTemplate.value,
-            page: f.pageTemplate.value,
-          },
-          templateContent: {
-            homeHeroHtml: f.homeHeroHtml.value,
-            postHeaderHtml: f.postHeaderHtml.value,
-            tagHeaderHtml: f.tagHeaderHtml.value,
-            pageHeaderHtml: f.pageHeaderHtml.value,
-          },
-          templateVariables: JSON.parse(f.templateVariables.value || '{}'),
-        };
+        setSavingState(true);
 
         try {
-          const tasks = [
-            fetchWithRetry('/api/admin/settings', {
-              method: 'PUT',
-              headers: { 'content-type': 'application/json' },
-              body: JSON.stringify(payload),
-            }, 1)
-          ];
-          
+          syncCategoriesToJson();
           const cssChanged = f.css.value !== initialCss;
-          if (cssChanged) {
-            tasks.push(
-               fetchWithRetry('/api/admin/themes', {
-                method: 'PUT',
-                headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ css: f.css.value }),
-              }, 1)
-            );
-          }
+          setMessage(cssChanged ? 'Saving settings and theme...' : 'Saving settings...', 'info');
+          const payload = {
+            locale: f.locale.value,
+            title: f.title.value,
+            description: f.description.value,
+            menu: parseJsonField(f.menu.value, [], 'Navigation Menu'),
+            footer: f.footer.value,
+            analyticsJs: f.analyticsJs.value,
+            seo: {
+              homeTitle: f.homeTitle.value,
+              homeDescription: f.homeDescription.value,
+              googleAnalyticsId: f.googleAnalyticsId.value,
+              googleSiteVerification: f.googleSiteVerification.value,
+              googleAdsenseClient: f.googleAdsenseClient.value,
+            },
+            adSlots: {
+              homeTop: f.adHomeTop.value,
+              listTop: f.adListTop.value,
+              postTop: f.adPostTop.value,
+              postBottom: f.adPostBottom.value,
+              postSidebar: f.adPostSidebar.value,
+            },
+            categories: parseJsonField(f.categories.value, [], 'Categories'),
+            templates: {
+              home: f.homeTemplate.value,
+              post: f.postTemplate.value,
+              tag: f.tagTemplate.value,
+              page: f.pageTemplate.value,
+            },
+            templateContent: {
+              homeHeroHtml: f.homeHeroHtml.value,
+              postHeaderHtml: f.postHeaderHtml.value,
+              tagHeaderHtml: f.tagHeaderHtml.value,
+              pageHeaderHtml: f.pageHeaderHtml.value,
+            },
+            templateVariables: parseJsonField(f.templateVariables.value, {}, 'Global Variables'),
+            themeCss: f.css.value,
+            saveTheme: cssChanged,
+            _meta: {
+              settingsSha,
+              themeSha,
+            },
+          };
 
-          const results = await Promise.all(tasks);
-          const allOk = results.every(r => r.ok);
+          const response = await fetchWithRetry('/api/admin/settings', {
+            method: 'PUT',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(payload),
+          }, 0);
 
-          if (!allOk) {
-            setMessage(`Save failed: ${results.map(r => r.status).join(', ')}`, 'error');
+          if (response.status === 401) return (location.href = '/admin');
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            const detail = result?.error || result?.message || response.status;
+            setMessage(`Save failed: ${detail}`, 'error');
             return;
           }
+
+          settingsSha = Object.prototype.hasOwnProperty.call(result, 'settingsSha') ? result.settingsSha ?? null : settingsSha;
+          themeSha = Object.prototype.hasOwnProperty.call(result, 'themeSha') ? result.themeSha ?? null : themeSha;
           if (cssChanged) initialCss = f.css.value;
-          setMessage('Saved Successfully', 'success');
+          setMessage('Saved successfully', 'success');
           isDirty = false;
         } catch (error) {
           setMessage(`Save failed: ${error instanceof Error ? error.message : String(error)}`, 'error');
         } finally {
           isSaving = false;
+          setSavingState(false);
         }
       });
     })();
