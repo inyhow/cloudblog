@@ -208,8 +208,8 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         </div>
         <div class="editor-mode-tags">
           <button type="button" class="mode-tag active" id="mode-wysiwyg">可视化</button>
-          <button type="button" class="mode-tag" id="mode-ir">Markdown</button>
-          <button type="button" class="mode-tag" id="mode-sv">分栏预览</button>
+          <button type="button" class="mode-tag" id="mode-ir">Markdown 文本</button>
+          <button type="button" class="mode-tag" id="mode-sv">Markdown + 预览</button>
           <button type="button" id="btn-insert-product" class="ml-4 rounded border border-amber-400/30 bg-amber-400/20 px-2 py-1 text-xs text-amber-300 hover:bg-amber-400/30">+ Product</button>
         </div>
       </div>
@@ -237,7 +237,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       const slug = new URL(location.href).searchParams.get('slug');
       const modeMeta = {
         wysiwyg: '可视化编辑',
-        ir: 'Markdown 即时渲染',
+        ir: 'Markdown 文本模式',
         sv: 'Markdown 分栏预览',
       };
       const sanitizeMode = (value) => (value === 'ir' || value === 'sv' || value === 'wysiwyg' ? value : 'wysiwyg');
@@ -281,9 +281,10 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         isDirty = true;
       }
 
-      function setMode(mode, options = {}) {
+      function updateModeUi(mode, options = {}) {
         const nextMode = sanitizeMode(mode);
-        const { syncEditor = true, dirty = syncEditor } = options;
+        const { dirty = false } = options;
+        const modeChanged = currentEditorMode !== nextMode;
         currentEditorMode = nextMode;
         if (editorModeInput) editorModeInput.value = nextMode;
         if (editorState) editorState.textContent = `当前：${modeMeta[nextMode]}`;
@@ -291,12 +292,59 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           tag.classList.toggle('active', tag.id === `mode-${nextMode}`);
         });
         rememberMode(nextMode);
-        if (syncEditor && vditor) {
-          vditor.setMode(nextMode);
-        }
-        if (dirty) {
+        if (dirty && modeChanged) {
           markDirty();
         }
+      }
+
+      function readEditorCurrentMode(fallback = currentEditorMode) {
+        return sanitizeMode(vditor?.currentMode || fallback);
+      }
+
+      function getBuiltinModeButton(mode) {
+        return vditor?.toolbar?.elements?.['edit-mode']?.querySelector(`button[data-mode="${sanitizeMode(mode)}"]`);
+      }
+
+      function bindBuiltinModeSync() {
+        const editMode = vditor?.toolbar?.elements?.['edit-mode'];
+        if (!editMode || editMode.dataset.bound === '1') return;
+        editMode.dataset.bound = '1';
+
+        const sync = () => {
+          const active = editMode.querySelector('button.vditor-menu--current[data-mode]');
+          updateModeUi(active?.dataset?.mode || readEditorCurrentMode(), { dirty: false });
+        };
+
+        editMode.querySelectorAll('button[data-mode]').forEach((button) => {
+          button.addEventListener('click', () => {
+            window.requestAnimationFrame(sync);
+          });
+        });
+
+        const observer = new MutationObserver(() => sync());
+        observer.observe(editMode, { subtree: true, attributes: true, attributeFilter: ['class'] });
+        sync();
+      }
+
+      function setMode(mode, options = {}) {
+        const nextMode = sanitizeMode(mode);
+        const { syncEditor = true, dirty = syncEditor } = options;
+        if (syncEditor && vditor) {
+          const currentMode = readEditorCurrentMode();
+          if (currentMode !== nextMode) {
+            const switchButton = getBuiltinModeButton(nextMode);
+            if (switchButton) {
+              switchButton.click();
+            } else {
+              console.warn('Vditor edit-mode button not found:', nextMode);
+            }
+          }
+          window.requestAnimationFrame(() => {
+            updateModeUi(readEditorCurrentMode(nextMode), { dirty });
+          });
+          return;
+        }
+        updateModeUi(nextMode, { dirty });
       }
 
       setMode(currentEditorMode, { syncEditor: false, dirty: false });
@@ -333,6 +381,8 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           markDirty();
         },
         after() {
+          bindBuiltinModeSync();
+          setMode(currentEditorMode, { dirty: false });
           if (slug) loadPost();
         }
       });
@@ -452,7 +502,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
             heroImage: $('f-heroImg').value
           },
           coverImage: $('f-cover').value,
-          editorMode: currentEditorMode,
+          editorMode: readEditorCurrentMode(),
           content: vditor.getValue()
         };
 
