@@ -14,16 +14,40 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       background-color: #ffffff !important;
       overflow: hidden;
     }
+    #vditor.vditor--dark {
+      --border-color: rgba(148,163,184,0.35);
+      --second-color: #94a3b8;
+      --panel-background-color: #ffffff;
+      --panel-shadow: 0 1px 2px rgba(15,23,42,0.08);
+      --toolbar-background-color: #f8fafc;
+      --toolbar-icon-color: #334155;
+      --toolbar-icon-hover-color: #0f172a;
+      --textarea-background-color: #ffffff;
+      --textarea-text-color: #0f172a;
+      --resize-icon-color: rgba(148,163,184,0.45);
+      --resize-background-color: rgba(148,163,184,0.12);
+      --resize-hover-icon-color: #0f172a;
+      --resize-hover-background-color: rgba(148,163,184,0.22);
+      --count-background-color: rgba(251,191,36,0.16);
+      --heading-border-color: #cbd5e1;
+      --blockquote-color: #64748b;
+      --ir-heading-color: #7c3aed;
+      --ir-title-color: #64748b;
+      --ir-bi-color: #c2410c;
+      --ir-link-color: #2563eb;
+      --ir-bracket-color: #475569;
+      --ir-paren-color: #059669;
+    }
     #vditor:focus-within {
       box-shadow: 0 0 0 3px rgba(245,158,11,0.12);
     }
     .vditor-toolbar {
-      background-color: #0d1117 !important;
-      border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+      background-color: #f8fafc !important;
+      border-bottom: 1px solid rgba(148,163,184,0.28) !important;
       padding: 4px 10px !important;
     }
     .vditor-toolbar button {
-      color: #cbd5e1 !important;
+      color: #334155 !important;
     }
     .vditor-toolbar button:hover {
       background: rgba(148,163,184,0.12) !important;
@@ -46,6 +70,15 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     }
     #vditor .vditor-wysiwyg {
       padding: 18px 20px !important;
+    }
+    #vditor .vditor-sv:focus,
+    #vditor .vditor-wysiwyg:focus,
+    #vditor .vditor-ir:focus,
+    #vditor .vditor-preview,
+    #vditor .vditor-preview > .vditor-reset,
+    #vditor .vditor-devtools {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
     }
     #vditor textarea::placeholder,
     #vditor [contenteditable='true'][data-placeholder]:empty::before {
@@ -353,7 +386,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       vditor = new Vditor('vditor', {
         height: 600,
         mode: currentEditorMode,
-        theme: 'dark',
+        theme: 'classic',
         cdn: 'https://cdn.jsdelivr.net/npm/vditor@3.10.7',
         toolbarConfig: {
           pin: true,
