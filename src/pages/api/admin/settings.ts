@@ -41,10 +41,10 @@ function normalizeTemplateVariables(input: unknown): SiteSettings['templateVaria
 function normalizeTemplates(input: unknown): SiteSettings['templates'] {
   const record = asRecord(input);
   return {
-    home: record.home === 'magazine' || record.home === 'minimal' || record.home === 'imoo' ? record.home : 'classic',
-    post: record.post === 'cover' || record.post === 'minimal' || record.post === 'imoo' ? record.post : 'classic',
-    tag: record.tag === 'grid' || record.tag === 'minimal' || record.tag === 'imoo' ? record.tag : 'classic',
-    page: record.page === 'minimal' || record.page === 'imoo' ? record.page : 'classic',
+    home: record.home === 'magazine' || record.home === 'minimal' ? record.home : 'classic',
+    post: record.post === 'cover' || record.post === 'minimal' ? record.post : 'classic',
+    tag: record.tag === 'grid' || record.tag === 'minimal' ? record.tag : 'classic',
+    page: record.page === 'minimal' ? record.page : 'classic',
   };
 }
 

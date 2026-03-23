@@ -8,26 +8,16 @@ const tag = decodeURIComponent(Astro.params.tag!);
 const runtimeEnv = getRuntimeEnv(Astro.locals);
 const settings = await readSettings(runtimeEnv);
 const tagTemplate = settings.templates?.tag ?? 'classic';
-const isImoo = tagTemplate === 'imoo';
 const posts = (await listPosts(runtimeEnv))
   .filter((post) => isPostPublic(post) && post.tags.includes(tag))
   .sort((a, b) => new Date(b.pubDate).valueOf() - new Date(a.pubDate).valueOf());
 ---
 
-<SiteLayout title={`Tag: ${tag}`} description={`Posts tagged ${tag}`} variant={isImoo ? 'imoo' : 'classic'}>
-  <section class:list={[
-    'mb-8 flex items-end justify-between gap-4',
-    isImoo ? 'rounded-[2rem] border border-white/10 bg-white px-6 py-6 shadow-xl shadow-slate-900/5' : '',
-  ]}>
+<SiteLayout title={`Tag: ${tag}`} description={`Posts tagged ${tag}`}>
+  <section class="mb-8 flex items-end justify-between gap-4 rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm">
     <div>
-      <p class:list={[
-        'mb-2 text-xs uppercase tracking-[0.24em]',
-        isImoo ? 'text-amber-600' : 'text-slate-400',
-      ]}>Tag Archive</p>
-      <h1 class:list={[
-        'font-black tracking-tight',
-        isImoo ? 'text-4xl text-slate-950' : 'text-3xl text-slate-950',
-      ]}>#{tag}</h1>
+      <p class="mb-2 text-xs uppercase tracking-[0.24em] text-slate-400">Tag Archive</p>
+      <h1 class="text-3xl font-black tracking-tight text-slate-950">#{tag}</h1>
     </div>
     <p class="text-sm text-slate-500">{posts.length} matching posts</p>
   </section>
@@ -35,15 +25,13 @@ const posts = (await listPosts(runtimeEnv))
     'grid gap-4',
     tagTemplate === 'grid' ? 'md:grid-cols-2' : 'md:grid-cols-3',
     tagTemplate === 'minimal' ? 'gap-3 md:grid-cols-1' : '',
-    isImoo ? 'xl:grid-cols-4 md:grid-cols-2' : '',
   ]}>
     {posts.map((post) => (
       <a
         href={`/blog/${post.slug}`}
         class:list={[
-          'rounded-[1.5rem] border bg-white transition hover:-translate-y-1 hover:shadow-xl',
+          'rounded-[1.5rem] border border-slate-200 bg-white transition hover:-translate-y-1 hover:shadow-xl',
           tagTemplate === 'minimal' ? 'p-4' : 'overflow-hidden',
-          isImoo ? 'border-slate-200 shadow-[0_16px_50px_-30px_rgba(15,23,42,0.35)]' : 'border-slate-200',
         ]}
       >
         {tagTemplate !== 'minimal' && post.coverImage && <img class="h-44 w-full object-cover" src={post.coverImage} alt={post.title} />}

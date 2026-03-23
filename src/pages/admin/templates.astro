@@ -2,15 +2,15 @@
 import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
 
-<AdminLayout title="Template Studio">
+<AdminLayout title="Theme CSS Studio">
   <div class="mb-6">
-    <h1 class="text-3xl font-semibold text-white">Template Studio</h1>
-    <p class="mt-2 text-sm text-slate-300">Edit template files, fragment HTML, and preview structure before publishing.</p>
+    <h1 class="text-3xl font-semibold text-white">Theme CSS Studio</h1>
+    <p class="mt-2 text-sm text-slate-300">Edit the extra theme stylesheet used by the frontend before publishing.</p>
   </div>
 
   <div class="grid gap-6 xl:grid-cols-[320px_1fr]">
     <section class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-      <div class="mb-4 text-lg font-semibold text-amber-300">Template Files</div>
+      <div class="mb-4 text-lg font-semibold text-amber-300">Editable Assets</div>
       <div id="template-list" class="grid gap-2"></div>
     </section>
 
@@ -19,10 +19,10 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         <section class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
           <div class="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 id="editor-title" class="text-lg font-semibold text-white">Template Editor</h2>
+              <h2 id="editor-title" class="text-lg font-semibold text-white">Theme Editor</h2>
               <p id="editor-path" class="mt-1 text-xs text-slate-400"></p>
             </div>
-            <button class="rounded-xl bg-amber-400 px-4 py-2 font-medium text-slate-950" id="save-template" type="button">Save Template</button>
+            <button class="rounded-xl bg-amber-400 px-4 py-2 font-medium text-slate-950" id="save-template" type="button">Save Theme CSS</button>
           </div>
           <textarea id="template-content" class="min-h-[60vh] w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm"></textarea>
         </section>
@@ -47,7 +47,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       const frame = document.getElementById('preview-frame');
       const saveBtn = document.getElementById('save-template');
 
-      let activeKey = 'home';
+      let activeKey = 'theme';
 
       function renderPreview(key, source) {
         const body = `

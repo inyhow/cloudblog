@@ -19,10 +19,10 @@ export interface SiteSettings {
   };
   templateVariables: Record<string, string>;
   templates: {
-    home: 'classic' | 'magazine' | 'minimal' | 'imoo';
-    post: 'classic' | 'cover' | 'minimal' | 'imoo';
-    tag: 'classic' | 'grid' | 'minimal' | 'imoo';
-    page: 'classic' | 'minimal' | 'imoo';
+    home: 'classic' | 'magazine' | 'minimal';
+    post: 'classic' | 'cover' | 'minimal';
+    tag: 'classic' | 'grid' | 'minimal';
+    page: 'classic' | 'minimal';
   };
   templateContent: {
     homeHeroHtml: string;

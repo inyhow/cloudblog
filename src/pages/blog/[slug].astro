@@ -3,7 +3,6 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
 import { getPostBySlug, isPostPublic, renderPostWithToc } from '../../lib/posts';
 import { readSettings } from '../../lib/settings';
 import { getRuntimeEnv } from '../../lib/runtime-env';
-import { getTemplateFile } from '../../lib/template-files';
 import { renderTemplateVariables } from '../../lib/template-vars';
 
 const slug = Astro.params.slug!;
@@ -14,38 +13,8 @@ if (!post || !isPostPublic(post)) {
 }
 
 const settings = await readSettings(runtimeEnv);
-const postTemplate = post.template || settings.templates?.post || 'classic';
-const postFile = await getTemplateFile('post', runtimeEnv);
-
+const postTemplate = settings.templates?.post ?? 'classic';
 const { html, toc } = renderPostWithToc(post.content);
-
-const isImoo = postTemplate === 'imoo';
-
-if (isImoo && postFile?.content) {
-  const { renderMenuAsHtml } = await import('../../lib/template-vars');
-  const context = {
-    site: {
-      title: settings.title,
-      description: settings.description,
-      footer: settings.footer,
-      menuHtml: renderMenuAsHtml(settings.menu),
-    },
-    post: {
-      title: post.title,
-      description: post.description,
-      content: html,
-      pubDate: post.pubDate,
-      category: post.category || post.tags?.[0] || 'Post',
-      tags: post.tags,
-      coverImage: post.coverImage,
-      ...post.customData,
-    },
-    variables: settings.templateVariables,
-  };
-  const rendered = renderTemplateVariables(postFile.content, context);
-  return new Response(rendered, { headers: { 'Content-Type': 'text/html' } });
-}
-
 const postHeaderRaw = settings.templateContent?.postHeaderHtml || '';
 const postHeaderHtml = renderTemplateVariables(postHeaderRaw, {
   site: { title: settings.title, description: settings.description, footer: settings.footer, menuHtml: '' },
@@ -65,10 +34,10 @@ const postHeaderHtml = renderTemplateVariables(postHeaderRaw, {
 });
 ---
 
-<SiteLayout title={post.title} description={post.description} variant={isImoo ? 'imoo' : 'classic'}>
+<SiteLayout title={post.title} description={post.description}>
   {postHeaderHtml && <div class="mb-4" set:html={postHeaderHtml} />}
   <div class:list={["grid gap-6", toc.length > 0 ? 'lg:grid-cols-[minmax(0,1fr)_260px]' : 'lg:grid-cols-1']}>
-    <article class:list={["prose max-w-none rounded-[2rem] border border-slate-200 bg-white shadow-sm", postTemplate === 'minimal' ? 'p-5' : 'p-7']}>
+    <article class:list={["post-article prose max-w-none rounded-[2rem] border border-slate-200 bg-white shadow-sm", postTemplate === 'minimal' ? 'p-5' : 'p-7']}>
       {post.coverImage && (
         <img
           class:list={["mb-6 w-full rounded-[1.5rem] object-cover", postTemplate === 'cover' ? 'h-[32rem]' : 'h-80']}
@@ -80,7 +49,7 @@ const postHeaderHtml = renderTemplateVariables(postHeaderRaw, {
         <span>{new Date(post.pubDate).toLocaleString('zh-CN')}</span>
         {post.pinned && <span class="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-700">Pinned</span>}
       </div>
-      <h1>{post.title}</h1>
+      <h1 class="not-prose mb-6 text-4xl font-black leading-tight tracking-tight text-slate-950 md:text-5xl">{post.title}</h1>
       {
         (post.tags?.length ?? 0) > 0 && (
           <div class="not-prose mb-6 flex flex-wrap gap-2">
@@ -95,7 +64,7 @@ const postHeaderHtml = renderTemplateVariables(postHeaderRaw, {
           </div>
         )
       }
-      <div set:html={html} />
+      <div class="post-body" set:html={html} />
     </article>
     {
       toc.length > 0 && (
@@ -116,4 +85,30 @@ const postHeaderHtml = renderTemplateVariables(postHeaderRaw, {
       )
     }
   </div>
+
+  <style is:inline>
+    .post-article :global(.post-body h1) {
+      font-size: 2rem;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .post-article :global(.post-body h2) {
+      font-size: 1.6rem;
+      margin-top: 2.25rem;
+      margin-bottom: 0.9rem;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .post-article :global(.post-body h3) {
+      font-size: 1.2rem;
+      margin-top: 1.8rem;
+      margin-bottom: 0.75rem;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+  </style>
 </SiteLayout>

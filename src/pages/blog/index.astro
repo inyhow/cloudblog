@@ -7,64 +7,165 @@ import { readSettings } from '../../lib/settings';
 const runtimeEnv = getRuntimeEnv(Astro.locals);
 const settings = await readSettings(runtimeEnv);
 const listTemplate = settings.templates?.tag ?? 'classic';
-const isImoo = listTemplate === 'imoo';
 const posts = (await listPosts(runtimeEnv))
   .filter((post) => isPostPublic(post))
   .sort((a, b) => {
     if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     return new Date(b.pubDate).valueOf() - new Date(a.pubDate).valueOf();
   });
+const pageSize = listTemplate === 'minimal' ? 8 : listTemplate === 'grid' ? 6 : 9;
+const initialPosts = posts.slice(0, pageSize);
+const postsJson = JSON.stringify(posts);
 ---
 
-<SiteLayout title="Blog" description={settings.description} variant={isImoo ? 'imoo' : 'classic'}>
-  <section class:list={[
-    'mb-8 flex items-end justify-between gap-4',
-    isImoo ? 'rounded-[2rem] border border-white/10 bg-white px-6 py-6 shadow-xl shadow-slate-900/5' : '',
-  ]}>
+<SiteLayout title="Blog" description={settings.description}>
+  <section class="mb-8 flex items-end justify-between gap-4">
     <div>
-      <p class:list={[
-        'mb-2 text-xs uppercase tracking-[0.24em]',
-        isImoo ? 'text-amber-600' : 'text-slate-400',
-      ]}>Archive</p>
-      <h1 class:list={[
-        'font-black tracking-tight',
-        isImoo ? 'text-4xl text-slate-950' : 'text-3xl text-slate-950',
-      ]}>All Posts</h1>
+      <p class="mb-2 text-xs uppercase tracking-[0.24em] text-slate-400">Archive</p>
+      <h1 class="text-3xl font-black tracking-tight text-slate-950">All Posts</h1>
+      <p class="mt-2 text-sm text-slate-500">列表页使用前端 JS 分页，每页显示 {pageSize} 篇文章。</p>
     </div>
     <p class="text-sm text-slate-500">{posts.length} published articles</p>
   </section>
-  <div class:list={[
-    'grid gap-4',
-    listTemplate === 'grid' ? 'md:grid-cols-2' : 'md:grid-cols-3',
-    listTemplate === 'minimal' ? 'gap-3 md:grid-cols-1' : '',
-    isImoo ? 'xl:grid-cols-4 md:grid-cols-2' : '',
-  ]}>
-    {posts.map((post) => (
-      <a
-        href={`/blog/${post.slug}`}
-        class:list={[
-          'rounded-[1.5rem] border bg-white transition hover:-translate-y-1 hover:shadow-xl',
-          listTemplate === 'minimal' ? 'p-4' : 'overflow-hidden',
-          isImoo ? 'border-slate-200 shadow-[0_16px_50px_-30px_rgba(15,23,42,0.35)]' : 'border-slate-200',
-        ]}
-      >
-        {listTemplate !== 'minimal' && post.coverImage && <img class="h-48 w-full object-cover" src={post.coverImage} alt={post.title} />}
-        <div class:list={[listTemplate === 'minimal' ? '' : 'p-5']}>
-          <div class="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-slate-400">
-            {post.pinned && <span class="rounded-full bg-amber-100 px-2 py-1 text-amber-700">Pinned</span>}
-            <span>{new Date(post.pubDate).toLocaleDateString('zh-CN')}</span>
-          </div>
-          <h2 class="text-lg font-semibold text-slate-950">{post.title}</h2>
-          <p class="mt-2 text-slate-600">{post.description}</p>
-          {post.tags.length > 0 && (
-            <div class="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
-              {post.tags.map((tag) => (
-                <a href={`/tags/${encodeURIComponent(tag)}`} class="rounded-full bg-slate-100 px-3 py-1 hover:bg-slate-200">#{tag}</a>
-              ))}
+
+  <div
+    id="blog-list"
+    data-template={listTemplate}
+    data-page-size={String(pageSize)}
+    data-posts={postsJson}
+    class:list={[
+      'grid gap-4',
+      listTemplate === 'grid' ? 'md:grid-cols-2' : 'md:grid-cols-3',
+      listTemplate === 'minimal' ? 'gap-3 md:grid-cols-1' : '',
+    ]}
+  >
+    {initialPosts.map((post) => (
+      <article class:list={['blog-card rounded-[1.5rem] border border-slate-200 bg-white transition hover:-translate-y-1 hover:shadow-xl', listTemplate === 'minimal' ? 'p-4' : 'overflow-hidden']}>
+        <a href={`/blog/${post.slug}`} class="block">
+          {listTemplate !== 'minimal' && post.coverImage && <img class="h-48 w-full object-cover" src={post.coverImage} alt={post.title} />}
+          <div class:list={[listTemplate === 'minimal' ? '' : 'p-5']}>
+            <div class="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-slate-400">
+              {post.pinned && <span class="rounded-full bg-amber-100 px-2 py-1 text-amber-700">Pinned</span>}
+              <span>{new Date(post.pubDate).toLocaleDateString('zh-CN')}</span>
             </div>
-          )}
-        </div>
-      </a>
+            <h2 class="text-lg font-semibold text-slate-950">{post.title}</h2>
+            <p class="mt-2 text-slate-600">{post.description}</p>
+            {post.tags.length > 0 && (
+              <div class="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
+                {post.tags.map((tag) => (
+                  <a href={`/tags/${encodeURIComponent(tag)}`} class="rounded-full bg-slate-100 px-3 py-1 hover:bg-slate-200">#{tag}</a>
+                ))}
+              </div>
+            )}
+          </div>
+        </a>
+      </article>
     ))}
   </div>
+
+  <div id="blog-pagination" class="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+    <p id="blog-pagination-status" class="text-sm text-slate-500">显示 1 - {Math.min(pageSize, posts.length)} / {posts.length}</p>
+    <div class="flex items-center gap-2">
+      <button id="blog-prev" type="button" class="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:border-slate-900 hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">上一页</button>
+      <div id="blog-page-numbers" class="flex flex-wrap items-center gap-2"></div>
+      <button id="blog-next" type="button" class="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:border-slate-900 hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">下一页</button>
+    </div>
+  </div>
+
+  <script is:inline>
+    (() => {
+      const root = document.getElementById('blog-list');
+      const pager = document.getElementById('blog-pagination');
+      const status = document.getElementById('blog-pagination-status');
+      const prev = document.getElementById('blog-prev');
+      const next = document.getElementById('blog-next');
+      const numbers = document.getElementById('blog-page-numbers');
+      if (!root || !pager || !status || !prev || !next || !numbers) return;
+
+      const posts = JSON.parse(root.dataset.posts || '[]');
+      const pageSize = Number(root.dataset.pageSize || '9');
+      const template = root.dataset.template || 'classic';
+      const totalPages = Math.max(1, Math.ceil(posts.length / pageSize));
+      let currentPage = 1;
+
+      const formatDate = (value) => new Date(value).toLocaleDateString('zh-CN');
+      const escapeHtml = (value) => String(value)
+        .replaceAll('&', '&')
+        .replaceAll('<', '<')
+        .replaceAll('>', '>')
+        .replaceAll('"', '"')
+        .replaceAll("'", ''');
+
+      function renderCards() {
+        const start = (currentPage - 1) * pageSize;
+        const pagePosts = posts.slice(start, start + pageSize);
+        root.innerHTML = pagePosts
+          .map((post) => {
+            const tags = (post.tags || [])
+              .map((tag) => `<a href="/tags/${encodeURIComponent(tag)}" class="rounded-full bg-slate-100 px-3 py-1 hover:bg-slate-200">#${escapeHtml(tag)}</a>`)
+              .join('');
+            const image = template !== 'minimal' && post.coverImage
+              ? `<img class="h-48 w-full object-cover" src="${escapeHtml(post.coverImage)}" alt="${escapeHtml(post.title)}" />`
+              : '';
+            const innerClass = template === 'minimal' ? '' : 'p-5';
+            const cardClass = template === 'minimal'
+              ? 'blog-card rounded-[1.5rem] border border-slate-200 bg-white p-4 transition hover:-translate-y-1 hover:shadow-xl'
+              : 'blog-card rounded-[1.5rem] border border-slate-200 bg-white overflow-hidden transition hover:-translate-y-1 hover:shadow-xl';
+            const pinned = post.pinned ? '<span class="rounded-full bg-amber-100 px-2 py-1 text-amber-700">Pinned</span>' : '';
+            return `
+              <article class="${cardClass}">
+                <a href="/blog/${encodeURIComponent(post.slug)}" class="block">
+                  ${image}
+                  <div class="${innerClass}">
+                    <div class="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-slate-400">
+                      ${pinned}
+                      <span>${formatDate(post.pubDate)}</span>
+                    </div>
+                    <h2 class="text-lg font-semibold text-slate-950">${escapeHtml(post.title)}</h2>
+                    <p class="mt-2 text-slate-600">${escapeHtml(post.description || '')}</p>
+                    ${tags ? `<div class="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">${tags}</div>` : ''}
+                  </div>
+                </a>
+              </article>`;
+          })
+          .join('');
+
+        const startNo = posts.length === 0 ? 0 : start + 1;
+        const endNo = Math.min(start + pageSize, posts.length);
+        status.textContent = `显示 ${startNo} - ${endNo} / ${posts.length}`;
+        prev.disabled = currentPage === 1;
+        next.disabled = currentPage === totalPages;
+
+        numbers.innerHTML = Array.from({ length: totalPages }, (_, idx) => {
+          const page = idx + 1;
+          const active = page === currentPage;
+          return `<button type="button" data-page="${page}" class="rounded-full px-3 py-1.5 text-sm transition ${active ? 'bg-slate-950 text-white' : 'border border-slate-200 text-slate-700 hover:border-slate-900 hover:text-slate-950'}">${page}</button>`;
+        }).join('');
+
+        numbers.querySelectorAll('[data-page]').forEach((button) => {
+          button.addEventListener('click', () => {
+            currentPage = Number(button.getAttribute('data-page') || '1');
+            renderCards();
+            pager.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          });
+        });
+      }
+
+      prev.addEventListener('click', () => {
+        if (currentPage <= 1) return;
+        currentPage -= 1;
+        renderCards();
+        pager.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+
+      next.addEventListener('click', () => {
+        if (currentPage >= totalPages) return;
+        currentPage += 1;
+        renderCards();
+        pager.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+
+      renderCards();
+    })();
+  </script>
 </SiteLayout>

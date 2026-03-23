@@ -3,7 +3,6 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
 import { getRuntimeEnv } from '../../lib/runtime-env';
 import { getCustomPageBySlug } from '../../lib/custom-pages';
 import { readSettings } from '../../lib/settings';
-import { getTemplateFile } from '../../lib/template-files';
 import { renderTemplateVariables } from '../../lib/template-vars';
 
 const slug = Astro.params.slug!;
@@ -14,45 +13,15 @@ if (!page) {
   return Astro.redirect('/');
 }
 
-const pageTemplate = settings.templates?.page ?? 'classic';
-const pageFile = await getTemplateFile('page', runtimeEnv);
-
-const isImoo = pageTemplate === 'imoo';
-
-if (isImoo && pageFile?.content) {
-  const { renderMenuAsHtml } = await import('../../lib/template-vars');
-  const context = {
-    site: {
-      title: settings.title,
-      description: settings.description,
-      footer: settings.footer,
-      menuHtml: renderMenuAsHtml(settings.menu),
-    },
-    post: {
-        title: page.title,
-        description: page.description,
-        content: page.content,
-        pubDate: '',
-        category: 'Page',
-        tags: [],
-        coverImage: '',
-        ...page.customData
-    },
-    variables: settings.templateVariables,
-  };
-  const rendered = renderTemplateVariables(pageFile.content, context);
-  return new Response(rendered, { headers: { 'Content-Type': 'text/html' } });
-}
-
 const pageHeaderRaw = settings.templateContent?.pageHeaderHtml || '';
 const pageHeaderHtml = renderTemplateVariables(pageHeaderRaw, {
-    site: { title: settings.title, description: settings.description, footer: settings.footer, menuHtml: '' },
-    post: { title: page.title, description: page.description, content: page.content, pubDate: '', category: 'Page', tags: [], coverImage: '', price: '', affiliateLink: '', heroImage: '' },
-    variables: settings.templateVariables
+  site: { title: settings.title, description: settings.description, footer: settings.footer, menuHtml: '' },
+  post: { title: page.title, description: page.description, content: page.content, pubDate: '', category: 'Page', tags: [], coverImage: '', price: '', affiliateLink: '', heroImage: '' },
+  variables: settings.templateVariables
 });
 ---
 
-<SiteLayout title={page.title} description={page.description} variant={isImoo ? 'imoo' : 'classic'}>
+<SiteLayout title={page.title} description={page.description}>
   {pageHeaderHtml && <div class="mb-4" set:html={pageHeaderHtml} />}
   <article class:list={["prose max-w-none rounded-[2rem] border border-slate-200 bg-white p-7 shadow-sm"]}>
     <h1>{page.title}</h1>

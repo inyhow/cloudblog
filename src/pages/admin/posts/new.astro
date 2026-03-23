@@ -215,14 +215,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       </select>
     </div>
 
-    <!-- Custom Data Row (Template Specific) -->
-    <div id="custom-data-panel" class="hidden grid gap-4 md:grid-cols-3 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4">
-      <div class="md:col-span-3 text-xs font-bold text-amber-500/80 uppercase tracking-tighter">Template Parameters</div>
-      <input class="field-input" id="f-price" placeholder="Product Price (e.g. $99.00)" />
-      <input class="field-input" id="f-affLink" placeholder="Affiliate Link" />
-      <input class="field-input" id="f-heroImg" placeholder="Hero Image URL" />
-    </div>
-
     <!-- Cover & Options -->
     <div class="flex flex-wrap items-center gap-4 rounded-2xl border border-white/10 bg-slate-900/40 p-4">
       <div class="min-w-[200px] flex-1">
@@ -236,10 +228,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       <label class="flex cursor-pointer items-center gap-2 rounded-xl bg-slate-800/50 px-4 py-2">
         <input type="checkbox" id="f-pinned" name="pinned" class="accent-amber-400" />
         <span class="text-sm text-slate-300">Pinned</span>
-      </label>
-      <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-2">
-        <input type="checkbox" id="f-affiliate" name="affiliate" class="accent-emerald-400" />
-        <span class="text-sm text-emerald-300">Affiliate Post</span>
       </label>
     </div>
 
@@ -256,7 +244,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           <button type="button" class="mode-tag active" id="mode-wysiwyg">可视化</button>
           <button type="button" class="mode-tag" id="mode-markdown">Markdown 源码</button>
           <button type="button" class="mode-tag" id="mode-sv">Markdown + 预览</button>
-          <button type="button" id="btn-insert-product" class="ml-4 rounded border border-amber-400/30 bg-amber-400/20 px-2 py-1 text-xs text-amber-300 hover:bg-amber-400/30">+ Product</button>
         </div>
       </div>
       <div id="vditor"></div>
@@ -456,11 +443,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           $('f-status').value = post.status || 'published';
           $('f-cover').value = post.coverImage || '';
           $('f-pinned').checked = !!post.pinned;
-          $('f-affiliate').checked = !!post.affiliate;
-
-          $('f-price').value = post.customData?.price || '';
-          $('f-affLink').value = post.customData?.affiliateLink || '';
-          $('f-heroImg').value = post.customData?.heroImage || '';
 
           vditor.setValue(post.content || '');
           setMode(post.editorMode || currentEditorMode, { dirty: false });
@@ -471,18 +453,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           setMessage('Load failed because of a client error.', 'error');
         }
       }
-
-      // 2.1 Get Global Settings to decide UI
-      async function initUi() {
-        const resp = await fetch('/api/admin/settings');
-        if (resp.ok) {
-          const settings = await resp.json();
-          if (settings.templates?.home === 'imoo' || settings.templates?.post === 'imoo') {
-            $('custom-data-panel').classList.remove('hidden');
-          }
-        }
-      }
-      initUi();
 
       async function loadRevisions() {
         const resp = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}/revisions`);
@@ -540,12 +510,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           tags: $('f-tags').value.split(',').map(t => t.trim()).filter(Boolean),
           status,
           pinned: $('f-pinned').checked,
-          affiliate: $('f-affiliate').checked,
-          customData: {
-            price: $('f-price').value,
-            affiliateLink: $('f-affLink').value,
-            heroImage: $('f-heroImg').value
-          },
           coverImage: $('f-cover').value,
           editorMode: currentEditorMode,
           content: vditor.getValue()
@@ -602,11 +566,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         if (!slug) $('f-slug').value = $('f-title').value.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '');
       };
 
-      $('btn-insert-product').onclick = () => {
-        const template = '[product title="Product Name" price="$99.00" image="https://example.com/img.jpg" link="https://amazon.com/dp/..." desc="Key features and why you should buy it." label="View on Amazon"]';
-        vditor.insertValue(template);
-        markDirty();
-      };
     })();
   </script>
 </AdminLayout>

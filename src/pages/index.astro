@@ -3,15 +3,12 @@ import SiteLayout from '../layouts/SiteLayout.astro';
 import { isPostPublic, listPosts } from '../lib/posts';
 import { readSettings } from '../lib/settings';
 import { getRuntimeEnv } from '../lib/runtime-env';
-import { getTemplateFile } from '../lib/template-files';
-import { renderTemplateVariables, renderMenuAsHtml } from '../lib/template-vars';
 
 const runtimeEnv = getRuntimeEnv(Astro.locals);
 const settings = await readSettings(runtimeEnv);
 const homeTitle = settings.seo?.homeTitle || settings.title;
 const homeDescription = settings.seo?.homeDescription || settings.description;
 const homeTemplate = settings.templates?.home ?? 'classic';
-const isImoo = homeTemplate === 'imoo';
 
 const posts = (await listPosts(runtimeEnv))
   .filter((post) => isPostPublic(post))
@@ -21,40 +18,8 @@ const posts = (await listPosts(runtimeEnv))
   });
 
 const featured = posts[0];
-
-if (isImoo) {
-  const homeFile = await getTemplateFile('home', runtimeEnv);
-  if (homeFile?.content) {
-    const context = {
-      site: {
-        title: settings.title,
-        description: settings.description,
-        footer: settings.footer,
-        menuHtml: renderMenuAsHtml(settings.menu),
-      },
-      post: featured
-        ? {
-            title: featured.title,
-            description: featured.description,
-            content: featured.content,
-            pubDate: featured.pubDate,
-            category: featured.category || '',
-            tags: featured.tags,
-            coverImage: featured.coverImage || '',
-            price: featured.customData?.price || '',
-            affiliateLink: featured.customData?.affiliateLink || '#',
-            heroImage: featured.customData?.heroImage || featured.coverImage || '',
-            ...featured.customData,
-          }
-        : undefined,
-      variables: settings.templateVariables,
-    };
-    const html = renderTemplateVariables(homeFile.content, context);
-    return new Response(html, { headers: { 'Content-Type': 'text/html' } });
-  }
-}
-
-const restPosts = posts.slice(1);
+const homeList = homeTemplate === 'minimal' ? posts.slice(0, 8) : posts.slice(1, 7);
+const remainingCount = Math.max(posts.length - (homeTemplate === 'minimal' ? homeList.length : homeList.length + (featured ? 1 : 0)), 0);
 const tagBuckets = new Map<string, typeof posts>();
 for (const post of posts) {
   for (const rawTag of post.tags || []) {
@@ -115,8 +80,18 @@ const tagSections = Array.from(tagBuckets.entries())
     </section>
   )}
 
+  <section class="mb-4 flex items-center justify-between gap-3">
+    <div>
+      <h2 class="text-2xl font-black tracking-tight text-slate-950">最新文章</h2>
+      <p class="text-sm text-slate-500">首页当前显示 {homeList.length} 篇，更多内容可进入完整列表页。</p>
+    </div>
+    <a class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-950" href="/blog">
+      查看全部文章
+    </a>
+  </section>
+
   <section class:list={["grid gap-4", homeTemplate === 'magazine' ? 'md:grid-cols-2' : '', homeTemplate === 'minimal' ? 'gap-3' : 'md:grid-cols-3']}>
-    {(homeTemplate === 'minimal' ? posts : restPosts).map((post) => (
+    {homeList.map((post) => (
       <a href={`/blog/${post.slug}`} class:list={["group rounded-[1.5rem] border border-slate-200 bg-white transition hover:-translate-y-1 hover:shadow-xl", homeTemplate === 'minimal' ? 'p-4' : 'overflow-hidden']}>
         {homeTemplate !== 'minimal' && post.coverImage && (
           <img class="h-48 w-full object-cover transition duration-500 group-hover:scale-[1.03]" src={post.coverImage} alt={post.title} />
@@ -137,6 +112,10 @@ const tagSections = Array.from(tagBuckets.entries())
       </a>
     ))}
   </section>
+
+  {remainingCount > 0 && (
+    <p class="mt-4 text-sm text-slate-500">还有 {remainingCount} 篇文章未在首页展开显示，可在列表页分页查看。</p>
+  )}
 
   {tagSections.length > 0 && (
     <section class="mt-10 grid gap-6">

@@ -45,16 +45,16 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
     <section data-panel="theme" class="panel hidden grid gap-6">
       <div class="rounded-2xl border border-white/10 bg-slate-900/60 p-5 font-display">
-        <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-slate-400">Site-wide Theme Preset</h3>
+        <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-slate-400">Layout Preset</h3>
         <div class="grid gap-4">
           <label class="grid gap-1">
             <span class="text-sm text-slate-300">Choose Preset Layout Style</span>
             <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-lg font-bold text-amber-400" id="theme-preset">
-              <option value="classic">Standard Blog (Dynamic)</option>
-              <option value="imoo">Amazon Affiliate Landing (imoo)</option>
+              <option value="classic">Classic</option>
+              <option value="minimal">Minimal</option>
               <option value="custom">Custom (Manual Override)</option>
             </select>
-            <p class="mt-1 text-[10px] text-slate-500">Note: Selecting a preset will automatically update all page layout settings below.</p>
+            <p class="mt-1 text-[10px] text-slate-500">Selecting a preset will synchronize the layout options below.</p>
           </label>
         </div>
       </div>
@@ -68,7 +68,6 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
               <option value="classic">Classic Blog</option>
               <option value="magazine">Magazine</option>
               <option value="minimal">Minimalist</option>
-              <option value="imoo">imoo index.html</option>
             </select>
           </label>
           <label class="grid gap-1">
@@ -77,7 +76,6 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
               <option value="classic">Classic Blog</option>
               <option value="cover">Cover</option>
               <option value="minimal">Minimal</option>
-              <option value="imoo">imoo product_detail.html</option>
             </select>
           </label>
           <label class="grid gap-1">
@@ -85,7 +83,6 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
             <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="pageTemplate">
               <option value="classic">Classic Page</option>
               <option value="minimal">Minimal</option>
-              <option value="imoo">imoo single.html</option>
             </select>
           </label>
           <label class="grid gap-1">
@@ -94,7 +91,6 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
               <option value="classic">Classic Tag</option>
               <option value="grid">Grid Layout</option>
               <option value="minimal">Minimal</option>
-              <option value="imoo">imoo archive style</option>
             </select>
           </label>
         </div>
@@ -229,19 +225,19 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       }
 
       function updatePreset() {
-        const allImoo =
-          f.homeTemplate.value === 'imoo' &&
-          f.postTemplate.value === 'imoo' &&
-          f.tagTemplate.value === 'imoo' &&
-          f.pageTemplate.value === 'imoo';
+        const allMinimal =
+          f.homeTemplate.value === 'minimal' &&
+          f.postTemplate.value === 'minimal' &&
+          f.tagTemplate.value === 'minimal' &&
+          f.pageTemplate.value === 'minimal';
         const allClassic =
           f.homeTemplate.value === 'classic' &&
           f.postTemplate.value === 'classic' &&
           f.tagTemplate.value === 'classic' &&
           f.pageTemplate.value === 'classic';
 
-        if (allImoo) {
-          preset.value = 'imoo';
+        if (allMinimal) {
+          preset.value = 'minimal';
         } else if (allClassic) {
           preset.value = 'classic';
         } else {
@@ -299,11 +295,11 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       });
 
       preset?.addEventListener('change', () => {
-        if (preset.value === 'imoo') {
-          f.homeTemplate.value = 'imoo';
-          f.postTemplate.value = 'imoo';
-          f.tagTemplate.value = 'imoo';
-          f.pageTemplate.value = 'imoo';
+        if (preset.value === 'minimal') {
+          f.homeTemplate.value = 'minimal';
+          f.postTemplate.value = 'minimal';
+          f.tagTemplate.value = 'minimal';
+          f.pageTemplate.value = 'minimal';
         } else if (preset.value === 'classic') {
           f.homeTemplate.value = 'classic';
           f.postTemplate.value = 'classic';

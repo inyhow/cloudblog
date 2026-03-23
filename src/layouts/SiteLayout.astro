@@ -9,10 +9,9 @@ import { tr } from '../lib/i18n';
 interface Props {
   title: string;
   description?: string;
-  variant?: 'classic' | 'imoo';
 }
 
-const { title, description = '', variant } = Astro.props;
+const { title, description = '' } = Astro.props;
 const runtimeEnv = getRuntimeEnv(Astro.locals);
 const settings = await readSettings(runtimeEnv);
 const themeCss = await readThemeCss(runtimeEnv);
@@ -30,13 +29,6 @@ const renderedTheme = renderTemplateVariables(templateTheme?.content ?? '', {
   variables: settings.templateVariables,
 });
 const locale = settings.locale || 'en';
-const isSiteWideImoo =
-  settings.templates?.home === 'imoo' &&
-  settings.templates?.post === 'imoo' &&
-  settings.templates?.tag === 'imoo' &&
-  settings.templates?.page === 'imoo';
-const shellVariant = variant ?? (isSiteWideImoo ? 'imoo' : 'classic');
-const isImooShell = shellVariant === 'imoo';
 ---
 
 <!doctype html>
@@ -64,68 +56,30 @@ const isImooShell = shellVariant === 'imoo';
       )
     }
   </head>
-  <body class:list={[
-    'min-h-screen',
-    isImooShell
-      ? 'bg-[linear-gradient(180deg,#111827_0%,#0f172a_22%,#e2e8f0_22%,#f8fafc_100%)] text-slate-900'
-      : 'bg-[linear-gradient(180deg,#fff7ed_0%,#ffffff_24%,#f8fafc_100%)] text-slate-800',
-  ]}>
-    <header class:list={[
-      'sticky top-0 z-20 border-b backdrop-blur',
-      isImooShell
-        ? 'border-slate-800/80 bg-slate-950/95 text-white shadow-[0_12px_40px_-24px_rgba(15,23,42,0.9)]'
-        : 'border-slate-200/80 bg-white/85',
-    ]}>
-      <nav class="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-4">
-        <a class:list={[
-          'font-black tracking-tight',
-          isImooShell ? 'text-2xl text-amber-300' : 'text-xl text-slate-950',
-        ]} href="/">{settings.title}</a>
-        <div class:list={[
-          'flex flex-wrap gap-3 text-sm',
-          isImooShell ? 'text-slate-300' : 'text-slate-600',
-        ]}>
+  <body class="min-h-screen bg-[linear-gradient(180deg,#fff7ed_0%,#ffffff_24%,#f8fafc_100%)] text-slate-800">
+    <header class="sticky top-0 z-20 border-b border-slate-200/80 bg-white/85 backdrop-blur">
+      <nav class="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-4">
+        <a class="text-xl font-black tracking-tight text-slate-950" href="/">{settings.title}</a>
+        <div class="flex flex-wrap gap-3 text-sm text-slate-600">
           {settings.menu.map((item) => (
-            <a
-              class:list={[
-                'transition',
-                isImooShell
-                  ? 'rounded-full border border-white/10 bg-white/5 px-3 py-1.5 hover:border-amber-300/40 hover:text-amber-200'
-                  : 'hover:text-slate-950',
-              ]}
-              href={item.href}
-            >
+            <a class="transition hover:text-slate-950" href={item.href}>
               {item.label}
             </a>
           ))}
         </div>
         <a
           href="/admin"
-          class:list={[
-            'ml-auto rounded-full px-3 py-1.5 text-sm transition',
-            isImooShell
-              ? 'border border-amber-300/30 bg-amber-300/10 text-amber-200 hover:bg-amber-300/20'
-              : 'border border-slate-200 text-slate-600 hover:border-slate-900 hover:text-slate-900',
-          ]}
+          class="ml-auto rounded-full border border-slate-200 px-3 py-1.5 text-sm text-slate-600 transition hover:border-slate-900 hover:text-slate-900"
         >
           {tr(locale, 'site.admin', 'Admin')}
         </a>
       </nav>
     </header>
-    <main class:list={[
-      'mx-auto px-4 py-10',
-      isImooShell ? 'max-w-7xl' : 'max-w-6xl',
-    ]}>
+    <main class="mx-auto max-w-6xl px-4 py-10">
       <slot />
     </main>
-    <footer class:list={[
-      'border-t py-6',
-      isImooShell ? 'border-slate-200 bg-white/90' : 'border-slate-200 bg-white/80 backdrop-blur',
-    ]}>
-      <div class:list={[
-        'mx-auto px-4 text-sm',
-        isImooShell ? 'max-w-7xl text-slate-500' : 'max-w-6xl text-slate-500',
-      ]}>{settings.footer}</div>
+    <footer class="border-t border-slate-200 bg-white/80 py-6 backdrop-blur">
+      <div class="mx-auto max-w-6xl px-4 text-sm text-slate-500">{settings.footer}</div>
     </footer>
     {settings.analyticsJs && <script is:inline set:html={settings.analyticsJs} />}
     <script is:inline>

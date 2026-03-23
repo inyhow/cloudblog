@@ -14,16 +14,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="description" placeholder="Page description (optional)"></textarea>
     </div>
 
-    <!-- imoo Params -->
-    <div id="imoo-params" class="hidden grid gap-3 rounded-xl border border-amber-400/20 bg-amber-400/5 p-4">
-      <p class="text-[10px] font-bold uppercase tracking-widest text-amber-500">imoo parameters</p>
-      <div class="grid gap-3 md:grid-cols-3">
-        <input class="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm" name="heroImage" placeholder="Hero Image URL" />
-        <input class="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm" name="price" placeholder="Price (e.g. $199)" />
-        <input class="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm" name="affiliateLink" placeholder="Purchase Link" />
-      </div>
-    </div>
-
     <textarea class="min-h-96 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono" name="content" placeholder="# Layout content (Markdown)"></textarea>
     <div class="flex gap-3">
       <button class="rounded-xl bg-amber-400 px-4 py-2 font-medium text-slate-950" type="submit">Save Page</button>
@@ -44,11 +34,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       const descriptionInput = form.querySelector('textarea[name="description"]');
       const contentInput = form.querySelector('textarea[name="content"]');
       
-      const imooPanel = document.getElementById('imoo-params');
-      const imooHero = form.querySelector('input[name="heroImage"]');
-      const imooPrice = form.querySelector('input[name="price"]');
-      const imooLink = form.querySelector('input[name="affiliateLink"]');
-
       function setMessage(text, tone = 'info') {
         msg.className = `mt-3 text-sm ${tone === 'error' ? 'text-red-400' : tone === 'success' ? 'text-emerald-300' : 'text-slate-300'}`;
         msg.textContent = text;
@@ -85,24 +70,8 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         descriptionInput.value = page.description || '';
         contentInput.value = page.rawContent || '';
         
-        if (page.customData) {
-          imooHero.value = page.customData.heroImage || '';
-          imooPrice.value = page.customData.price || '';
-          imooLink.value = page.customData.affiliateLink || '';
-        }
         isDirty = false;
       })();
-
-      async function initUi() {
-        const resp = await fetch('/api/admin/settings');
-        if (resp.ok) {
-          const settings = await resp.json();
-          if (settings.templates?.page === 'imoo') {
-            imooPanel.classList.remove('hidden');
-          }
-        }
-      }
-      initUi();
 
       form.addEventListener('input', markDirty);
       window.addEventListener('beforeunload', (event) => {
@@ -120,11 +89,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           slug: slugInput.value.trim(),
           description: descriptionInput.value.trim(),
           content: contentInput.value,
-          customData: {
-            heroImage: imooHero.value.trim(),
-            price: imooPrice.value.trim(),
-            affiliateLink: imooLink.value.trim(),
-          }
         };
         const url = slug ? `/api/admin/pages/${encodeURIComponent(slug)}` : '/api/admin/pages';
         const method = slug ? 'PUT' : 'POST';
