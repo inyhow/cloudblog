@@ -24,7 +24,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         const stat = [
           { label: 'All Posts', value: posts.length },
           { label: 'Review Queue', value: posts.filter((p) => p.status === 'review').length },
-          { label: 'Scheduled', value: posts.filter((p) => p.status === 'scheduled').length },
+          { label: 'Drafts', value: posts.filter((p) => p.status === 'draft').length },
           { label: 'Published', value: posts.filter((p) => p.status === 'published').length },
         ];
 

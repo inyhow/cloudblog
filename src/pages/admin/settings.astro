@@ -10,7 +10,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
   <div class="mb-4 flex flex-wrap gap-2" id="tabs">
     <button data-tab="base" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Site Base</button>
-    <button data-tab="seo" class="rounded-xl border border-white/10 px-3 py-2 text-sm">SEO & Ads</button>
+    <button data-tab="seo" class="rounded-xl border border-white/10 px-3 py-2 text-sm">SEO</button>
     <button data-tab="theme" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Theme & Layout</button>
   </div>
 
@@ -41,17 +41,6 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
           <input class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="googleAdsenseClient" placeholder="Google AdSense client (ca-pub-xxxx)" />
         </div>
       </div>
-
-      <div class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-        <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-slate-400">Ad Slots (HTML)</h3>
-        <div class="grid gap-3">
-          <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adHomeTop" placeholder="Home Top Ad"></textarea>
-          <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adListTop" placeholder="List Top Ad"></textarea>
-          <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostTop" placeholder="Post Top Ad"></textarea>
-          <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostBottom" placeholder="Post Bottom Ad"></textarea>
-          <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="adPostSidebar" placeholder="Post Sidebar Ad"></textarea>
-        </div>
-      </div>
     </section>
 
     <section data-panel="theme" class="panel hidden grid gap-6">
@@ -65,7 +54,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
               <option value="imoo">Amazon Affiliate Landing (imoo)</option>
               <option value="custom">Custom (Manual Override)</option>
             </select>
-            <p class="text-[10px] text-slate-500 mt-1">Note: Selecting a preset will automatically update all page layout settings below.</p>
+            <p class="mt-1 text-[10px] text-slate-500">Note: Selecting a preset will automatically update all page layout settings below.</p>
           </label>
         </div>
       </div>
@@ -77,6 +66,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
             <span class="text-sm text-slate-300">Home Template</span>
             <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="homeTemplate">
               <option value="classic">Classic Blog</option>
+              <option value="magazine">Magazine</option>
               <option value="minimal">Minimalist</option>
               <option value="imoo">imoo index.html</option>
             </select>
@@ -85,6 +75,8 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
             <span class="text-sm text-slate-300">Article Template</span>
             <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="postTemplate">
               <option value="classic">Classic Blog</option>
+              <option value="cover">Cover</option>
+              <option value="minimal">Minimal</option>
               <option value="imoo">imoo product_detail.html</option>
             </select>
           </label>
@@ -92,6 +84,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
             <span class="text-sm text-slate-300">Single Page Template</span>
             <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="pageTemplate">
               <option value="classic">Classic Page</option>
+              <option value="minimal">Minimal</option>
               <option value="imoo">imoo single.html</option>
             </select>
           </label>
@@ -100,23 +93,18 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
             <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="tagTemplate">
               <option value="classic">Classic Tag</option>
               <option value="grid">Grid Layout</option>
+              <option value="minimal">Minimal</option>
+              <option value="imoo">imoo archive style</option>
             </select>
           </label>
         </div>
       </div>
 
       <div class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-          <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-slate-400">Navigation & Categories</h3>
-          <div class="grid gap-3">
-            <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="menu" placeholder='Navigation Menu JSON: [{"label": "Home", "href": "/"}, ...]'></textarea>
-            <div class="rounded-xl border border-white/10 bg-slate-950/40 p-3">
-              <div class="mb-2 flex items-center justify-between gap-2">
-                <div class="text-xs font-bold uppercase text-slate-400">Categories</div>
-                <button id="cat-add" type="button" class="rounded-lg border border-emerald-400/50 px-3 py-1 text-xs text-emerald-300">Add Cat</button>
-              </div>
-              <div id="cat-table" class="grid gap-2"></div>
-            </div>
-          </div>
+        <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-slate-400">Navigation</h3>
+        <div class="grid gap-3">
+          <textarea class="min-h-24 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="menu" placeholder='Navigation Menu JSON: [{"label": "Home", "href": "/"}, ...]'></textarea>
+        </div>
       </div>
 
       <div class="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
@@ -138,11 +126,6 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="postHeaderHtml" placeholder="Article Header Snippet"></textarea>
         <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="tagHeaderHtml" placeholder="Tag Header Snippet"></textarea>
         <textarea class="min-h-20 rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 font-mono text-sm" name="pageHeaderHtml" placeholder="Page Header Snippet"></textarea>
-        <div class="grid gap-3 md:grid-cols-2">
-            <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="tagTemplate"><option value="classic">Tag: classic</option><option value="grid">Tag: grid</option></select>
-            <select class="rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2" name="pageTemplate"><option value="classic">Page: classic</option><option value="imoo">Page: imoo</option></select>
-        </div>
-        <textarea class="hidden" name="categories" placeholder='Categories JSON'></textarea>
       </div>
     </details>
 
@@ -161,6 +144,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       const tabs = document.getElementById('tabs');
       const saveButton = document.getElementById('save-settings');
       const saveLabel = saveButton?.querySelector('[data-label]');
+      const preset = document.getElementById('theme-preset');
       let isDirty = false;
       let isSaving = false;
       let settingsSha = null;
@@ -190,12 +174,6 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         googleAnalyticsId: pick('input[name="googleAnalyticsId"]'),
         googleSiteVerification: pick('input[name="googleSiteVerification"]'),
         googleAdsenseClient: pick('input[name="googleAdsenseClient"]'),
-        adHomeTop: pick('textarea[name="adHomeTop"]'),
-        adListTop: pick('textarea[name="adListTop"]'),
-        adPostTop: pick('textarea[name="adPostTop"]'),
-        adPostBottom: pick('textarea[name="adPostBottom"]'),
-        adPostSidebar: pick('textarea[name="adPostSidebar"]'),
-        categories: pick('textarea[name="categories"]'),
         homeTemplate: pick('select[name="homeTemplate"]'),
         postTemplate: pick('select[name="postTemplate"]'),
         tagTemplate: pick('select[name="tagTemplate"]'),
@@ -208,9 +186,6 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         css: document.getElementById('css'),
       };
       let initialCss = '';
-      const catTable = document.getElementById('cat-table');
-      const catAdd = document.getElementById('cat-add');
-      let categoryRows = [];
 
       function setMessage(text, tone = 'info') {
         msg.className = `mt-4 text-sm ${tone === 'error' ? 'text-red-400' : tone === 'success' ? 'text-emerald-300' : 'text-slate-300'}`;
@@ -253,63 +228,25 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         }
       }
 
-      function renderCategories() {
-        catTable.innerHTML = categoryRows
-          .map((row, idx) => `
-            <div class="grid gap-2 rounded-lg border border-white/10 bg-slate-900/40 p-2 md:grid-cols-12">
-              <input data-k="slug" data-i="${idx}" class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-2" value="${row.slug || ''}" placeholder="slug" />
-              <input data-k="name" data-i="${idx}" class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-2" value="${row.name || ''}" placeholder="name" />
-              <input data-k="description" data-i="${idx}" class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-3" value="${row.description || ''}" placeholder="description" />
-              <select data-k="template" data-i="${idx}" class="rounded border border-white/10 bg-slate-950/70 px-2 py-1 text-xs md:col-span-2">
-                <option value="classic" ${row.template === 'classic' ? 'selected' : ''}>classic</option>
-                <option value="grid" ${row.template === 'grid' ? 'selected' : ''}>grid</option>
-                <option value="minimal" ${row.template === 'minimal' ? 'selected' : ''}>minimal</option>
-              </select>
-              <label class="flex items-center gap-1 text-xs md:col-span-2"><input data-k="showInMenu" data-i="${idx}" type="checkbox" ${row.showInMenu ? 'checked' : ''}/>menu</label>
-              <button data-remove="${idx}" type="button" class="rounded border border-red-400/40 px-2 py-1 text-xs text-red-300 md:col-span-1">x</button>
-            </div>
-          `)
-          .join('');
-        catTable.querySelectorAll('[data-k]').forEach((el) => {
-          el.addEventListener('input', () => {
-            const i = Number(el.dataset.i);
-            const k = el.dataset.k;
-            categoryRows[i][k] = el.type === 'checkbox' ? el.checked : el.value;
-            markDirty();
-          });
-          el.addEventListener('change', () => {
-            const i = Number(el.dataset.i);
-            const k = el.dataset.k;
-            categoryRows[i][k] = el.type === 'checkbox' ? el.checked : el.value;
-            markDirty();
-          });
-        });
-        catTable.querySelectorAll('[data-remove]').forEach((btn) => {
-          btn.addEventListener('click', () => {
-            categoryRows.splice(Number(btn.dataset.remove), 1);
-            renderCategories();
-            markDirty();
-          });
-        });
-      }
+      function updatePreset() {
+        const allImoo =
+          f.homeTemplate.value === 'imoo' &&
+          f.postTemplate.value === 'imoo' &&
+          f.tagTemplate.value === 'imoo' &&
+          f.pageTemplate.value === 'imoo';
+        const allClassic =
+          f.homeTemplate.value === 'classic' &&
+          f.postTemplate.value === 'classic' &&
+          f.tagTemplate.value === 'classic' &&
+          f.pageTemplate.value === 'classic';
 
-      function syncCategoriesToJson() {
-        const normalized = categoryRows
-          .map((row, idx) => ({
-            slug: String(row.slug || '').trim(),
-            name: String(row.name || '').trim(),
-            description: String(row.description || '').trim(),
-            seoTitle: String(row.seoTitle || '').trim(),
-            seoDescription: String(row.seoDescription || '').trim(),
-            template: ['classic', 'grid', 'minimal'].includes(String(row.template)) ? String(row.template) : 'classic',
-            sort: idx,
-            showInMenu: !!row.showInMenu,
-            adTop: String(row.adTop || '').trim(),
-            adSidebar: String(row.adSidebar || '').trim(),
-            modules: Array.isArray(row.modules) ? row.modules : ['hero', 'list', 'sidebar'],
-          }))
-          .filter((row) => row.slug && row.name);
-        f.categories.value = JSON.stringify(normalized, null, 2);
+        if (allImoo) {
+          preset.value = 'imoo';
+        } else if (allClassic) {
+          preset.value = 'classic';
+        } else {
+          preset.value = 'custom';
+        }
       }
 
       (async () => {
@@ -331,14 +268,6 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
           f.googleAnalyticsId.value = settings.seo?.googleAnalyticsId || '';
           f.googleSiteVerification.value = settings.seo?.googleSiteVerification || '';
           f.googleAdsenseClient.value = settings.seo?.googleAdsenseClient || '';
-          f.adHomeTop.value = settings.adSlots?.homeTop || '';
-          f.adListTop.value = settings.adSlots?.listTop || '';
-          f.adPostTop.value = settings.adSlots?.postTop || '';
-          f.adPostBottom.value = settings.adSlots?.postBottom || '';
-          f.adPostSidebar.value = settings.adSlots?.postSidebar || '';
-          f.categories.value = JSON.stringify(settings.categories || [], null, 2);
-          categoryRows = Array.isArray(settings.categories) ? settings.categories : [];
-          renderCategories();
           f.homeTemplate.value = settings.templates?.home || 'classic';
           f.postTemplate.value = settings.templates?.post || 'classic';
           f.tagTemplate.value = settings.templates?.tag || 'classic';
@@ -358,44 +287,31 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         }
       })();
 
-      catAdd?.addEventListener('click', () => {
-        categoryRows.push({ slug: '', name: '', description: '', template: 'classic', showInMenu: false });
-        renderCategories();
-        markDirty();
+      form.addEventListener('input', markDirty);
+      [f.homeTemplate, f.postTemplate, f.tagTemplate, f.pageTemplate].forEach((input) => {
+        input?.addEventListener('change', updatePreset);
       });
 
-      form.addEventListener('input', markDirty);
       window.addEventListener('beforeunload', (event) => {
         if (!isDirty || isSaving) return;
         event.preventDefault();
         event.returnValue = '';
       });
 
-      const preset = document.getElementById('theme-preset');
       preset?.addEventListener('change', () => {
-          if (preset.value === 'imoo') {
-              f.homeTemplate.value = 'imoo';
-              f.postTemplate.value = 'imoo';
-              f.pageTemplate.value = 'imoo';
-          } else if (preset.value === 'classic') {
-              f.homeTemplate.value = 'classic';
-              f.postTemplate.value = 'classic';
-              f.pageTemplate.value = 'classic';
-          }
-          markDirty();
+        if (preset.value === 'imoo') {
+          f.homeTemplate.value = 'imoo';
+          f.postTemplate.value = 'imoo';
+          f.tagTemplate.value = 'imoo';
+          f.pageTemplate.value = 'imoo';
+        } else if (preset.value === 'classic') {
+          f.homeTemplate.value = 'classic';
+          f.postTemplate.value = 'classic';
+          f.tagTemplate.value = 'classic';
+          f.pageTemplate.value = 'classic';
+        }
+        markDirty();
       });
-
-      function updatePreset() {
-          const h = f.homeTemplate.value;
-          const p = f.postTemplate.value;
-          if (h === 'imoo' && p === 'imoo') {
-              preset.value = 'imoo';
-          } else if (h === 'classic' && p === 'classic') {
-              preset.value = 'classic';
-          } else {
-              preset.value = 'custom';
-          }
-      }
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -404,7 +320,6 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         setSavingState(true);
 
         try {
-          syncCategoriesToJson();
           const cssChanged = f.css.value !== initialCss;
           setMessage(cssChanged ? 'Saving settings and theme...' : 'Saving settings...', 'info');
           const payload = {
@@ -421,14 +336,6 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
               googleSiteVerification: f.googleSiteVerification.value,
               googleAdsenseClient: f.googleAdsenseClient.value,
             },
-            adSlots: {
-              homeTop: f.adHomeTop.value,
-              listTop: f.adListTop.value,
-              postTop: f.adPostTop.value,
-              postBottom: f.adPostBottom.value,
-              postSidebar: f.adPostSidebar.value,
-            },
-            categories: parseJsonField(f.categories.value, [], 'Categories'),
             templates: {
               home: f.homeTemplate.value,
               post: f.postTemplate.value,
@@ -450,11 +357,15 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
             },
           };
 
-          const response = await fetchWithRetry('/api/admin/settings', {
-            method: 'PUT',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify(payload),
-          }, 0);
+          const response = await fetchWithRetry(
+            '/api/admin/settings',
+            {
+              method: 'PUT',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify(payload),
+            },
+            0,
+          );
 
           if (response.status === 401) return (location.href = '/admin');
           const result = await response.json().catch(() => ({}));

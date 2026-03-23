@@ -16,7 +16,8 @@ marked.use(
   }),
 );
 
-export type EditorMode = 'wysiwyg' | 'ir' | 'sv';
+export type EditorMode = 'wysiwyg' | 'markdown' | 'sv';
+export type PostStatus = 'draft' | 'review' | 'published' | 'archived' | 'deleted';
 
 export interface BlogPost {
   slug: string;
@@ -24,13 +25,12 @@ export interface BlogPost {
   description: string;
   category?: string;
   tags: string[];
-  status: 'draft' | 'review' | 'scheduled' | 'published' | 'archived' | 'deleted';
+  status: PostStatus;
   reviewNote?: string;
   pinned: boolean;
   coverImage?: string;
   pubDate: string;
   updatedDate?: string;
-  scheduledAt?: string;
   content: string;
   affiliate?: boolean;
   template?: string;
@@ -51,7 +51,6 @@ function filePathFromSlug(slug: string): string {
 }
 
 function parseFrontmatter(raw: string): { data: Record<string, unknown>; content: string } {
-  // Support both \n and \r\n, and be more lenient with whitespace
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
   if (!match) return { data: {}, content: raw };
 
@@ -92,13 +91,12 @@ function stringifyFrontmatter(data: {
   description: string;
   category?: string;
   tags: string[];
-  status: 'draft' | 'review' | 'scheduled' | 'published' | 'archived' | 'deleted';
+  status: PostStatus;
   reviewNote?: string;
   pinned: boolean;
   coverImage?: string;
   pubDate: string;
   updatedDate: string;
-  scheduledAt?: string;
   affiliate?: boolean;
   template?: string;
   customData?: Record<string, any>;
@@ -107,18 +105,24 @@ function stringifyFrontmatter(data: {
   const tagsBlock = data.tags.map((t) => `  - ${t}`).join('\n');
   const customDataStr = data.customData ? JSON.stringify(data.customData) : '{}';
   const editorMode = normalizeEditorMode(data.editorMode);
-  return `---\ntitle: ${quote(data.title)}\ndescription: ${quote(data.description)}\ncategory: ${quote(data.category || '')}\ntags:\n${tagsBlock || '  -'}\nstatus: ${data.status}\nreviewNote: ${quote(data.reviewNote || '')}\npinned: ${data.pinned}\ncoverImage: ${quote(data.coverImage || '')}\npubDate: ${data.pubDate}\nupdatedDate: ${data.updatedDate}\nscheduledAt: ${quote(data.scheduledAt || '')}\naffiliate: ${data.affiliate ?? false}\ntemplate: ${data.template || ''}\ncustomData: ${customDataStr}\neditorMode: ${editorMode}\n---\n\n${content}`;
+  return `---\ntitle: ${quote(data.title)}\ndescription: ${quote(data.description)}\ncategory: ${quote(data.category || '')}\ntags:\n${tagsBlock || '  -'}\nstatus: ${data.status}\nreviewNote: ${quote(data.reviewNote || '')}\npinned: ${data.pinned}\ncoverImage: ${quote(data.coverImage || '')}\npubDate: ${data.pubDate}\nupdatedDate: ${data.updatedDate}\naffiliate: ${data.affiliate ?? false}\ntemplate: ${data.template || ''}\ncustomData: ${customDataStr}\neditorMode: ${editorMode}\n---\n\n${content}`;
 }
 
 function normalizeStatus(value: unknown): BlogPost['status'] {
-  if (value === 'draft' || value === 'review' || value === 'scheduled' || value === 'published' || value === 'archived' || value === 'deleted') {
+  if (value === 'draft' || value === 'review' || value === 'published' || value === 'archived' || value === 'deleted') {
     return value;
+  }
+  if (value === 'scheduled') {
+    return 'draft';
   }
   return 'published';
 }
 
 export function normalizeEditorMode(value: unknown): EditorMode {
-  if (value === 'ir' || value === 'sv' || value === 'wysiwyg') {
+  if (value === 'ir' || value === 'markdown') {
+    return 'markdown';
+  }
+  if (value === 'sv' || value === 'wysiwyg') {
     return value;
   }
   return 'wysiwyg';
@@ -143,7 +147,6 @@ async function listPostsCore(runtimeEnv?: Record<string, string>): Promise<BlogP
         coverImage: String(parsed.data.coverImage ?? '').replace(/^"|"$/g, '') || undefined,
         pubDate: String(parsed.data.pubDate ?? new Date().toISOString()),
         updatedDate: parsed.data.updatedDate ? String(parsed.data.updatedDate) : undefined,
-        scheduledAt: String(parsed.data.scheduledAt ?? '').replace(/^"|"$/g, '') || undefined,
         content: parsed.content,
         affiliate: String(parsed.data.affiliate ?? 'false') === 'true',
         template: parsed.data.template ? String(parsed.data.template) : undefined,
@@ -186,7 +189,6 @@ export async function getPostBySlug(slug: string, runtimeEnv?: Record<string, st
       coverImage: String(parsed.data.coverImage ?? '').replace(/^"|"$/g, '') || undefined,
       pubDate: String(parsed.data.pubDate ?? new Date().toISOString()),
       updatedDate: parsed.data.updatedDate ? String(parsed.data.updatedDate) : undefined,
-      scheduledAt: String(parsed.data.scheduledAt ?? '').replace(/^"|"$/g, '') || undefined,
       content: parsed.content,
       affiliate: String(parsed.data.affiliate ?? 'false') === 'true',
       template: parsed.data.template ? String(parsed.data.template) : undefined,
@@ -225,7 +227,6 @@ export async function savePost(
     coverImage: input.coverImage ?? '',
     pubDate: input.pubDate ?? new Date().toISOString(),
     updatedDate: new Date().toISOString(),
-    scheduledAt: input.scheduledAt ?? '',
     affiliate: input.affiliate ?? false,
     template: input.template,
     customData: input.customData,
@@ -247,12 +248,9 @@ export async function trashPost(slug: string, runtimeEnv?: Record<string, string
 
 export function markdownToHtml(markdown: string): string {
   if (!markdown) return '';
-  
-  // 1. Fix for broken tables: Remove blank lines between rows in a table block
+
   let cleanedMarkdown = markdown.replace(/^(\s*\|.*)\s*\n\s*\n(?=\s*\|)/gm, '$1\n');
 
-  // 2. Process Shortcodes (e.g., [product name="..." price="..." link="..." image="..."])
-  // Syntax: [product title="Sony A7" price="$2499" image="..." link="..." desc="..." label="Buy Now"]
   cleanedMarkdown = cleanedMarkdown.replace(/\[product\s+([\s\S]*?)\]/g, (_, attrs) => {
     const data: Record<string, string> = {};
     const regex = /(\w+)="([^"]*)"/g;
@@ -260,7 +258,7 @@ export function markdownToHtml(markdown: string): string {
     while ((m = regex.exec(attrs)) !== null) {
       data[m[1]] = m[2];
     }
-    
+
     if (!data.title) return '';
 
     return `
@@ -279,7 +277,7 @@ export function markdownToHtml(markdown: string): string {
   </div>
 </div>`;
   });
-  
+
   return marked.parse(cleanedMarkdown, {
     gfm: true,
     breaks: true,
@@ -317,19 +315,15 @@ export function renderPostWithToc(markdown: string): { html: string; toc: TocIte
   return { html, toc };
 }
 
-export function isPostPublic(post: BlogPost, now = new Date()): boolean {
-  if (post.status === 'published') return true;
-  if (post.status !== 'scheduled') return false;
-  if (!post.scheduledAt) return false;
-  return new Date(post.scheduledAt).valueOf() <= now.valueOf();
+export function isPostPublic(post: BlogPost): boolean {
+  return post.status === 'published';
 }
 
 export function canTransitionStatus(from: BlogPost['status'], to: BlogPost['status']): boolean {
   if (from === to) return true;
   const allowed: Record<BlogPost['status'], BlogPost['status'][]> = {
-    draft: ['review', 'scheduled', 'published', 'archived', 'deleted'],
+    draft: ['review', 'published', 'archived', 'deleted'],
     review: ['draft', 'published', 'archived', 'deleted'],
-    scheduled: ['draft', 'published', 'archived', 'deleted'],
     published: ['draft', 'archived', 'deleted'],
     archived: ['draft', 'published', 'deleted'],
     deleted: ['draft'],

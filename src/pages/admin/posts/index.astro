@@ -18,7 +18,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     <button data-tab="all" class="rounded-xl border border-white/10 px-3 py-2 text-sm">All</button>
     <button data-tab="draft" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Draft</button>
     <button data-tab="review" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Review</button>
-    <button data-tab="scheduled" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Scheduled</button>
     <button data-tab="published" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Published</button>
     <button data-tab="deleted" class="rounded-xl border border-white/10 px-3 py-2 text-sm">Recycle Bin</button>
   </div>
@@ -50,7 +49,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         if (status === 'published') return 'bg-emerald-500/15 text-emerald-300';
         if (status === 'draft') return 'bg-slate-500/20 text-slate-300';
         if (status === 'review') return 'bg-sky-500/20 text-sky-300';
-        if (status === 'scheduled') return 'bg-violet-500/20 text-violet-300';
         if (status === 'deleted') return 'bg-rose-500/20 text-rose-300';
         return 'bg-amber-500/20 text-amber-300';
       }

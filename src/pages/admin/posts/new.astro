@@ -80,6 +80,20 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       background-color: #ffffff !important;
       color: #0f172a !important;
     }
+    #vditor .vditor-toolbar [data-type='edit-mode'] {
+      display: none !important;
+    }
+    #vditor.editor-mode-markdown .vditor-sv__preview,
+    #vditor.editor-mode-markdown .vditor-sv__resize {
+      display: none !important;
+    }
+    #vditor.editor-mode-markdown .vditor-sv__editor,
+    #vditor.editor-mode-markdown .vditor-sv__editor .CodeMirror,
+    #vditor.editor-mode-markdown .vditor-sv__editor .CodeMirror-scroll {
+      width: 100% !important;
+      max-width: 100% !important;
+      flex: 1 1 auto !important;
+    }
     #vditor textarea::placeholder,
     #vditor [contenteditable='true'][data-placeholder]:empty::before {
       color: #94a3b8 !important;
@@ -192,8 +206,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       <input class="field-input" id="f-slug" name="slug" placeholder="Custom Slug" />
     </div>
 
-    <div class="grid gap-4 md:grid-cols-3">
-      <input class="field-input" id="f-category" name="category" placeholder="Category" />
+    <div class="grid gap-4 md:grid-cols-2">
       <input class="field-input" id="f-tags" name="tags" placeholder="Tags (comma separated)" />
       <select class="field-input border-emerald-500/30" id="f-status" name="status">
         <option value="published">Published</option>
@@ -241,7 +254,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         </div>
         <div class="editor-mode-tags">
           <button type="button" class="mode-tag active" id="mode-wysiwyg">可视化</button>
-          <button type="button" class="mode-tag" id="mode-ir">Markdown 文本</button>
+          <button type="button" class="mode-tag" id="mode-markdown">Markdown 源码</button>
           <button type="button" class="mode-tag" id="mode-sv">Markdown + 预览</button>
           <button type="button" id="btn-insert-product" class="ml-4 rounded border border-amber-400/30 bg-amber-400/20 px-2 py-1 text-xs text-amber-300 hover:bg-amber-400/30">+ Product</button>
         </div>
@@ -270,10 +283,13 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       const slug = new URL(location.href).searchParams.get('slug');
       const modeMeta = {
         wysiwyg: '可视化编辑',
-        ir: 'Markdown 文本模式',
+        markdown: 'Markdown 源码模式',
         sv: 'Markdown 分栏预览',
       };
-      const sanitizeMode = (value) => (value === 'ir' || value === 'sv' || value === 'wysiwyg' ? value : 'wysiwyg');
+      const sanitizeMode = (value) => {
+        if (value === 'ir') return 'markdown';
+        return value === 'markdown' || value === 'sv' || value === 'wysiwyg' ? value : 'wysiwyg';
+      };
       const persistedMode = (() => {
         try {
           return sanitizeMode(localStorage.getItem('admin-post-editor-mode'));
@@ -314,6 +330,12 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         isDirty = true;
       }
 
+      function applyEditorLayout(mode) {
+        const editorRoot = $('vditor');
+        if (!editorRoot) return;
+        editorRoot.classList.toggle('editor-mode-markdown', sanitizeMode(mode) === 'markdown');
+      }
+
       function updateModeUi(mode, options = {}) {
         const nextMode = sanitizeMode(mode);
         const { dirty = false } = options;
@@ -324,47 +346,39 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         document.querySelectorAll('.mode-tag').forEach((tag) => {
           tag.classList.toggle('active', tag.id === `mode-${nextMode}`);
         });
+        applyEditorLayout(nextMode);
         rememberMode(nextMode);
         if (dirty && modeChanged) {
           markDirty();
         }
       }
 
+      function readBuiltinEditorMode(fallback = 'wysiwyg') {
+        return vditor?.currentMode === 'sv' || vditor?.currentMode === 'wysiwyg' ? vditor.currentMode : fallback;
+      }
+
       function readEditorCurrentMode(fallback = currentEditorMode) {
-        return sanitizeMode(vditor?.currentMode || fallback);
+        return sanitizeMode(fallback);
       }
 
       function getBuiltinModeButton(mode) {
-        return vditor?.toolbar?.elements?.['edit-mode']?.querySelector(`button[data-mode="${sanitizeMode(mode)}"]`);
+        const builtinMode = sanitizeMode(mode) === 'markdown' ? 'sv' : sanitizeMode(mode);
+        return vditor?.toolbar?.elements?.['edit-mode']?.querySelector(`button[data-mode="${builtinMode}"]`);
       }
 
       function bindBuiltinModeSync() {
         const editMode = vditor?.toolbar?.elements?.['edit-mode'];
-        if (!editMode || editMode.dataset.bound === '1') return;
-        editMode.dataset.bound = '1';
-
-        const sync = () => {
-          const active = editMode.querySelector('button.vditor-menu--current[data-mode]');
-          updateModeUi(active?.dataset?.mode || readEditorCurrentMode(), { dirty: false });
-        };
-
-        editMode.querySelectorAll('button[data-mode]').forEach((button) => {
-          button.addEventListener('click', () => {
-            window.requestAnimationFrame(sync);
-          });
-        });
-
-        const observer = new MutationObserver(() => sync());
-        observer.observe(editMode, { subtree: true, attributes: true, attributeFilter: ['class'] });
-        sync();
+        if (!editMode) return;
+        editMode.style.display = 'none';
       }
 
       function setMode(mode, options = {}) {
         const nextMode = sanitizeMode(mode);
+        const builtinMode = nextMode === 'markdown' ? 'sv' : nextMode;
         const { syncEditor = true, dirty = syncEditor } = options;
         if (syncEditor && vditor) {
-          const currentMode = readEditorCurrentMode();
-          if (currentMode !== nextMode) {
+          const currentMode = readBuiltinEditorMode();
+          if (currentMode !== builtinMode) {
             const switchButton = getBuiltinModeButton(nextMode);
             if (switchButton) {
               switchButton.click();
@@ -373,7 +387,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
             }
           }
           window.requestAnimationFrame(() => {
-            updateModeUi(readEditorCurrentMode(nextMode), { dirty });
+            updateModeUi(nextMode, { dirty });
           });
           return;
         }
@@ -385,7 +399,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       // 1. Initialize Vditor
       vditor = new Vditor('vditor', {
         height: 600,
-        mode: currentEditorMode,
+        mode: currentEditorMode === 'markdown' ? 'sv' : currentEditorMode,
         theme: 'classic',
         cdn: 'https://cdn.jsdelivr.net/npm/vditor@3.10.7',
         toolbarConfig: {
@@ -422,7 +436,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
       // Mode switch handling
       $('mode-wysiwyg').onclick = () => setMode('wysiwyg');
-      $('mode-ir').onclick = () => setMode('ir');
+      $('mode-markdown').onclick = () => setMode('markdown');
       $('mode-sv').onclick = () => setMode('sv');
 
       // 2. Load Existing Post
@@ -438,7 +452,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
           $('f-title').value = post.title || '';
           $('f-slug').value = post.slug || '';
-          $('f-category').value = post.category || '';
           $('f-tags').value = (post.tags || []).join(', ');
           $('f-status').value = post.status || 'published';
           $('f-cover').value = post.coverImage || '';
@@ -524,7 +537,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           title: $('f-title').value,
           slug: $('f-slug').value,
           description: '',
-          category: $('f-category').value,
           tags: $('f-tags').value.split(',').map(t => t.trim()).filter(Boolean),
           status,
           pinned: $('f-pinned').checked,
@@ -535,7 +547,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
             heroImage: $('f-heroImg').value
           },
           coverImage: $('f-cover').value,
-          editorMode: readEditorCurrentMode(),
+          editorMode: currentEditorMode,
           content: vditor.getValue()
         };
 

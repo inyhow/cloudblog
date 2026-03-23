@@ -1,6 +1,5 @@
 ---
 import SiteLayout from '../../layouts/SiteLayout.astro';
-import LPImooLayout from '../../layouts/LPImooLayout.astro';
 import { getPostBySlug, isPostPublic, renderPostWithToc } from '../../lib/posts';
 import { readSettings } from '../../lib/settings';
 import { getRuntimeEnv } from '../../lib/runtime-env';
@@ -15,7 +14,7 @@ if (!post || !isPostPublic(post)) {
 }
 
 const settings = await readSettings(runtimeEnv);
-const postTemplate = settings.templates?.post ?? 'classic';
+const postTemplate = post.template || settings.templates?.post || 'classic';
 const postFile = await getTemplateFile('post', runtimeEnv);
 
 const { html, toc } = renderPostWithToc(post.content);
@@ -32,14 +31,14 @@ if (isImoo && postFile?.content) {
       menuHtml: renderMenuAsHtml(settings.menu),
     },
     post: {
-        title: post.title,
-        description: post.description,
-        content: html,
-        pubDate: post.pubDate,
-        category: post.category || 'Product',
-        tags: post.tags,
-        coverImage: post.coverImage,
-        ...post.customData
+      title: post.title,
+      description: post.description,
+      content: html,
+      pubDate: post.pubDate,
+      category: post.category || post.tags?.[0] || 'Post',
+      tags: post.tags,
+      coverImage: post.coverImage,
+      ...post.customData,
     },
     variables: settings.templateVariables,
   };
@@ -47,64 +46,71 @@ if (isImoo && postFile?.content) {
   return new Response(rendered, { headers: { 'Content-Type': 'text/html' } });
 }
 
-// Fallback logic for header snippet
 const postHeaderRaw = settings.templateContent?.postHeaderHtml || '';
 const postHeaderHtml = renderTemplateVariables(postHeaderRaw, {
-    site: { title: settings.title, description: settings.description, footer: settings.footer, menuHtml: '' },
-    post: { title: post.title, description: post.description, content: html, pubDate: post.pubDate, category: post.category || '', tags: [], coverImage: '', price: '', affiliateLink: '', heroImage: '' },
-    variables: settings.templateVariables
+  site: { title: settings.title, description: settings.description, footer: settings.footer, menuHtml: '' },
+  post: {
+    title: post.title,
+    description: post.description,
+    content: html,
+    pubDate: post.pubDate,
+    category: post.category || post.tags?.[0] || '',
+    tags: post.tags || [],
+    coverImage: post.coverImage || '',
+    price: '',
+    affiliateLink: '',
+    heroImage: '',
+  },
+  variables: settings.templateVariables,
 });
-
-// Layout Logic
-const currentTemplate = post.template || settings.templates?.post || 'classic';
-const isLPImoo = currentTemplate === 'imoo';
 ---
 
-<SiteLayout title={post.title} description={post.description}>
+<SiteLayout title={post.title} description={post.description} variant={isImoo ? 'imoo' : 'classic'}>
   {postHeaderHtml && <div class="mb-4" set:html={postHeaderHtml} />}
-  {settings.adSlots?.postTop && <section class="mb-4 rounded-2xl border border-slate-200 bg-white p-4" set:html={settings.adSlots.postTop} />}
   <div class:list={["grid gap-6", toc.length > 0 ? 'lg:grid-cols-[minmax(0,1fr)_260px]' : 'lg:grid-cols-1']}>
     <article class:list={["prose max-w-none rounded-[2rem] border border-slate-200 bg-white shadow-sm", postTemplate === 'minimal' ? 'p-5' : 'p-7']}>
-    {post.coverImage && (
-      <img
-        class:list={["mb-6 w-full rounded-[1.5rem] object-cover", postTemplate === 'cover' ? 'h-[32rem]' : 'h-80']}
-        src={post.coverImage}
-        alt={post.title}
-      />
-    )}
-    <div class="mb-5 flex flex-wrap items-center gap-3 text-sm text-slate-500">
-      {post.category && (
-        <a class="rounded-full bg-sky-100 px-2 py-1 text-xs text-sky-700" href={`/category/${encodeURIComponent(post.category)}`}>
-          {post.category}
-        </a>
+      {post.coverImage && (
+        <img
+          class:list={["mb-6 w-full rounded-[1.5rem] object-cover", postTemplate === 'cover' ? 'h-[32rem]' : 'h-80']}
+          src={post.coverImage}
+          alt={post.title}
+        />
       )}
-      <span>{new Date(post.pubDate).toLocaleString('zh-CN')}</span>
-      {post.pinned && <span class="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-700">Pinned</span>}
-    </div>
-    <h1>{post.title}</h1>
-    <div set:html={html} />
+      <div class="mb-5 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+        <span>{new Date(post.pubDate).toLocaleString('zh-CN')}</span>
+        {post.pinned && <span class="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-700">Pinned</span>}
+      </div>
+      <h1>{post.title}</h1>
+      {
+        (post.tags?.length ?? 0) > 0 && (
+          <div class="not-prose mb-6 flex flex-wrap gap-2">
+            {post.tags.map((tag) => (
+              <a
+                class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-200 hover:text-slate-900"
+                href={`/tags/${encodeURIComponent(tag)}`}
+              >
+                #{tag}
+              </a>
+            ))}
+          </div>
+        )
+      }
+      <div set:html={html} />
     </article>
     {
-      (toc.length > 0 || settings.adSlots?.postSidebar) && (
+      toc.length > 0 && (
         <aside class="hidden lg:block">
           <nav class="sticky top-24 rounded-2xl border border-slate-200 bg-white p-4">
-            {
-              toc.length > 0 && (
-                <>
-                  <div class="mb-3 text-sm font-semibold text-slate-800">On this page</div>
-                  <ul class="grid gap-2 text-sm text-slate-600">
-                    {
-                      toc.map((item) => (
-                        <li class:list={[item.level === 3 ? 'ml-3' : '']}>
-                          <a class="transition hover:text-slate-900" href={`#${item.id}`}>{item.title}</a>
-                        </li>
-                      ))
-                    }
-                  </ul>
-                </>
-              )
-            }
-            {settings.adSlots?.postSidebar && <div class:list={['rounded-xl border border-slate-200 bg-slate-50 p-3', toc.length > 0 ? 'mt-4' : '']} set:html={settings.adSlots.postSidebar} />}
+            <div class="mb-3 text-sm font-semibold text-slate-800">On this page</div>
+            <ul class="grid gap-2 text-sm text-slate-600">
+              {
+                toc.map((item) => (
+                  <li class:list={[item.level === 3 ? 'ml-3' : '']}>
+                    <a class="transition hover:text-slate-900" href={`#${item.id}`}>{item.title}</a>
+                  </li>
+                ))
+              }
+            </ul>
           </nav>
         </aside>
       )

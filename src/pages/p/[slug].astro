@@ -1,6 +1,5 @@
 ---
 import SiteLayout from '../../layouts/SiteLayout.astro';
-import LPImooLayout from '../../layouts/LPImooLayout.astro';
 import { getRuntimeEnv } from '../../lib/runtime-env';
 import { getCustomPageBySlug } from '../../lib/custom-pages';
 import { readSettings } from '../../lib/settings';
@@ -53,7 +52,7 @@ const pageHeaderHtml = renderTemplateVariables(pageHeaderRaw, {
 });
 ---
 
-<SiteLayout title={page.title} description={page.description}>
+<SiteLayout title={page.title} description={page.description} variant={isImoo ? 'imoo' : 'classic'}>
   {pageHeaderHtml && <div class="mb-4" set:html={pageHeaderHtml} />}
   <article class:list={["prose max-w-none rounded-[2rem] border border-slate-200 bg-white p-7 shadow-sm"]}>
     <h1>{page.title}</h1>
