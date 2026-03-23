@@ -34,31 +34,35 @@ const postsJson = JSON.stringify(posts);
     data-page-size={String(pageSize)}
     data-posts={postsJson}
     class:list={[
-      'grid gap-4',
-      listTemplate === 'grid' ? 'md:grid-cols-2' : 'md:grid-cols-3',
-      listTemplate === 'minimal' ? 'gap-3 md:grid-cols-1' : '',
+      listTemplate === 'minimal' ? 'grid gap-3 md:grid-cols-1' : 'grid gap-4',
+      listTemplate === 'grid' ? 'md:grid-cols-2' : '',
+      listTemplate !== 'minimal' && listTemplate !== 'grid' ? 'md:grid-cols-3' : '',
     ]}
   >
     {initialPosts.map((post) => (
       <article class:list={['blog-card rounded-[1.5rem] border border-slate-200 bg-white transition hover:-translate-y-1 hover:shadow-xl', listTemplate === 'minimal' ? 'p-4' : 'overflow-hidden']}>
-        <a href={`/blog/${post.slug}`} class="block">
-          {listTemplate !== 'minimal' && post.coverImage && <img class="h-48 w-full object-cover" src={post.coverImage} alt={post.title} />}
-          <div class:list={[listTemplate === 'minimal' ? '' : 'p-5']}>
-            <div class="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-slate-400">
-              {post.pinned && <span class="rounded-full bg-amber-100 px-2 py-1 text-amber-700">Pinned</span>}
-              <span>{new Date(post.pubDate).toLocaleDateString('zh-CN')}</span>
-            </div>
-            <h2 class="text-lg font-semibold text-slate-950">{post.title}</h2>
-            <p class="mt-2 text-slate-600">{post.description}</p>
-            {post.tags.length > 0 && (
-              <div class="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
-                {post.tags.map((tag) => (
-                  <a href={`/tags/${encodeURIComponent(tag)}`} class="rounded-full bg-slate-100 px-3 py-1 hover:bg-slate-200">#{tag}</a>
-                ))}
-              </div>
-            )}
+        {listTemplate !== 'minimal' && post.coverImage && (
+          <a href={`/blog/${post.slug}`} class="block overflow-hidden">
+            <img class="h-48 w-full object-cover" src={post.coverImage} alt={post.title} />
+          </a>
+        )}
+        <div class:list={[listTemplate === 'minimal' ? '' : 'p-5']}>
+          <div class="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-slate-400">
+            {post.pinned && <span class="rounded-full bg-amber-100 px-2 py-1 text-amber-700">Pinned</span>}
+            <span>{new Date(post.pubDate).toLocaleDateString('zh-CN')}</span>
           </div>
-        </a>
+          <h2 class="text-lg font-semibold text-slate-950">
+            <a class="transition hover:text-sky-700" href={`/blog/${post.slug}`}>{post.title}</a>
+          </h2>
+          <p class="mt-2 text-slate-600">{post.description}</p>
+          {post.tags.length > 0 && (
+            <div class="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
+              {post.tags.map((tag) => (
+                <a href={`/tags/${encodeURIComponent(tag)}`} class="rounded-full bg-slate-100 px-3 py-1 hover:bg-slate-200">#{tag}</a>
+              ))}
+            </div>
+          )}
+        </div>
       </article>
     ))}
   </div>
@@ -90,11 +94,11 @@ const postsJson = JSON.stringify(posts);
 
       const formatDate = (value) => new Date(value).toLocaleDateString('zh-CN');
       const escapeHtml = (value) => String(value)
-        .replaceAll('&', '&')
-        .replaceAll('<', '<')
-        .replaceAll('>', '>')
-        .replaceAll('"', '"')
-        .replaceAll("'", ''');
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
 
       function renderCards() {
         const start = (currentPage - 1) * pageSize;
@@ -114,18 +118,18 @@ const postsJson = JSON.stringify(posts);
             const pinned = post.pinned ? '<span class="rounded-full bg-amber-100 px-2 py-1 text-amber-700">Pinned</span>' : '';
             return `
               <article class="${cardClass}">
-                <a href="/blog/${encodeURIComponent(post.slug)}" class="block">
-                  ${image}
-                  <div class="${innerClass}">
-                    <div class="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-slate-400">
-                      ${pinned}
-                      <span>${formatDate(post.pubDate)}</span>
-                    </div>
-                    <h2 class="text-lg font-semibold text-slate-950">${escapeHtml(post.title)}</h2>
-                    <p class="mt-2 text-slate-600">${escapeHtml(post.description || '')}</p>
-                    ${tags ? `<div class="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">${tags}</div>` : ''}
+                ${image ? `<a href="/blog/${encodeURIComponent(post.slug)}" class="block overflow-hidden">${image}</a>` : ''}
+                <div class="${innerClass}">
+                  <div class="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-slate-400">
+                    ${pinned}
+                    <span>${formatDate(post.pubDate)}</span>
                   </div>
-                </a>
+                  <h2 class="text-lg font-semibold text-slate-950">
+                    <a class="transition hover:text-sky-700" href="/blog/${encodeURIComponent(post.slug)}">${escapeHtml(post.title)}</a>
+                  </h2>
+                  <p class="mt-2 text-slate-600">${escapeHtml(post.description || '')}</p>
+                  ${tags ? `<div class="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">${tags}</div>` : ''}
+                </div>
               </article>`;
           })
           .join('');
