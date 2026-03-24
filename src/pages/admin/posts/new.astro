@@ -83,16 +83,42 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     #vditor .vditor-toolbar [data-type='edit-mode'] {
       display: none !important;
     }
-    #vditor.editor-mode-markdown .vditor-sv__preview,
-    #vditor.editor-mode-markdown .vditor-sv__resize {
+    .editor-wrap.editor-mode-markdown #vditor {
       display: none !important;
     }
-    #vditor.editor-mode-markdown .vditor-sv__editor,
-    #vditor.editor-mode-markdown .vditor-sv__editor .CodeMirror,
-    #vditor.editor-mode-markdown .vditor-sv__editor .CodeMirror-scroll {
-      width: 100% !important;
-      max-width: 100% !important;
-      flex: 1 1 auto !important;
+    .markdown-source-wrap {
+      display: none;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-top: none;
+      border-radius: 0 0 16px 16px;
+      background: #ffffff;
+      overflow: hidden;
+    }
+    .editor-wrap.editor-mode-markdown .markdown-source-wrap {
+      display: block;
+    }
+    .markdown-source-wrap:focus-within {
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.12);
+    }
+    .markdown-source-editor {
+      width: 100%;
+      min-height: 600px;
+      padding: 20px 22px;
+      border: none;
+      outline: none;
+      resize: vertical;
+      background: #ffffff;
+      color: #0f172a;
+      font: 14px/1.75 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      tab-size: 2;
+      white-space: pre-wrap;
+    }
+    .markdown-source-editor::placeholder {
+      color: #94a3b8;
+    }
+    .markdown-source-editor::selection {
+      background: rgba(251,191,36,0.28);
+      color: #111827;
     }
     #vditor textarea::placeholder,
     #vditor [contenteditable='true'][data-placeholder]:empty::before {
@@ -247,6 +273,14 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         </div>
       </div>
       <div id="vditor"></div>
+      <div class="markdown-source-wrap">
+        <textarea
+          id="markdown-source-editor"
+          class="markdown-source-editor"
+          spellcheck="false"
+          placeholder="在这里直接编辑完整 Markdown 源码..."
+        ></textarea>
+      </div>
     </div>
 
     <div class="flex flex-wrap items-center gap-4">
@@ -294,6 +328,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       const msg = $('msg');
       const editorState = $('editor-state');
       const editorModeInput = $('f-editor-mode');
+      const sourceEditor = $('markdown-source-editor');
 
       function setMessage(text, tone = 'info') {
         msg.textContent = text;
@@ -317,10 +352,32 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         isDirty = true;
       }
 
+      function syncSourceFromVditor() {
+        if (!sourceEditor || !vditor) return;
+        const nextValue = vditor.getValue();
+        if (sourceEditor.value !== nextValue) {
+          sourceEditor.value = nextValue;
+        }
+      }
+
+      function syncVditorFromSource() {
+        if (!sourceEditor || !vditor) return;
+        const nextValue = sourceEditor.value;
+        if (vditor.getValue() !== nextValue) {
+          vditor.setValue(nextValue);
+        }
+      }
+
       function applyEditorLayout(mode) {
-        const editorRoot = $('vditor');
-        if (!editorRoot) return;
-        editorRoot.classList.toggle('editor-mode-markdown', sanitizeMode(mode) === 'markdown');
+        const editorWrap = document.querySelector('.editor-wrap');
+        const isMarkdownMode = sanitizeMode(mode) === 'markdown';
+        if (!editorWrap) return;
+        editorWrap.classList.toggle('editor-mode-markdown', isMarkdownMode);
+        if (isMarkdownMode) {
+          syncSourceFromVditor();
+          return;
+        }
+        syncVditorFromSource();
       }
 
       function updateModeUi(mode, options = {}) {
@@ -503,6 +560,10 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         const status = forceStatus || $('f-status').value;
         setMessage('Saving...', 'info');
 
+        if (currentEditorMode === 'markdown') {
+          syncVditorFromSource();
+        }
+
         const payload = {
           title: $('f-title').value,
           slug: $('f-slug').value,
@@ -512,7 +573,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           pinned: $('f-pinned').checked,
           coverImage: $('f-cover').value,
           editorMode: currentEditorMode,
-          content: vditor.getValue()
+          content: currentEditorMode === 'markdown' && sourceEditor ? sourceEditor.value : vditor.getValue()
         };
 
         const url = slug ? `/api/admin/posts/${encodeURIComponent(slug)}` : '/api/admin/posts';
