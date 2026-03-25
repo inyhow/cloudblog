@@ -352,9 +352,13 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         isDirty = true;
       }
 
-      function syncSourceFromVditor() {
-        if (!sourceEditor || !vditor) return;
-        const nextValue = vditor.getValue();
+      function syncSourceFromVditor(preferredValue) {
+        if (!sourceEditor) return;
+        const nextValue = typeof preferredValue === 'string'
+          ? preferredValue
+          : vditor
+            ? vditor.getValue()
+            : sourceEditor.value;
         if (sourceEditor.value !== nextValue) {
           sourceEditor.value = nextValue;
         }
@@ -368,13 +372,14 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         }
       }
 
-      function applyEditorLayout(mode) {
+      function applyEditorLayout(mode, options = {}) {
         const editorWrap = document.querySelector('.editor-wrap');
         const isMarkdownMode = sanitizeMode(mode) === 'markdown';
+        const { sourceValue } = options;
         if (!editorWrap) return;
         editorWrap.classList.toggle('editor-mode-markdown', isMarkdownMode);
         if (isMarkdownMode) {
-          syncSourceFromVditor();
+          syncSourceFromVditor(sourceValue);
           return;
         }
         syncVditorFromSource();
@@ -382,7 +387,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
       function updateModeUi(mode, options = {}) {
         const nextMode = sanitizeMode(mode);
-        const { dirty = false } = options;
+        const { dirty = false, sourceValue } = options;
         const modeChanged = currentEditorMode !== nextMode;
         currentEditorMode = nextMode;
         if (editorModeInput) editorModeInput.value = nextMode;
@@ -390,7 +395,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         document.querySelectorAll('.mode-tag').forEach((tag) => {
           tag.classList.toggle('active', tag.id === `mode-${nextMode}`);
         });
-        applyEditorLayout(nextMode);
+        applyEditorLayout(nextMode, { sourceValue });
         rememberMode(nextMode);
         if (dirty && modeChanged) {
           markDirty();
@@ -419,7 +424,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       function setMode(mode, options = {}) {
         const nextMode = sanitizeMode(mode);
         const builtinMode = nextMode === 'markdown' ? 'sv' : nextMode;
-        const { syncEditor = true, dirty = syncEditor } = options;
+        const { syncEditor = true, dirty = syncEditor, sourceValue } = options;
         if (syncEditor && vditor) {
           const currentMode = readBuiltinEditorMode();
           if (currentMode !== builtinMode) {
@@ -431,14 +436,18 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
             }
           }
           window.requestAnimationFrame(() => {
-            updateModeUi(nextMode, { dirty });
+            updateModeUi(nextMode, { dirty, sourceValue });
           });
           return;
         }
-        updateModeUi(nextMode, { dirty });
+        updateModeUi(nextMode, { dirty, sourceValue });
       }
 
-      setMode(currentEditorMode, { syncEditor: false, dirty: false });
+      if (editorModeInput) editorModeInput.value = currentEditorMode;
+      if (editorState) editorState.textContent = `当前：${modeMeta[currentEditorMode]}`;
+      document.querySelectorAll('.mode-tag').forEach((tag) => {
+        tag.classList.toggle('active', tag.id === `mode-${currentEditorMode}`);
+      });
 
       // 1. Initialize Vditor
       vditor = new Vditor('vditor', {
@@ -473,8 +482,11 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         },
         after() {
           bindBuiltinModeSync();
-          setMode(currentEditorMode, { dirty: false });
-          if (slug) loadPost();
+          if (slug) {
+            loadPost();
+          } else {
+            setMode(currentEditorMode, { dirty: false });
+          }
         }
       });
 
@@ -501,8 +513,10 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           $('f-cover').value = post.coverImage || '';
           $('f-pinned').checked = !!post.pinned;
 
-          vditor.setValue(post.content || '');
-          setMode(post.editorMode || currentEditorMode, { dirty: false });
+          const content = post.content || '';
+          vditor.setValue(content);
+          if (sourceEditor) sourceEditor.value = content;
+          setMode(post.editorMode || currentEditorMode, { dirty: false, sourceValue: content });
           isDirty = false;
           loadRevisions();
         } catch (e) {
