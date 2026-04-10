@@ -123,12 +123,10 @@ export const PUT: APIRoute = async (context) => {
   const meta = asRecord(body._meta);
   const runtimeEnv = getRuntimeEnv(context.locals);
   const saveTheme = body.saveTheme === true;
-  const nextSettingsSha = await saveSettings(normalizeSettingsPayload(body), runtimeEnv, asSha(meta.settingsSha));
-  let nextThemeSha = asSha(meta.themeSha) ?? null;
-
-  if (saveTheme) {
-    nextThemeSha = await saveThemeCss(asString(body.themeCss), runtimeEnv, asSha(meta.themeSha));
-  }
+  const [nextSettingsSha, nextThemeSha] = await Promise.all([
+    saveSettings(normalizeSettingsPayload(body), runtimeEnv, asSha(meta.settingsSha)),
+    saveTheme ? saveThemeCss(asString(body.themeCss), runtimeEnv, asSha(meta.themeSha)) : Promise.resolve(asSha(meta.themeSha) ?? null),
+  ]);
 
   appendOpsLog(
     {

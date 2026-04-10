@@ -5,6 +5,7 @@ export interface GithubFile {
 }
 
 const apiBase = 'https://api.github.com';
+const DEFAULT_FETCH_TIMEOUT_MS = 15000;
 
 function encodeBase64(value: string): string {
   const bytes = new TextEncoder().encode(value);
@@ -46,10 +47,25 @@ function jsonHeaders(token: string) {
   };
 }
 
+async function fetchWithTimeout(input: string, init: RequestInit, timeoutMs = DEFAULT_FETCH_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(`Request timeout after ${timeoutMs}ms`), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`GitHub request timeout after ${timeoutMs}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function getFile(path: string, runtimeEnv?: Record<string, string>): Promise<GithubFile | null> {
   const { owner, repo, token, branch } = repoConfig(runtimeEnv);
   const url = `${apiBase}/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
-  const resp = await fetch(url, { headers: jsonHeaders(token) });
+  const resp = await fetchWithTimeout(url, { headers: jsonHeaders(token) }, 12000);
   if (resp.status === 404) return null;
   if (!resp.ok) throw new Error(`GitHub get file failed: ${resp.status}`);
   const data = await resp.json();
@@ -63,7 +79,7 @@ export async function getFile(path: string, runtimeEnv?: Record<string, string>)
 export async function listDir(path: string, runtimeEnv?: Record<string, string>): Promise<string[]> {
   const { owner, repo, token, branch } = repoConfig(runtimeEnv);
   const url = `${apiBase}/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
-  const resp = await fetch(url, { headers: jsonHeaders(token) });
+  const resp = await fetchWithTimeout(url, { headers: jsonHeaders(token) }, 12000);
   if (resp.status === 404) return [];
   if (!resp.ok) throw new Error(`GitHub list dir failed: ${resp.status}`);
   const data = await resp.json();
@@ -87,11 +103,15 @@ export async function putFile(
     branch,
   };
   if (currentSha) body.sha = currentSha;
-  const resp = await fetch(url, {
-    method: 'PUT',
-    headers: jsonHeaders(token),
-    body: JSON.stringify(body),
-  });
+  const resp = await fetchWithTimeout(
+    url,
+    {
+      method: 'PUT',
+      headers: jsonHeaders(token),
+      body: JSON.stringify(body),
+    },
+    20000,
+  );
   if (!resp.ok) throw new Error(`GitHub put file failed: ${resp.status}`);
   const data = await resp.json().catch(() => null);
   return typeof data?.content?.sha === 'string' ? data.content.sha : null;
@@ -102,14 +122,18 @@ export async function deleteFile(path: string, message: string, runtimeEnv?: Rec
   const current = await getFile(path, runtimeEnv);
   if (!current) return;
   const url = `${apiBase}/repos/${owner}/${repo}/contents/${path}`;
-  const resp = await fetch(url, {
-    method: 'DELETE',
-    headers: jsonHeaders(token),
-    body: JSON.stringify({
-      message,
-      sha: current.sha,
-      branch,
-    }),
-  });
+  const resp = await fetchWithTimeout(
+    url,
+    {
+      method: 'DELETE',
+      headers: jsonHeaders(token),
+      body: JSON.stringify({
+        message,
+        sha: current.sha,
+        branch,
+      }),
+    },
+    20000,
+  );
   if (!resp.ok) throw new Error(`GitHub delete file failed: ${resp.status}`);
 }

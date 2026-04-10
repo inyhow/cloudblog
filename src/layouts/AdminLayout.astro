@@ -54,15 +54,57 @@ const nav = allNav.filter((item) => {
     </div>
     <script is:inline>
       (() => {
-        // Defensive reset in case any runtime error/overlay script left the page inert.
-        document.documentElement.style.pointerEvents = 'auto';
-        document.body.style.pointerEvents = 'auto';
-        if ('inert' in document.body) {
-          document.body.inert = false;
+        const seen = new WeakSet();
+
+        function isProblemOverlay(el) {
+          if (!(el instanceof HTMLElement)) return false;
+          const style = window.getComputedStyle(el);
+          if (style.position !== 'fixed') return false;
+          if (style.pointerEvents === 'none' || style.display === 'none' || style.visibility === 'hidden') return false;
+          const opacity = Number.parseFloat(style.opacity || '1');
+          if (!Number.isFinite(opacity) || opacity < 0.01) return false;
+          const rect = el.getBoundingClientRect();
+          const coversViewport =
+            rect.width >= window.innerWidth * 0.95 &&
+            rect.height >= window.innerHeight * 0.95 &&
+            rect.top <= 4 &&
+            rect.left <= 4;
+          if (!coversViewport) return false;
+          const zIndex = Number.parseInt(style.zIndex || '0', 10);
+          const hasBackdrop = /(rgba?|hsla?)\(/i.test(style.backgroundColor) && style.backgroundColor !== 'rgba(0, 0, 0, 0)';
+          return zIndex >= 20 && hasBackdrop;
         }
-        document.querySelectorAll('[inert]').forEach((el) => {
-          el.inert = false;
-        });
+
+        function recoverPage() {
+          document.documentElement.style.pointerEvents = 'auto';
+          document.body.style.pointerEvents = 'auto';
+          document.documentElement.removeAttribute('inert');
+          document.body.removeAttribute('inert');
+          if ('inert' in document.body) {
+            document.body.inert = false;
+          }
+          document.querySelectorAll('[inert]').forEach((el) => {
+            el.inert = false;
+            el.removeAttribute('inert');
+          });
+          document.querySelectorAll('body *').forEach((el) => {
+            if (isProblemOverlay(el) && !seen.has(el)) {
+              seen.add(el);
+              el.style.pointerEvents = 'none';
+              el.style.display = 'none';
+              el.setAttribute('data-admin-overlay-disabled', 'true');
+            }
+          });
+        }
+
+        recoverPage();
+        const observer = new MutationObserver(() => recoverPage());
+        observer.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['style', 'class', 'inert'] });
+        const timer = window.setInterval(recoverPage, 500);
+        window.setTimeout(() => {
+          observer.disconnect();
+          window.clearInterval(timer);
+        }, 10000);
       })();
     </script>
   </body>
