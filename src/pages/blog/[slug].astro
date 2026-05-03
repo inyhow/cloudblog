@@ -1,6 +1,6 @@
 ---
 import SiteLayout from '../../layouts/SiteLayout.astro';
-import { getPostBySlug, isPostPublic, renderPostWithToc } from '../../lib/posts';
+import { getPostBySlug, isPostPublic, listPosts, renderPostWithToc } from '../../lib/posts';
 import { readSettings } from '../../lib/settings';
 import { getRuntimeEnv } from '../../lib/runtime-env';
 import { renderTemplateVariables } from '../../lib/template-vars';
@@ -15,6 +15,16 @@ if (!post || !isPostPublic(post)) {
 const settings = await readSettings(runtimeEnv);
 const postTemplate = settings.templates?.post ?? 'classic';
 const { html, toc } = renderPostWithToc(post.content);
+const relatedPosts = (await listPosts(runtimeEnv))
+  .filter((item) => isPostPublic(item) && item.slug !== post.slug)
+  .map((item) => {
+    const sharedTags = (item.tags || []).filter((tag) => post.tags?.includes(tag)).length;
+    const sameCategory = post.category && item.category === post.category ? 1 : 0;
+    const score = sharedTags * 3 + sameCategory * 2;
+    return { ...item, score };
+  })
+  .sort((a, b) => b.score - a.score || new Date(b.pubDate).valueOf() - new Date(a.pubDate).valueOf())
+  .slice(0, 3);
 const postHeaderRaw = settings.templateContent?.postHeaderHtml || '';
 const postHeaderHtml = renderTemplateVariables(postHeaderRaw, {
   site: { title: settings.title, description: settings.description, footer: settings.footer, menuHtml: '' },
@@ -32,15 +42,74 @@ const postHeaderHtml = renderTemplateVariables(postHeaderRaw, {
   },
   variables: settings.templateVariables,
 });
+const siteUrl = (Astro.site ?? new URL('https://blog.kuailian.lol/')).toString().replace(/\/$/, '');
+const canonicalUrl = `${siteUrl}/blog/${encodeURIComponent(post.slug)}`;
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: settings.title,
+      item: `${siteUrl}/`,
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Blog',
+      item: `${siteUrl}/blog`,
+    },
+    {
+      '@type': 'ListItem',
+      position: 3,
+      name: post.title,
+      item: canonicalUrl,
+    },
+  ],
+};
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: post.title,
+  description: post.description,
+  datePublished: post.pubDate,
+  dateModified: post.updatedDate || post.pubDate,
+  mainEntityOfPage: canonicalUrl,
+  author: {
+    '@type': 'Organization',
+    name: settings.title,
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: settings.title,
+  },
+  image: post.coverImage ? [post.coverImage.startsWith('http') ? post.coverImage : `${siteUrl}${post.coverImage.startsWith('/') ? '' : '/'}${post.coverImage}`] : undefined,
+  keywords: post.tags?.join(', ') || undefined,
+  articleSection: post.category || undefined,
+};
 ---
 
-<SiteLayout title={post.title} description={post.description}>
+<SiteLayout title={post.title} description={post.description} image={post.coverImage} type="article">
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
+  </Fragment>
   {postHeaderHtml && <div class="mb-4" set:html={postHeaderHtml} />}
+  <nav aria-label="Breadcrumb" class="mb-4 text-sm text-slate-500">
+    <ol class="flex flex-wrap items-center gap-2">
+      <li><a class="transition hover:text-slate-900" href="/">Home</a></li>
+      <li aria-hidden="true">/</li>
+      <li><a class="transition hover:text-slate-900" href="/blog">Blog</a></li>
+      <li aria-hidden="true">/</li>
+      <li class="min-w-0 break-words text-slate-700">{post.title}</li>
+    </ol>
+  </nav>
   <div class:list={["grid gap-6", toc.length > 0 ? 'lg:grid-cols-[minmax(0,1fr)_260px]' : 'lg:grid-cols-1']}>
-    <article class:list={["post-article prose max-w-none rounded-[2rem] border border-slate-200 bg-white shadow-sm", postTemplate === 'minimal' ? 'p-5' : 'p-7']}>
+    <article class:list={["post-article prose max-w-none rounded-2xl border border-slate-200 bg-white shadow-sm", postTemplate === 'minimal' ? 'p-4 sm:p-5' : 'p-5 sm:p-7']}>
       {post.coverImage && (
         <img
-          class:list={["mb-6 w-full rounded-[1.5rem] object-cover", postTemplate === 'cover' ? 'h-[32rem]' : 'h-80']}
+          class:list={["mb-6 aspect-[16/10] w-full rounded-[1.5rem] object-cover", postTemplate === 'cover' ? 'md:h-[32rem]' : 'md:h-80']}
           src={post.coverImage}
           alt={post.title}
         />
@@ -49,7 +118,7 @@ const postHeaderHtml = renderTemplateVariables(postHeaderRaw, {
         <span>{new Date(post.pubDate).toLocaleString('zh-CN')}</span>
         {post.pinned && <span class="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-700">Pinned</span>}
       </div>
-      <h1 class="not-prose mb-6 text-4xl font-black leading-tight tracking-tight text-slate-950 md:text-5xl">{post.title}</h1>
+      <h1 class="not-prose mb-6 break-words text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-4xl md:text-5xl">{post.title}</h1>
       {
         (post.tags?.length ?? 0) > 0 && (
           <div class="not-prose mb-6 flex flex-wrap gap-2">
@@ -85,6 +154,29 @@ const postHeaderHtml = renderTemplateVariables(postHeaderRaw, {
       )
     }
   </div>
+  {
+    relatedPosts.length > 0 && (
+      <section class="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <div class="mb-4">
+          <h2 class="text-2xl font-black tracking-tight text-slate-950">Related Articles</h2>
+          <p class="mt-1 text-sm text-slate-500">Based on shared tags and category.</p>
+        </div>
+        <div class="grid gap-4 md:grid-cols-3">
+          {relatedPosts.map((item) => (
+            <article class="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
+              <div class="mb-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+                <span>{new Date(item.pubDate).toLocaleDateString('zh-CN')}</span>
+              </div>
+              <h3 class="text-lg font-bold tracking-tight text-slate-950">
+                <a class="transition hover:text-sky-700" href={`/blog/${item.slug}`}>{item.title}</a>
+              </h3>
+              <p class="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    )
+  }
 
   <style is:inline>
     .post-article :global(.post-body h1) {

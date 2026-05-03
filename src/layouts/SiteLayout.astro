@@ -9,9 +9,11 @@ import { tr } from '../lib/i18n';
 interface Props {
   title: string;
   description?: string;
+  image?: string;
+  type?: 'website' | 'article';
 }
 
-const { title, description = '' } = Astro.props;
+const { title, description = '', image, type = 'website' } = Astro.props;
 const runtimeEnv = getRuntimeEnv(Astro.locals);
 const settings = await readSettings(runtimeEnv);
 const themeCss = await readThemeCss(runtimeEnv);
@@ -34,7 +36,8 @@ const locale = settings.locale || 'en';
 <!doctype html>
 <html lang={locale}>
   <head>
-    <BaseHead title={title} description={description || settings.description} />
+    <BaseHead title={title} description={description || settings.description} image={image} type={type} />
+    <slot name="head" />
     <style is:inline>{themeCss}</style>
     <style is:inline>{renderedTheme}</style>
     {googleSiteVerification && <meta name="google-site-verification" content={googleSiteVerification} />}

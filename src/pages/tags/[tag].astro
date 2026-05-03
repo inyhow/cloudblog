@@ -14,7 +14,7 @@ const posts = (await listPosts(runtimeEnv))
 ---
 
 <SiteLayout title={`Tag: ${tag}`} description={`Posts tagged ${tag}`}>
-  <section class="mb-8 flex items-end justify-between gap-4 rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm">
+  <section class="mb-8 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-5 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:gap-4 sm:px-6 sm:py-6">
     <div>
       <p class="mb-2 text-xs uppercase tracking-[0.24em] text-slate-400">Tag Archive</p>
       <h1 class="text-3xl font-black tracking-tight text-slate-950">#{tag}</h1>

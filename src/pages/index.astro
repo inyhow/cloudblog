@@ -43,23 +43,23 @@ const tagSections = Array.from(tagBuckets.entries())
 ---
 
 <SiteLayout title={homeTitle} description={homeDescription}>
-  <section class="mb-10 overflow-hidden rounded-[2rem] border border-amber-200/60 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_50%,#fffbeb_100%)] p-8 shadow-[0_20px_80px_-40px_rgba(245,158,11,0.45)]">
-    <div class="grid gap-8 md:grid-cols-[1.2fr_0.8fr] md:items-end">
+  <section class="mb-8 overflow-hidden rounded-2xl border border-amber-200/60 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_50%,#fffbeb_100%)] p-5 shadow-[0_20px_80px_-40px_rgba(245,158,11,0.45)] sm:p-8 md:mb-10">
+    <div class="grid gap-6 md:grid-cols-[1.2fr_0.8fr] md:items-end lg:gap-8">
       <div>
         <p class="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-amber-600">Cloudflare Pages CMS</p>
-        <h1 class="max-w-3xl text-4xl font-black tracking-tight text-slate-950 md:text-6xl">{settings.title}</h1>
+        <h1 class="max-w-3xl text-3xl font-black tracking-tight text-slate-950 sm:text-4xl md:text-6xl">{settings.title}</h1>
         <p class="mt-4 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">{settings.description}</p>
       </div>
     </div>
   </section>
 
   {featured && homeTemplate !== 'minimal' && (
-    <section class="mb-8 grid gap-6 rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-[1.2fr_0.8fr]">
+    <section class="mb-8 grid gap-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 md:grid-cols-[1.2fr_0.8fr] md:gap-6">
       <a href={`/blog/${featured.slug}`} class="overflow-hidden rounded-[1.5rem]">
         {featured.coverImage ? (
-          <img class="h-full max-h-[26rem] w-full rounded-[1.5rem] object-cover" src={featured.coverImage} alt={featured.title} />
+          <img class="aspect-[16/10] w-full rounded-[1.5rem] object-cover md:h-full md:max-h-[26rem]" src={featured.coverImage} alt={featured.title} />
         ) : (
-          <div class="grid h-full min-h-[20rem] place-items-center rounded-[1.5rem] bg-slate-900 text-slate-100">Featured Story</div>
+          <div class="grid min-h-48 place-items-center rounded-[1.5rem] bg-slate-900 text-slate-100 md:h-full md:min-h-[20rem]">Featured Story</div>
         )}
       </a>
       <div class="flex flex-col justify-between gap-5">
@@ -68,7 +68,7 @@ const tagSections = Array.from(tagBuckets.entries())
             {featured.pinned && <span class="rounded-full bg-amber-100 px-2 py-1 text-amber-700">Pinned</span>}
             <span>{new Date(featured.pubDate).toLocaleDateString('zh-CN')}</span>
           </div>
-          <a href={`/blog/${featured.slug}`} class="text-3xl font-black tracking-tight text-slate-950">{featured.title}</a>
+          <a href={`/blog/${featured.slug}`} class="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">{featured.title}</a>
           <p class="mt-4 text-slate-600">{featured.description}</p>
         </div>
         <div class="flex flex-wrap gap-2 text-xs text-slate-500">
@@ -80,12 +80,12 @@ const tagSections = Array.from(tagBuckets.entries())
     </section>
   )}
 
-  <section class="mb-4 flex items-center justify-between gap-3">
+  <section class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <h2 class="text-2xl font-black tracking-tight text-slate-950">最新文章</h2>
       <p class="text-sm text-slate-500">首页当前显示 {homeList.length} 篇，更多内容可进入完整列表页。</p>
     </div>
-    <a class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-950" href="/blog">
+    <a class="w-fit rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-950" href="/blog">
       查看全部文章
     </a>
   </section>
@@ -123,7 +123,7 @@ const tagSections = Array.from(tagBuckets.entries())
 
   {tagSections.length > 0 && (
     <section class="mt-10 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div class="mb-4 flex items-center justify-between gap-3">
+      <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 class="text-xl font-bold text-slate-900">热门标签</h3>
           <p class="text-sm text-slate-500">首页下方不再重复展开文章卡片，改为按标签快速浏览。</p>
